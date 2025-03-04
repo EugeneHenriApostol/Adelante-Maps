@@ -132,10 +132,14 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         } else {
             const errorData = await response.json();
             if(errorData.detail === "Email already registered") {
-                const emailError = createErrorElement('')
+                const emailError = createErrorElement("email-exists-error", "This email is already registered.");
+                emailInput.parentElement.appendChild(emailError);
+            } else {
+                alert(errorData.detail || 'Registration failed. Please try again.');
             }
         }
-    } catch {
-
+    } catch (error){
+        console.error('Error occurred during registration', error);
+        alert('An error occurred during registration. Please try again.');
     }
 });
