@@ -1,0 +1,39 @@
+# schemas.py is defines the pydantic models
+# pydantic models are responsible for telling the API how the request body should look like
+
+from typing import Optional
+from pydantic import BaseModel
+
+class Role(BaseModel):
+    role_id: int
+    role_name: str
+
+class User(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    role_id: int
+
+# we do it this class like this because in the api we want the user to pass in the normal password as a normal string, normal password for the api
+# in the database we will have a hashed version of this password, so i create two kind of different classes, the database version and the api
+# normal class for the api
+class UserIn(User):
+    password: str 
+
+class UserInDBBase(User):
+    role_id: int
+
+    class Config:
+        from_attributes = True
+
+# class in database with the hashed password
+# class for the database
+class UserInDB(UserInDBBase):
+    hashed_password: str 
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
