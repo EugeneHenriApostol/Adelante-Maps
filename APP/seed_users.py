@@ -4,25 +4,25 @@ import models
 import security
 
 def seed_users():
-    db: Session = SessionLocal()  # FIXED: Call SessionLocal() to get a session instance
+    db: Session = SessionLocal()  
 
     try:
-        # Define user data (7 verified, 7 unverified)
+        # define user data (7 verified, 7 unverified)
         users_data = [
             {
                 "email": f"user{i}@example.com",
                 "first_name": f"User{i}",
                 "last_name": "Test",
-                "is_verified": i < 7,  # First 7 are verified, last 7 are not
+                "is_verified": i < 7,  # first 7 are verified, last 7 are not
                 "role_id": 1
             }
             for i in range(14)
         ]
 
-        # Hash password once for efficiency
+        # hash password 
         hashed_password = security.get_password_hash("1234")
 
-        # Create user objects
+        # create user objects
         users = [
             models.User(
                 email=user["email"],
@@ -35,7 +35,7 @@ def seed_users():
             for user in users_data
         ]
 
-        # Add and commit to the database
+        # add and commit to the database
         db.add_all(users)
         db.commit()
         print("Database seeded successfully!")

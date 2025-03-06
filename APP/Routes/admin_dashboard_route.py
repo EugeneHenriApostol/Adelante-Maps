@@ -1,4 +1,4 @@
-
+# admin_dashboard_route.py
 from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
 import auth, schemas

@@ -62,6 +62,11 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
         return None
     
     try:
-        return get_current_user(token, db)
-    except:
+        payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        user = db.query(models.User).filter(models.User.email == email).first()
+        return user
+    except JWTError:
         return None

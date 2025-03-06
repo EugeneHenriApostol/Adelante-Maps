@@ -34,9 +34,9 @@ async function login(email, password) {
 
     // redirect user based on their role id
     if (data.role_id === 2 || data.role_id === 3) {
-        window.location.href = '/admin-dashboard';
+        window.location.replace('/admin-dashboard'); // Forces a proper redirect
     } else {
-        window.location.href = '/maps';
+        window.location.replace('/maps');
     }
 }
 
