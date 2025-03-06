@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Adelante Maps</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            background-color: #0B4619;
+        }
+        .sidebar-title {
+            color: #FFD700;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex flex-col h-screen">
+        <!-- Mobile Header -->
+        <header class="bg-white shadow-sm p-4 flex justify-between items-center md:hidden">
+            <button id="menu-toggle" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <h1 class="text-xl font-bold text-green-800">Adelante Maps</h1>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar w-64 flex-shrink-0 h-full fixed md:static z-10">
+                <div class="p-4">
+                    <h1 class="sidebar-title text-2xl font-bold mb-8 hidden md:block">Adelante Maps</h1>
+                    <nav class="space-y-4">
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-th-large w-6"></i>
+                            <span class="ml-2">Dashboard</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-user-graduate w-6"></i>
+                            <span class="ml-2">Senior High Students</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-user-graduate w-6"></i>
+                            <span class="ml-2">College Students</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-map w-6"></i>
+                            <span class="ml-2">Maps</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-question-circle w-6"></i>
+                            <span class="ml-2">Help</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-user w-6"></i>
+                            <span class="ml-2">Profile</span>
+                        </a>
+                        <a href="#" class="flex items-center text-white hover:bg-green-800 p-2 rounded-lg">
+                            <i class="fas fa-cog w-6"></i>
+                            <span class="ml-2">Settings</span>
+                        </a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+                    <!-- Senior High Students Card -->
+                    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
+                        <div class="flex justify-center mb-4">
+                            <i class="fas fa-user-graduate text-3xl md:text-4xl text-blue-500"></i>
+                        </div>
+                        <h2 class="text-lg md:text-xl text-gray-600 mb-2">Senior High Students</h2>
+                        <p class="text-2xl md:text-3xl font-bold">95</p>
+                    </div>
+
+                    <!-- College Students Card -->
+                    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
+                        <div class="flex justify-center mb-4">
+                            <i class="fas fa-user-graduate text-3xl md:text-4xl text-blue-500"></i>
+                        </div>
+                        <h2 class="text-lg md:text-xl text-gray-600 mb-2">College Students</h2>
+                        <p class="text-2xl md:text-3xl font-bold">98</p>
+                    </div>
+
+                    <!-- Manage Student Data Card -->
+                    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
+                        <div class="flex justify-center mb-4">
+                            <i class="fas fa-upload text-3xl md:text-4xl text-blue-500"></i>
+                        </div>
+                        <h2 class="text-lg md:text-xl text-gray-600 mb-2">Manage Student Data</h2>
+                        <p class="text-sm md:text-base text-gray-500">Upload or Remove CSV Files</p>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-4 md:p-6">
+                        <h2 class="text-lg md:text-xl font-semibold mb-4">Users Registered</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3 md:pb-4">Email</th>
+                                        <th class="pb-3 md:pb-4">Name</th>
+                                        <th class="pb-3 md:pb-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- dynamic population -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="flex justify-center mt-4 md:mt-6" id="pagination"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='admin-dashboard.js') }}" defer></script>
+</body>
+</html>

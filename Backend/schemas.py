@@ -12,7 +12,7 @@ class User(BaseModel):
     email: str
     first_name: str
     last_name: str
-    role_id: int
+    role_id: Optional[int] = None
 
 # we do it this class like this because in the api we want the user to pass in the normal password as a normal string, normal password for the api
 # in the database we will have a hashed version of this password, so i create two kind of different classes, the database version and the api

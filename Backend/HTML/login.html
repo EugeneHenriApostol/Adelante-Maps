@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Adelante Maps Login">
+    <title>Login | Adelante Maps</title>
+    <script src="{{ url_for('static', path='login.js') }}" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .left-bg {
+            background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        @media (max-width: 768px) {
+            .left-bg {
+                min-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <div class="flex flex-col md:flex-row h-screen">
+        <!-- left side -->
+        <div class="left-bg md:w-1/2 relative">
+            <div class="absolute inset-0 bg-green-900 bg-opacity-70 flex flex-col justify-center items-center text-white p-8">
+                <div class="rounded-full bg-white p-5 mb-6">
+                    <i class="fa-solid fa-map text-5xl text-green-600"></i>
+                </div>
+                <h1 class="text-4xl font-bold mb-4">Adelante Maps</h1>
+                <p class="text-xl mb-6 text-center">Discover and navigate your world with precision and ease.</p>
+                <div class="w-16 h-1 bg-green-400 mb-8"></div>
+                <p class="text-sm text-center max-w-md">
+                    Welcome back! Log in to access your personalized maps, 
+                    saved routes, and exclusive features.
+                </p>
+            </div>
+        </div>
+        
+        <!-- right side -->
+        <div class="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
+            <div class="w-full max-w-md">
+                <!-- header -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-gray-900">
+                        Welcome Back
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Log in to your account
+                    </p>
+                </div>
+
+                <!-- login form -->
+                <form id="loginForm" class="space-y-6">
+                    <!-- email field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">
+                            Email Address
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            <input id="email" name="email" type="email" required
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="your@email.com">
+                        </div>
+                    </div>
+
+                    <!-- password field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input id="password" name="password" type="password" required
+                                class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="••••••••">
+                            <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 focus:outline-none">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- forgot password link -->
+                    <div class="text-sm">
+                        <a href="#" class="font-medium text-green-600 hover:text-green-500">
+                            Forgot your password?
+                        </a>
+                    </div>
+
+                    <!-- login button -->
+                    <div>
+                        <button type="submit"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <i class="fas fa-sign-in-alt text-green-500 group-hover:text-green-400"></i>
+                            </span>
+                            Log in
+                        </button>
+                    </div>
+                </form>
+
+                <!-- register link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account?
+                        <a href="/register" class="font-medium text-green-600 hover:text-green-500">
+                            Sign up
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

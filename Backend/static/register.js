@@ -8,13 +8,16 @@ const passwordMatchMessage = document.getElementById('password-match');
 confirmPasswordInput.addEventListener('input', () => {
     const passwordsMatch = confirmPasswordInput.value === passwordInput.value;
     passwordMatchMessage.classList.toggle("hidden", passwordsMatch);
+    passwordMatchMessage.style.position = "absolute"; // Ensure it doesn’t push content
 });
 
-confirmPasswordInput.addEventListener("blur", () => {
-    if (confirmPasswordInput.value && !passwordMatchMessage.classList.toggle("hidden")) {
-        passwordMatchMessage.textContent = "Password do not match!";
-    }
-});
+
+if (confirmPasswordInput.value && confirmPasswordInput.value !== passwordInput.value) {
+    passwordMatchMessage.textContent = "Passwords do not match!";
+    passwordMatchMessage.classList.remove("hidden");
+} else {
+    passwordMatchMessage.classList.add("hidden");
+}
 
 // real time input validation
 const registerForm = document.getElementById("registerForm");
@@ -28,17 +31,28 @@ const createErrorElement = (id, message) => {
     if (!errorElement) {
         errorElement = document.createElement("p");
         errorElement.id = id;
-        errorElement.className = "text-xs mt-1 text-red-600";
+        errorElement.className = "error-message"; // Use CSS for positioning
         errorElement.textContent = message;
+        errorElement.style.marginTop = "0"; // Ensure no extra spacing
     }
     return errorElement;
 };
 
-// real time validation functions
+
+// real time name validation 
 const validateName = (input, id, fieldName) => {
     const nameRegex = /^[A-Z][a-z]*(\s[A-Z][a-z]*)*$/;
     const errorElement = createErrorElement(id, `${fieldName} must start with a capital letter`);
-    if (!nameRegex.test(input.value.trim())) {
+    const value = input.value.trim();
+
+    // Don't show error if the field is empty
+    if (value === "") {
+        const existingError = document.getElementById(id);
+        if (existingError) existingError.remove();
+        return true; 
+    }
+
+    if (!nameRegex.test(value)) {
         input.parentElement.appendChild(errorElement);
         return false;
     } else {
@@ -48,27 +62,34 @@ const validateName = (input, id, fieldName) => {
     }
 };
 
-// real time validation with server check
+
+// real time email validation with server check
 emailInput.addEventListener("blur", async () => {
-    const emailValue = emailValue.input.trim();
+    const emailValue = emailInput.value.trim();
     const emailErrorId = "email-exists-error";
     const errorElement = createErrorElement(emailErrorId, "This email is already registered.");
 
-    if (emailValue === "") // skip if email is already empty
+    if (emailValue === "") return; // Skip check if email is empty
 
     try {
-        const response = await fetch(`/api/check/email?email=${encodeURIComponent(emailValue)}`);
-        const data = await response.json();
+        const response = await fetch(`/api/check-email?email=${encodeURIComponent(emailValue)}`);
+        if (!response.ok) {
+            console.error("Error checking email:", response.statusText);
+            return;
+        }
 
-        // check to response to check if email already exists
-        if (response.ok && data.exists) {
-            emailInput.parentElement.appendChild(errorElement);
+        const data = await response.json();
+        const existingError = document.getElementById(emailErrorId);
+
+        if (data.exists) {
+            if (!existingError) {
+                emailInput.parentElement.appendChild(errorElement);
+            }
         } else {
-            const existingError = document.getElementById(emailErrorId);
             if (existingError) existingError.remove();
         }
     } catch (error) {
-        console.error("Error checking email: ", error);
+        console.error("Error checking email:", error);
     }
 });
 
@@ -93,24 +114,66 @@ toggleVisibility("confirm_password", "toggle-confirm-password");
 firstNameInput.addEventListener("blur", () => validateName(firstNameInput, "first-name-error", "First Name"));
 lastNameInput.addEventListener("blur", () => validateName(lastNameInput, "last-name-error", "Last Name"));
 
+// email validation function
+function validateEmail() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailErrorId = "email-format-error";
+    const errorElement = createErrorElement(emailErrorId, "Invalid email format.");
+
+    if (!emailRegex.test(emailInput.value.trim())) {
+        emailInput.parentElement.appendChild(errorElement);
+        return false;
+    } else {
+        const existingError = document.getElementById(emailErrorId);
+        if (existingError) existingError.remove();
+        return true;
+    }
+}
+
+// modal function to show error
+function showErrorModal(message) {
+    const modal = document.getElementById("errorModal");
+    const errorMessage = document.getElementById("errorMessage");
+    const closeModal = document.getElementById("closeErrorModal");
+
+    errorMessage.textContent = message;
+    modal.classList.remove("hidden");
+
+    closeModal.addEventListener("click", () => {
+        modal.classList.add("hidden");
+    });
+}
+
 document.getElementById("registerForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const firstNameValid = validateName(firstNameInput, "first-name-error", "First Name");
     const lastNameValid = validateName(lastNameInput, "last-name-error", "Last Name");
+    const emailValid = validateEmail();
+    
+    // check password match
+    const passwordsMatch = passwordInput.value === confirmPasswordInput.value;
+    if (!passwordsMatch) {
+        passwordMatchMessage.textContent = "Passwords do not match!";
+        passwordMatchMessage.classList.remove("hidden");
+    } else {
+        passwordMatchMessage.classList.add("hidden");
+    }
 
-    if (!firstNameValid || !lastNameValid) {
-        alert("Please fix the errors in the form before submitting.");
+    if (!firstNameValid || !lastNameValid || !emailValid || !passwordsMatch) {
+        showErrorModal("Please fix the errors in the form before submitting.");
         return;
     }
 
     // check if email is already registered
     const formData = {
-        fist_name: firstNameInput.value.trim(),
-        last_name: lastNameInput.value.trim(),
-        email: emailInput.value.trim(),
-        password: document.getElementById("password").value,
+        first_name: document.getElementById("first_name").value,
+        last_name: document.getElementById("last_name").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value
     };
+
+    console.log("Sending data:", formData);  // Check if data matches API schema
 
     try {
         const response = await fetch('/api/register', {
@@ -120,26 +183,19 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         });
 
         if (response.ok) {
-            const data = await response.json(); // get the json response
-            const token = data.token; // extract the token
-            localStorage.setItem("registered", "true");
+            document.getElementById("emailModal").classList.remove("hidden"); // Show modal
 
-            if (token) {
-                window.location.href = `/verify-email?token=${token}`;
-            } else {
-                alert("No verification token received.");
-            }
+            document.getElementById("closeModal").addEventListener("click", () => {
+                window.location.href = "/login"; // Redirect after closing modal
+            });
         } else {
             const errorData = await response.json();
-            if(errorData.detail === "Email already registered") {
+            if (errorData.detail === "Email already registered") {
                 const emailError = createErrorElement("email-exists-error", "This email is already registered.");
                 emailInput.parentElement.appendChild(emailError);
-            } else {
-                alert(errorData.detail || 'Registration failed. Please try again.');
             }
         }
-    } catch (error){
-        console.error('Error occurred during registration', error);
-        alert('An error occurred during registration. Please try again.');
+    } catch (error) {
+        console.error("Registration error:", error);
     }
 });

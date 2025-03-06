@@ -4,145 +4,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Library Management System Login">
-    <title>Register</title>
+    <meta name="description" content="Adelante Maps Registration">
+    <title>Register | Adelante Maps</title>
     <script src="{{ url_for('static', path='register.js') }}" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        .left-bg {
+            background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80');
+            background-size: cover;
+            background-position: center;
         }
-        body {
-            background: rgba(243, 240, 240, 0.95)
+        
+        @media (max-width: 768px) {
+            .left-bg {
+                min-height: 300px; /* Increased from 200px */
+            }
+            .mobile-padding {
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            .mobile-text {
+                font-size: 0.875rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        .error-message {
+            position: absolute;
+            bottom: -20px; 
+            left: 0px; 
+            font-size: 12px;
+            color: red;
+            white-space: nowrap; 
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="glass-effect max-w-md w-full space-y-8 p-10 rounded-xl shadow-2xl">
-        <!-- header -->
-        <div class="text-center">
-            <div class="flex justify-center">
-                <div class="rounded-full bg-green-100 p-4">
-                    <i class="fa-solid fa-map text-4xl text-green-600"></i>
+<body class="min-h-screen bg-gray-50">
+    <div class="flex flex-col md:flex-row h-screen">
+        <!-- Left side - Image and branding -->
+        <div class="left-bg md:w-1/2 relative">
+            <div class="absolute inset-0 bg-green-900 bg-opacity-70 flex flex-col justify-center items-center text-white p-4 md:p-8">
+                <div class="rounded-full bg-white p-5 mb-4 md:mb-6">
+                    <i class="fa-solid fa-map text-4xl md:text-5xl text-green-600"></i>
                 </div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-center">Adelante Maps</h1>
+                <p class="text-lg md:text-xl mb-4 md:mb-6 text-center px-4">Improve student services by using student geospatial data.</p>
+                <div class="w-16 h-1 bg-green-400 mb-4 md:mb-8"></div>
+                <p class="text-xs md:text-sm text-center max-w-md px-4">
+                    Provide analysis and insights through using the GIS Application.
+                </p>
             </div>
-            <h2 class="mt-6 text-2xl font-extrabold text-gray-900">
-                Adelante Maps User Registration
-            </h2>
         </div>
-
-        <!-- register form -->
-        <form id="registerForm" class="mt-8 space-y-6">
-            <!-- first name field -->
-            <div>
-                <label for="first_name" class="block text-sm font-medium text-gray-700">
-                    First Name
-                </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-user text-gray-400"></i>
-                    </div>
-                    <input id="first_name" name="first_name" type="text" required
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="John Doe">
+        
+        <!-- Right side - Registration form -->
+        <div class="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
+            <div class="w-full max-w-md">
+                <!-- header -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-gray-900">
+                        Create Your Account
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Fill in your details to get started
+                    </p>
                 </div>
-            </div>
-            <!-- last name field -->
-            <div>
-                <label for="last_name" class="block text-sm font-medium text-gray-700">
-                    Last Name
-                </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-user text-gray-400"></i>
-                    </div>
-                    <input id="last_name" name="last_name" type="text" required
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="John Doe">
-                </div>
-            </div>
-            <!-- email field -->
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">
-                    Email Address
-                </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-envelope text-gray-400"></i>
-                    </div>
-                    <input id="email" name="email" type="email" required
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="your@email.com">
-                </div>
-            </div>
 
-            <!-- password field -->
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">
-                    Password
-                </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-lock text-gray-400"></i>
+                <!-- register form -->
+                <form id="registerForm" class="space-y-6">
+                    <!-- first name field -->
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700">
+                            First Name
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input id="first_name" name="first_name" type="text" required
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="John">
+                        </div>
                     </div>
-                    <input id="password" name="password" type="password" required
-                        class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="••••••••">
-                    <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 focus:outline-none">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- confirm password field -->
-            <div>
-                <label for="confirm_password" class="block text-sm font-medium text-gray-700">
-                    Confirm Password
-                </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-lock text-gray-400"></i>
+                    
+                    <!-- last name field -->
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700">
+                            Last Name
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input id="last_name" name="last_name" type="text" required
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="Doe">
+                        </div>
                     </div>
-                    <input id="confirm_password" name="confirm_password" type="password" required
-                        class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="••••••••">
-                    <button type="button" id="toggle-confirm-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 focus:outline-none">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                    
+                    <!-- email field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">
+                            Email Address
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            <input id="email" name="email" type="email" required
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="your@email.com">
+                        </div>
+                    </div>
+
+                    <!-- password field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input id="password" name="password" type="password" required
+                                class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="••••••••">
+                            <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 focus:outline-none">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- confirm password field -->
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700">
+                            Confirm Password
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input id="confirm_password" name="confirm_password" type="password" required
+                                class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                placeholder="••••••••">
+                            <button type="button" id="toggle-confirm-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 focus:outline-none">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p id="password-match" class="text-xs mt-1 text-red-600 hidden">Passwords do not match!</p>
+                    </div>
+
+                    <!-- register button -->
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <i class="fas fa-user-plus text-green-500 group-hover:text-green-400"></i>
+                            </span>
+                            Create account
+                        </button>
+                    </div>
+                </form>
+
+                <!-- login link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account?
+                        <a href="/login" class="font-medium text-green-600 hover:text-green-500">
+                            Sign In
+                        </a>
+                    </p>
                 </div>
-                <p id="password-match" class="text-xs mt-1 text-red-600 hidden">Passwords do not match!</p>
-            </div>
+                
+                <!-- Email Verification Modal -->
+                <div id="emailModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm text-center">
+                        <h2 class="text-xl font-semibold text-gray-900">Verify Your Email</h2>
+                        <p class="text-gray-600 mt-2">Please check your email and click the verification link to complete registration.</p>
+                        <button id="closeModal" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">OK</button>
+                    </div>
+                </div>
 
-            <!-- register button -->
-            <div>
-                <button type="submit"
-                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
-                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <i class="fas fa-sign-in-alt text-green-500 group-hover:text-green-400"></i>
-                    </span>
-                    Create account
-                </button>
-            </div>
-        </form>
+                <!-- Error Modal -->
+                <div id="errorModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div class="bg-white p-5 rounded-lg shadow-lg w-80 text-center">
+                        <h2 class="text-lg font-semibold text-red-600">Form Errors</h2>
+                        <p id="errorMessage" class="mt-2 text-gray-700"></p>
+                        <button id="closeErrorModal" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">OK</button>
+                    </div>
+                </div>
 
-        <!-- login link -->
-        <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600">
-                Already have an account?
-                <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">
-                    Sign In
-                </a>
-            </p>
+            </div>
         </div>
-
-        <!-- footer -->
-        <!-- <div class="mt-8 border-t border-gray-200 pt-6">
-            <p class="mt-4 text-center text-xs text-gray-500">
-                &copy; 2024 Geographic Information System. All rights reserved.
-            </p>
-        </div> -->
     </div>
 </body>
 </html>
