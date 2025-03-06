@@ -2,27 +2,41 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 import models
 import security
+import random
+
+
+def generate_unique_emails(count: int) -> list:
+    emails = set()
+    while len(emails) < count:
+        random_number = random.randint(100, 999)  # 3-digit random number
+        email = f"user{random_number}@example.com"
+        emails.add(email)  # Ensure uniqueness
+    return list(emails)
+
 
 def seed_users():
-    db: Session = SessionLocal()  
-
+    db: Session = SessionLocal()
+    
     try:
-        # define user data (7 verified, 7 unverified)
+        # Generate unique emails for 10 verified and 4 unverified users
+        unique_emails = generate_unique_emails(14)
+        
+        # Define user data
         users_data = [
             {
-                "email": f"user{i}@example.com",
+                "email": unique_emails[i],
                 "first_name": f"User{i}",
                 "last_name": "Test",
-                "is_verified": i < 7,  # first 7 are verified, last 7 are not
+                "is_verified": i < 10,  # First 10 are verified, last 4 are not
                 "role_id": 1
             }
             for i in range(14)
         ]
 
-        # hash password 
+        # Hash password
         hashed_password = security.get_password_hash("1234")
 
-        # create user objects
+        # Create user objects
         users = [
             models.User(
                 email=user["email"],
@@ -35,7 +49,7 @@ def seed_users():
             for user in users_data
         ]
 
-        # add and commit to the database
+        # Add and commit to the database
         db.add_all(users)
         db.commit()
         print("Database seeded successfully!")
@@ -46,6 +60,7 @@ def seed_users():
 
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_users()

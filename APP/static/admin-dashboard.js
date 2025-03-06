@@ -43,10 +43,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const offset = (page - 1) * usersPerPage;
 
         try {
-            const response = await fetch(`/users?limit=${usersPerPage}&offset=${offset}`, {
+            const response = await fetch(`/users?limit=${usersPerPage}&offset=${offset}`, { 
                 method: 'GET',
                 credentials: 'include',
-            });
+            });                     
 
             if (!response.ok) {
                 throw new Error("Failed to fetch users");
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error loading users:", error);
         }
     }
-
+    // render users
     function renderUsers(users) {
         usersTableBody.innerHTML = ""; // clear table before adding new rows
 
@@ -67,17 +67,40 @@ document.addEventListener("DOMContentLoaded", function () {
             const row = document.createElement("tr");
             row.classList.add("border-t");
             row.innerHTML = `
-                <td class="py-2 md:py-3">${user.email}</td>
-                <td>${user.first_name} ${user.last_name}</td>
-                <td>
-                    <a href="#" class="text-purple-600 hover:text-purple-800 mr-2 md:mr-3">Edit</a>
-                    <a href="#" class="text-purple-600 hover:text-purple-800">Delete</a>
-                </td>
+                <tr>
+                    <td class="py-2 md:py-3">${user.email}</td>
+                    <td>${user.first_name} ${user.last_name}</td>
+                    <td>
+                        <a href="#" class="edit-user text-purple-600 hover:text-purple-800 mr-2 md:mr-3" data-id="${user.user_id}">Edit</a>
+                        <a href="#" class="delete-user text-red-600 hover:text-red-800" data-id="${user.user_id}">Delete</a>
+                    </td>
+                </tr>
             `;
-            usersTableBody.appendChild(row);
+
+            usersTableBody.append(row);
+            
+        });
+
+        // add event listener to edit button
+        document.querySelectorAll(".edit-user").forEach(button => {
+            button.addEventListener("click", (e) => {
+                e.preventDefault();
+                const userId = e.target.getAttribute("data-id");
+                openEditModal(userId, users);
+            });
+        });
+        
+        // add event listener to delete button
+        document.querySelectorAll(".delete-user").forEach(button => {
+            button.addEventListener("click", (e) => {
+                e.preventDefault();
+                const userId = e.target.getAttribute("data-id");
+                openDeleteModal(userId);
+            });
         });
     }
 
+    // render pagination
     function renderPagination(totalUsers, currentPage) {
         const totalPages = Math.ceil(totalUsers / usersPerPage);
         paginationContainer.innerHTML = "";
@@ -101,7 +124,88 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.appendChild(button);
         }
     }
-    
-
     fetchUsers(currentPage); // fetch users
+});
+
+// function to open edit modal
+function openEditModal(userId, users) {
+    const user = users.find(u => u.user_id == userId);
+    if (!user) return;
+
+    document.getElementById("editUserId").value = userId;
+    document.getElementById("editFirstName").value = user.first_name;
+    document.getElementById("editLastName").value = user.last_name;
+    document.getElementById("editEmail").value = user.email;  // Read-only field
+    document.getElementById("editRoleId").value = user.role_id; // Editable field
+
+    document.getElementById("editModal").classList.remove("hidden");
+}
+
+
+// close Modal
+document.getElementById("closeEditModal").addEventListener("click", () => {
+    document.getElementById("editModal").classList.add("hidden");
+});
+
+// save edited user
+document.getElementById("saveEditUser").addEventListener("click", async () => {
+    const userId = document.getElementById("editUserId").value;
+    const updatedUser = {
+        email: document.getElementById("editEmail").value,
+        first_name: document.getElementById("editFirstName").value,
+        last_name: document.getElementById("editLastName").value,
+        role_id: parseInt(document.getElementById("editRoleId").value)
+    };
+
+    try {
+        const response = await fetch(`/users/${userId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(updatedUser)
+        });
+
+        if (!response.ok) throw new Error("Failed to update user");
+
+        document.getElementById("editModal").classList.add("hidden");
+        fetchUsers();
+    } catch (error) {
+        console.error("Error updating user:", error);
+    }
+});
+
+// function to open delete modal
+function openDeleteModal(userId) {
+    document.getElementById("deleteUserId").value = userId;
+    document.getElementById("deleteModal").classList.remove("hidden");
+}
+
+// Close Modal
+document.getElementById("closeDeleteModal").addEventListener("click", () => {
+    document.getElementById("deleteModal").classList.add("hidden");
+});
+
+// Confirm Delete User
+document.getElementById("confirmDeleteUser").addEventListener("click", async () => {
+    const userId = document.getElementById("deleteUserId").value;
+
+    try {
+        const response = await fetch(`/users/${userId}`, {
+            method: "DELETE",
+            credentials: "include"
+        });
+
+        if (!response.ok) throw new Error("Failed to delete user");
+
+        document.getElementById("deleteModal").classList.add("hidden");
+
+        // remove user from table without reloading the entire page
+        document.querySelector(`.delete-user[data-id="${userId}"]`).closest("tr").remove();
+
+        // refresh the users list dynamically
+        fetchUsers(currentPage);
+
+    } catch (error) {
+        console.error("Error deleting user:", error);
+    }
 });

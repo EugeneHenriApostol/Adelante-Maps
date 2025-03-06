@@ -29,12 +29,12 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
         httponly=True,  # prevents javaScript from accessing the cookie
         secure=True,  # ensures the cookie is only sent over HTTPS
         samesite="Lax",  # prevents CSRF attacks
-        max_age=security.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # token expiration
+        expires=access_token_expires.total_seconds()  # token expiration
     )
 
     # return role_id in JSON but not the token
     return {
-        "role_id": user.role_id  # Send only role_id to frontend
+        "role_id": user.role_id  # send only role_id to frontend
     }
 
     # return {"access_token": access_token, "token_type": "bearer"}
