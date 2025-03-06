@@ -10,7 +10,7 @@ menuToggle.addEventListener('click', (e) => {
     sidebar.classList.toggle('open');
 });
 
-// Close sidebar when clicking outside
+// close sidebar when clicking outside
 document.addEventListener('click', (e) => {
     const isSidebar = e.target.closest('#sidebar');
     const isMenuToggle = e.target.closest('#menu-toggle');
@@ -19,12 +19,12 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Prevent sidebar from closing when clicking inside it
+// prevent sidebar from closing when clicking inside it
 sidebar.addEventListener('click', (e) => {
     e.stopPropagation();
 });
 
-// Close sidebar when resizing to larger screen
+// close sidebar when resizing to larger screen
 window.addEventListener('resize', () => {
     if (window.innerWidth > 768) {
         sidebar.classList.remove('open');
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderUsers(users) {
-        usersTableBody.innerHTML = ""; // Clear table before adding new rows
+        usersTableBody.innerHTML = ""; // clear table before adding new rows
 
         users.forEach(user => {
             const row = document.createElement("tr");
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
             button.classList.add("px-3", "py-1", "rounded", "ml-2");
     
             if (i === currentPage) {
-                button.classList.add("bg-black", "text-white"); // Fix: Add classes separately
+                button.classList.add("bg-black", "text-white"); 
             } else {
                 button.classList.add("bg-blue-500", "text-white");
             }
@@ -103,5 +103,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
 
-    fetchUsers(currentPage); // Initial fetch
+    fetchUsers(currentPage); // fetch users
 });

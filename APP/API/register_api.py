@@ -1,3 +1,5 @@
+# register.py
+
 from email.message import EmailMessage
 import smtplib
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -106,21 +108,27 @@ def send_verification_email(background_tasks: BackgroundTasks, email: str, token
 # intialize scheduler
 scheduler = BackgroundScheduler()
 
-# function to delete unverified users within 45 min
+# function to delete unverified users within 10 min
 def delete_unverified_users():
     db = SessionLocal()
     try:
-        expiration_time = datetime.now(timezone.utc) - timedelta(minutes=45)
+        expiration_time = datetime.now(timezone.utc) - timedelta(minutes=10)
         print(f"Running clean up at {datetime.now(timezone.utc)}")
-        unverified_users = db.query(models.User).filter(models.User.is_verified == False, models.User.created_at < expiration_time).all()
 
-        if unverified_users:
-            for user in unverified_users:
-                print(f"Deleting unverified user: {user.email}")
-                db.delete(user)
-            db.commit()
+        unverified_users = db.query(models.User).filter(
+            models.User.is_verified == False, models.User.created_at < expiration_time
+        ).all()
+
+        print(f"Found {len(unverified_users)} unverified users to delete.")
+        for user in unverified_users:
+            print(f"Deleting: {user.email}, Created At: {user.created_at}")
+
+            db.delete(user)
+        db.commit()
+        print("Deleted unverified users successfully.")
     finally:
         db.close()
+
 
 # register api endpoint
 @register_api_router.post("/api/register", response_model=schemas.UserInDBBase)
@@ -148,7 +156,7 @@ def register(user_in: schemas.UserIn, background_tasks: BackgroundTasks, db: Ses
     return db_user
 
 # auto database cleaner for unverified users after 30 min
-scheduler.add_job(delete_unverified_users, "interval", minutes=15)
+scheduler.add_job(delete_unverified_users, "interval", minutes=5)
 scheduler.start()
 
 # verify email endpoint

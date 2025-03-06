@@ -26,7 +26,7 @@
 </head>
 <body class="bg-gray-100">
     <div class="flex flex-col h-screen">
-        <!-- Mobile Header -->
+        <!-- mobile header -->
         <header class="bg-white shadow-sm p-4 flex justify-between items-center md:hidden">
             <button id="menu-toggle" class="text-gray-500 hover:text-gray-700">
                 <i class="fas fa-bars text-2xl"></i>
@@ -72,11 +72,11 @@
                 </div>
             </aside>
 
-            <!-- Main Content -->
+            <!-- main content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6">
-                <!-- Stats Cards -->
+                <!-- cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
-                    <!-- Senior High Students Card -->
+                    <!-- senior high students Card -->
                     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
                         <div class="flex justify-center mb-4">
                             <i class="fas fa-user-graduate text-3xl md:text-4xl text-blue-500"></i>
@@ -85,7 +85,7 @@
                         <p class="text-2xl md:text-3xl font-bold">95</p>
                     </div>
 
-                    <!-- College Students Card -->
+                    <!-- college students card -->
                     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
                         <div class="flex justify-center mb-4">
                             <i class="fas fa-user-graduate text-3xl md:text-4xl text-blue-500"></i>
@@ -94,7 +94,7 @@
                         <p class="text-2xl md:text-3xl font-bold">98</p>
                     </div>
 
-                    <!-- Manage Student Data Card -->
+                    <!-- manage student data card -->
                     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
                         <div class="flex justify-center mb-4">
                             <i class="fas fa-upload text-3xl md:text-4xl text-blue-500"></i>
@@ -104,7 +104,7 @@
                     </div>
                 </div>
 
-                <!-- Users Table -->
+                <!-- users table -->
                 <div class="bg-white rounded-lg shadow-sm">
                     <div class="p-4 md:p-6">
                         <h2 class="text-lg md:text-xl font-semibold mb-4">Users Registered</h2>
@@ -118,12 +118,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">
-                                    <!-- dynamic population -->
+                                    <!-- dynamic users population -->
                                 </tbody>
                             </table>
                         </div>
-                        <!-- Pagination -->
-                        <div class="flex justify-center mt-4 md:mt-6" id="pagination"></div>
+                        <!-- pagination -->
+                        <div class="flex justify-center mt-4 md:mt-6" id="pagination">
+                            <!-- dynamic number of pagniation -->
+                        </div>
                     </div>
                 </div>
             </main>

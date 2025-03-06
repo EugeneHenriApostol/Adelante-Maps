@@ -32,7 +32,7 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
         max_age=security.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # token expiration
     )
 
-    # return role_id in JSON (but NOT the token)
+    # return role_id in JSON but not the token
     return {
         "role_id": user.role_id  # Send only role_id to frontend
     }
