@@ -9,11 +9,13 @@ from API.login_api import login_api_router
 from API.get_users_api import get_users_api_router
 from API.edit_users import edit_users_api_router
 from API.delete_users import delete_users_api_router
+from API.current_user_api import user_info_api_router
 
 from Routes.register_route import register_router
 from Routes.login_route import login_router
 from Routes.admin_dashboard_route import admin_dashboard_router
 from Routes.maps_route import maps_router
+from Routes.manage_files_route import manage_files_router
 
 
 app = FastAPI()
@@ -30,7 +32,8 @@ app.include_router(maps_router)
 app.include_router(get_users_api_router)
 app.include_router(edit_users_api_router)
 app.include_router(delete_users_api_router)
-
+app.include_router(user_info_api_router)
+app.include_router(manage_files_router)
 
 if __name__ == "__main__":
     uvicorn.run(app=app, host="localhost", port=8000)

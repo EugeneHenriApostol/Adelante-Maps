@@ -17,6 +17,10 @@ def update_user(user_id: int, user_data: schemas.User, db: Session = Depends(get
     user.last_name = user_data.last_name
     user.role_id = user_data.role_id
 
+    # prevent from editing other admins or superadmins
+    if current_user.role_id == 2 and user.role_id >= 2:
+        raise HTTPException(status_code=403, detail="You are not allowed to edit this user")
+
     if user_data.role_id is not None:
         user.role_id = user_data.role_id
 

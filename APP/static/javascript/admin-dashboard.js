@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
             button.addEventListener("click", (e) => {
                 e.preventDefault();
                 const userId = e.target.getAttribute("data-id");
-                openDeleteModal(userId);
+                openDeleteModal(userId, users);
             });
         });
     }
@@ -128,17 +128,44 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // function to open edit modal
-function openEditModal(userId, users) {
+async function openEditModal(userId, users) {
     const user = users.find(u => u.user_id == userId);
     if (!user) return;
+
+    const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
+    const currentUser = await currentUserResponse.json();
+
+    // restrict editing if logged-in user is an admin (role_id = 2) and target user is an admin or superadmin (role_id >= 2)
+    if (currentUser.role_id === 2 && user.role_id >= 2) {
+        alert("You are not allowed to edit this user.");
+        return;
+    }
 
     document.getElementById("editUserId").value = userId;
     document.getElementById("editFirstName").value = user.first_name;
     document.getElementById("editLastName").value = user.last_name;
-    document.getElementById("editEmail").value = user.email;  // Read-only field
-    document.getElementById("editRoleId").value = user.role_id; // Editable field
+    document.getElementById("editEmail").value = user.email;  
+    document.getElementById("editRoleId").value = user.role_id;
 
     document.getElementById("editModal").classList.remove("hidden");
+}
+
+// function to open delete modal
+async function openDeleteModal(userId, users) {
+    const user = users.find(u => u.user_id == userId);
+    if (!user) return;
+
+    const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
+    const currentUser = await currentUserResponse.json();
+
+    // restrict editing if logged-in user is an admin (role_id = 2) and target user is an admin or superadmin (role_id >= 2)
+    if (currentUser.role_id === 2 && user.role_id >= 2) {
+        alert("You are not allowed to delete this user.");
+        return;
+    }
+
+    document.getElementById("deleteUserId").value = userId;
+    document.getElementById("deleteModal").classList.remove("hidden");
 }
 
 
@@ -174,12 +201,6 @@ document.getElementById("saveEditUser").addEventListener("click", async () => {
     }
 });
 
-// function to open delete modal
-function openDeleteModal(userId) {
-    document.getElementById("deleteUserId").value = userId;
-    document.getElementById("deleteModal").classList.remove("hidden");
-}
-
 // Close Modal
 document.getElementById("closeDeleteModal").addEventListener("click", () => {
     document.getElementById("deleteModal").classList.add("hidden");
@@ -198,10 +219,8 @@ document.getElementById("confirmDeleteUser").addEventListener("click", async () 
         if (!response.ok) throw new Error("Failed to delete user");
 
         document.getElementById("deleteModal").classList.add("hidden");
-
         // remove user from table without reloading the entire page
         document.querySelector(`.delete-user[data-id="${userId}"]`).closest("tr").remove();
-
         // refresh the users list dynamically
         fetchUsers(currentPage);
 

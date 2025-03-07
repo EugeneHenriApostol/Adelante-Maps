@@ -40,13 +40,13 @@ def send_verification_email(background_tasks: BackgroundTasks, email: str, token
     verification_link = f"http://localhost:8000/api/verify-email?token={token}"
     subject = "Verify Your Email"
 
-    # Create a multipart email (HTML + plain text fallback)
+    # create a multipart email (HTML + plain text fallback)
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = SMTP_USERNAME
     msg["To"] = email
 
-    # Plain text version (for email clients that don’t support HTML)
+    # plain text version (for email clients that don’t support HTML)
     text_body = f"Click the link to verify your email: {verification_link}"
 
     # HTML version (for better styling)
@@ -92,11 +92,11 @@ def send_verification_email(background_tasks: BackgroundTasks, email: str, token
     </html>
     """
 
-    # Attach both plain text and HTML versions
+    # attach both plain text and HTML versions
     msg.attach(MIMEText(text_body, "plain"))
     msg.attach(MIMEText(html_body, "html"))
 
-    # Send email in the background
+    # send email in the background
     def send_email():
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
