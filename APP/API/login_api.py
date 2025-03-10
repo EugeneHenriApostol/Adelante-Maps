@@ -38,3 +38,9 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
     }
 
     # return {"access_token": access_token, "token_type": "bearer"}
+
+# logout api endpoint
+@login_api_router('/api/logout')
+def logout(response: Response):
+    response.delete_cookie('access_token')
+    return {'message': 'Successfully logged out.'}

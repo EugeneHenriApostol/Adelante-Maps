@@ -70,3 +70,11 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
         return user
     except JWTError:
         return None
+
+# dependency injection to restrict non-admin users from accessing the APIs    
+def get_current_admin(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if user.role_id not in [2, 3]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='You do not have permission to access this URL.')
+    return user
+    

@@ -1,5 +1,6 @@
 # admin_dashboard_route.py
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import auth, schemas
 
@@ -11,6 +12,5 @@ templates = Jinja2Templates(directory="HTML")
 @admin_dashboard_router.get("/admin-dashboard")
 def admin_dashboard_page(request: Request, current_user: schemas.UserInDBBase = Depends(auth.get_current_user)):
     if current_user.role_id not in [2, 3]:
-        return templates.TemplateResponse("maps.html", {"request": request})
-    else:
-        return templates.TemplateResponse("admin-dashboard.html", {"request": request})
+        return RedirectResponse(url="/maps", status_code=303)
+    return templates.TemplateResponse("admin-dashboard.html", {"request": request})

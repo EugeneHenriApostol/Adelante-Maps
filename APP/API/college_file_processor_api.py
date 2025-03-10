@@ -1,4 +1,3 @@
-
 import io
 import os
 import re
@@ -8,120 +7,98 @@ from fastapi import File, HTTPException, UploadFile, requests
 from fastapi.responses import StreamingResponse
 import pandas as pd
 
+import models, auth
+
 from fastapi import APIRouter, Depends, Query
 from sklearn.cluster import KMeans
 from sqlalchemy.orm import Session
 import requests
-import auth, models
 from database import get_db
 
-senior_high_file_api_router = APIRouter()
+college_file_api_router = APIRouter()
 
 load_dotenv()
 
-# preprocess senior high file function
-def preprocess_file_seniorhigh(file_path: str) -> io.BytesIO:
-    # read csv file
+def clean_text(text):
+    return re.sub(r'[^\w\s]', '', str(text))
+
+# preprocess college file function
+def preprocess_file_college(file_path: str) -> io.BytesIO:
     try:
-        df = pd.read_csv(file_path, header=None)
+        # read the raw CSV file
+        df = pd.read_csv(file_path, header=None)  
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading CSV: {e}")
-    
-    # define expected columns
+
+    # define the expected column names 
     expected_columns = [
-        'year', 'strand', 'age', 'strand_abbrev', 'previous_school',
-        'city', 'province', 'barangay'
+        "year", "course", "age", "strand", 
+        "previous_school", "city", "province", "barangay"
     ]
 
     # check column count
     if df.shape[1] != len(expected_columns):
-        raise HTTPException(status_code=400, detail=f"Column count mismatch: expected {len(expected_columns)}, got {df.shape[1]}")
-    
-    # assign columns
-    df.columns = expected_columns
-    
-    # add incremental student id
-    df.insert(0, 'stud_id', range(1, len(df) + 1))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Column count mismatch: expected {len(expected_columns)}, got {df.shape[1]}"
+        )
 
-    # fill missing values and preprocess
-    df['year'] = df['year'].fillna('N/A').astype(str).str.strip()
-    df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0)
-    df['full_address'] = (
-        df['barangay'].fillna('Unknown') + ', ' +
-        df['city'].fillna('Unknown') + ', ' + 
-        df['province'].fillna('Unknown')
+    # assign column names
+    df.columns = expected_columns
+
+    # add incremental student id
+    df.insert(0, "stud_id", range(1, len(df) + 1))
+
+    # fill missing values
+    df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
+    df["course"] = df["course"].fillna("N/A").astype(str).str.strip()
+    df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
+    df["strand"] = df["strand"].fillna("N/A").astype(str).str.strip()
+    df["previous_school"] = df["previous_school"].fillna("Unknown").str.strip()
+    df["city"] = df["city"].fillna("Unknown").str.strip()
+    df["province"] = df["province"].fillna("Unknown").str.strip()
+    df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
+
+    # clean the strand column by removing leading digits
+    df["strand"] = df["strand"].apply(lambda x: re.sub(r"^\d{2}", "", x).strip())
+
+    # create the full address column by concatenating city, province, and barangay
+    df["full_address"] = (
+        df["barangay"] + ", " + df["city"] + ", " + df["province"]
     ).str.strip()
 
-    # save the cleaned data in an in-memory file
+    # save the cleaned file
     output = io.BytesIO()
     df.to_csv(output, index=False)
     output.seek(0)
     return output
 
-# remove column function
-def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
-    try:
-        df = pd.read_csv(file_content)
 
-        if column_name in df.columns:
-            df.drop(columns=[column_name], inplace=True)
-        else:
-            raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
-
-        output = io.BytesIO
-        df.to_csv(output, index=False)    
-        output.seek(0)
-        return output
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Error processfile file {e}')     
-    
-# upload raw senior high student file api
-@senior_high_file_api_router.post('/api/upload/seniorhigh-file')
+# upload raw college file api
+@college_file_api_router.post('/api/upload/collge-file')
 async def upload_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
-    if not file.filename.endswith('csv'):
-        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
-    
-    try: 
-        # saved the uploaded file temporarily
-        with NamedTemporaryFile(delete=False, suffix='.csv') as tmp:
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+
+    # save the uploaded file to a temporary location
+    try:
+        with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        # process the file and get the in-memory stream
-        processed_file = preprocess_file_seniorhigh(tmp_path)
+            processed_file = preprocess_file_college(tmp_path)
+
     finally:
-        os.remove(tmp_path) # always delete temporary file after processing
+        os.remove(tmp_path)  # delete temp file after preprocessing
 
-    # return file as a response without saving to the server
-    return StreamingResponse(
-        processed_file, 
-        media_type='text/csv', 
-        headers={'Content-Disposition': 'attachment; filename=cleaned_seniorhigh_file.csv'}
-        )
-
-# api to remove column
-@senior_high_file_api_router.post('/api/remove-column')
-async def remove_strand_abbrev(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
-    # check if file is csv
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
-    
-    try:
-        file_content = io.BytesIO(await file.read())
-        processed_file = remove_column(file_content, 'strand_abbrev')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+    # return the processed file as a response without saving to the server
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=updated_seniorhigh_file.csv'}
+        headers={"Content Disposition": "attachment; filename=cleaned_college_data.csv"}
     )
 
-def clean_text(text):
-    return re.sub(r'[^\w\s]', '', str(text))
 
 # function to geocode address using HERE API
 def geocode_address(address, api_key):
@@ -136,19 +113,18 @@ def geocode_address(address, api_key):
             return latitude, longitude
     return None, None
 
-# geocode senior high student address api
-@senior_high_file_api_router.post('/api/geocode/seniorhigh-file')
+# geocode college student address api
+@college_file_api_router.post('/api/geocode/college-file')
 async def geocode_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
     
-    api_key = os.getenv("HERE_GEOCODE_API_KEY")  # replace api key (free but expires after 1000 uses)
+    api_key = os.getenv('HERE_GEOCODE_API_KEY') # replace api key (free but expires after 1000 uses)
 
     try:
         file_content = io.BytesIO(await file.read())
-        df = pd.read_csv(file_content, na_values=[""], keep_default_na=False)
-        df.fillna("NA", inplace=True)
+        df = pd.read_csv(file_content, na_values=[''], keep_default_na=False)
 
         # clean specified columns
         columns_to_clean = ['previous_school', 'city', 'province', 'barangay']
@@ -157,10 +133,10 @@ async def geocode_file(file: UploadFile = File(...), current_user: models.User =
                 df[col] = df[col].apply(clean_text)
 
         # combine address (full address)
-        if all(col in df.columns for col in ['barangay', 'city', 'province']):
+        if all(col in df.columns for col in [['barangay', 'city', 'province']]):
             df['full_address'] = df['barangay'] + ', ' + df['city'] + ', ' + df['province']
-        else:
-            raise HTTPException(status_code=400, detail="Missing required columns needed for geocoding")
+        else: 
+            raise HTTPException(status_code=400, detail='Missing required columns needed for geocoding')
         
         # geocode address
         geocoded_data = df['full_address'].apply(lambda x: geocode_address(x, api_key))
@@ -173,27 +149,32 @@ async def geocode_file(file: UploadFile = File(...), current_user: models.User =
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers={"Content Distribution": "attachment; filename=geocoded_seniorhigh_file.csv"}
+            headers = {'Content-Disposition': 'attachment; filename=geocoded_college_file.csv'}
         )
+    
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {e}")
 
-
-# senior high cluster
-@senior_high_file_api_router.post("/api/seniorhigh-cluster-file")
+# college cluster
+@college_file_api_router.post('/api/cluster/collge-file') 
 async def cluster_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
+    # check if file is csv
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
+    
+    api_key = os.getenv('HERE_GEOCODE_API_KEY')
+
     try:
-        # upload file
         file_content = io.BytesIO(await file.read())
         df = pd.read_csv(file_content)
 
         # check if latitude and longitude columns exist
         if 'latitude' not in df.columns or 'longitude' not in df.columns:
-            raise HTTPException(status_code=400, detail="File must contain latitude and longitude columns.")
-
-        # remove rows with missing or unknown latitude and longitude
-        df = df[df['latitude'] != "Unknown"]
-        df = df[df['longitude'] != "Unknown"]
+            raise HTTPException(status_code=400, detail='File must contain latitude and longitude columns.')
+        
+        # remove rows with missing or unknown latitude and longitude columns
+        df = df[df['latitude'] != 'Unknown']
+        df = df[df['longitude'] != 'Unknown']
 
         # convert latitude and longitude to number
         df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
@@ -203,10 +184,11 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         df.dropna(subset=['latitude', 'longitude'], inplace=True)
 
         if df.empty:
-            raise HTTPException(status_code=400, detail="No valid data after removing missing values.")
-
-        # cluster address based on unique lat-lon pairs
+            raise HTTPException(status_code=400, detail='No valid data after removing missing values.')
+        
+        # cluster address in unique lat-long pairs
         unique_lat_long = df[['latitude', 'longitude']].drop_duplicates()
+        # one cluster per unique lat-long pairs
         n_clusters = unique_lat_long.shape[0]
 
         X = df[['latitude', 'longitude']].values
@@ -220,7 +202,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         ].copy()
 
         if not df_cebu.empty:
-            k = 6  # optimal K
+            k = 6 # optimal k
             kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init=10)
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
@@ -228,24 +210,25 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
             df_cebu = df_cebu.drop_duplicates(subset=['latitude', 'longitude'])
             df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
         else:
-            df['cluster_proximity'] = -1  # assign -1 for students outside Cebu
+            df['cluster_proximity'] = -1 # assign -1 to students who are not from cebu
 
-        # make sure no NaN values remain
+        
+        # ensure no NaN values
         df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
 
-        # print cluster counts
+        # Debugging: Print cluster counts
         print(df[['cluster_address', 'cluster_proximity']].value_counts())
 
-        # convert DataFrame back to CSV
+        # convert data frame back to csv
         output = io.BytesIO()
-        df.to_csv(output, index=False)
+        df.to_csv(output, index='False')
         output.seek(0)
 
         return StreamingResponse(
-            output,
+            output, 
             media_type='text/csv',
-            headers={"Content-Disposition": "attachment; filename=clustered_seniorhigh_file.csv"}
+            headers = {'Content-Disposition': 'attachment; filename=clustered_college_file.csv'}
         )
-
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
