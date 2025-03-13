@@ -1,4 +1,4 @@
-
+# senior_high_processor_api.py
 import io
 import os
 import re
@@ -8,12 +8,10 @@ from fastapi import File, HTTPException, UploadFile, requests
 from fastapi.responses import StreamingResponse
 import pandas as pd
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sklearn.cluster import KMeans
-from sqlalchemy.orm import Session
 import requests
 import auth, models
-from database import get_db
 
 senior_high_file_api_router = APIRouter()
 
@@ -77,12 +75,12 @@ def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
         raise HTTPException(status_code=400, detail=f'Error processfile file {e}')     
     
 # upload raw senior high student file api
-@senior_high_file_api_router.post('/api/upload/seniorhigh-file')
+@senior_high_file_api_router.post('/api/upload/raw/seniorhigh-file')
 async def upload_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
     if not file.filename.endswith('csv'):
         raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
-    
+
     try: 
         # saved the uploaded file temporarily
         with NamedTemporaryFile(delete=False, suffix='.csv') as tmp:
@@ -101,7 +99,7 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
         headers={'Content-Disposition': 'attachment; filename=cleaned_seniorhigh_file.csv'}
         )
 
-# api to remove column
+# api endpoint to remove column
 @senior_high_file_api_router.post('/api/remove-column')
 async def remove_strand_abbrev(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv

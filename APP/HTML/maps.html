@@ -1,11 +1,235 @@
+<!-- maps.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/maps.css') }}">
+    <title>Adelante Maps</title>
 </head>
+
 <body>
-    <h1>TEST</h1>
+    <!-- Main content -->
+    <div id="main">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#"><strong>Adelante Maps</strong></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <!-- Dropdown for Clusters -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="clusterDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Clusters
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="clusterDropdown">
+                                <li><a class="dropdown-item" href="#" id="seniorhighclusterbyaddress">Senior High Cluster by Address</a></li>
+                                <li><a class="dropdown-item" href="#" id="seniorhighclusterbyproximity">Senior High Cluster by Proximity</a></li>
+                                <li><a class="dropdown-item" href="#" id="collegeclusterbyaddress">College Cluster by Address</a></li>
+                                <li><a class="dropdown-item" href="#" id="collegeclusterbyproximity">College Cluster by Proximity</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Dropdown for Data Visualization -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="dataVizDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Data Analytics
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dataVizDropdown">
+                                <li><a class="dropdown-item" href="#" id="seniorHighData">Senior High Data</a></li>
+                                <li><a class="dropdown-item" href="#" id="collegeData">College Data</a></li>
+                            </ul>
+                        </li>
+                        <!-- Filter Controls Button -->
+                        <a class="nav-link text-dark" href="#" id="openNav" data-bs-toggle="offcanvas"
+                        data-bs-target="#filterSidebar" aria-controls="filterSidebar">
+                        <i class="bi bi-funnel"></i> Filter Controls
+                        </a>
+
+                        <li class="nav-item">
+                        <a class="nav-link cursor-pointer text-dark" id="toggleDrawControl" href="#">
+                            <i class="bi bi-map"></i> Geospatial Event Tool
+                        </a>
+                        </li>
+
+                        <!-- Link to Event Reports -->
+                        <li class="nav-item">
+                        <a class="nav-link cursor-pointer text-dark" id="eventReportsLink" href="#">
+                            <i class="bi bi-clipboard-data"></i> Event Reports
+                        </a>
+                        </li>
+
+                        <li class="nav-item">
+                        <div class="nav-link d-flex align-items-center text-dark">
+                            <i class="bi bi-circle me-2"></i>
+                            <span class="me-2">Adjust Circle Radius (meters):</span>
+                            <input type="range" class="form-range me-2" id="radius-slider" min="100" max="5000" step="100" value="1000">
+                            <span id="radius-value">1000</span> meters
+                        </div>
+                        </li>                    
+
+                    </ul>
+                </div>
+                <!-- User Icon and Dropdown Menu -->
+                <div class="dropdown">
+                    <div id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/1177/1177568.png" alt="User Icon" id="user-icon"
+                            style="width: 40px; height: 40px;">
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <a href="/edit-profile" id="editProfile" class="dropdown-item">
+                                <img src="https://cdn-icons-png.flaticon.com/512/5935/5935145.png"
+                                    alt="Edit Profile Icon" style="width: 20px; height: 20px; margin-right: 8px;">
+                                Edit Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="logoutButton" class="dropdown-item">
+                                <img src="https://cdn-icons-png.flaticon.com/512/339/339737.png" alt="Logout Icon"
+                                    style="width: 20px; height: 20px; margin-right: 8px;">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- Sidenavbar -->
+    <div id="side-nav">
+        <div class="offcanvas offcanvas-start bg-dark text-white" data-bs-scroll="true" data-bs-backdrop="false"
+            tabindex="-1" id="filterSidebar" aria-labelledby="filterSidebarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="filterSidebarLabel">Filter Controls</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="mb-3" id="strand-filter-section">
+                    <h6>Strand</h6>
+                    <div id="strand-checks" class="w-100"></div>
+                </div>
+                <div class="mb-3" id="course-filter-section">
+                    <h6>Course</h6>
+                    <div id="course-checks" class="w-100"></div>
+                </div>
+                <div class="mb-3" id="previous-school-filter-section">
+                    <h6>Previous School</h6>
+                    <div id="previous-school-checks" class="w-100"></div>
+                </div>
+                <div class="mb-3">
+                    <h6>Year Level</h6>
+                    <div id="year-checks" class="w-100" role="group" aria-label="Year Level"></div>
+                </div>
+                <div class="mb-3">
+                    <h6>Age</h6>
+                    <input type="number" id="age-input" class="form-control form-control-sm w-auto d-inline-block"
+                        min="0" placeholder="Enter age" style="width: 100px;">
+                </div>
+                <button id="apply-filters" class="btn btn-success">Apply Filters</button>
+                <button id="clear-filters" class="btn btn-secondary">Clear Filters</button>
+
+                <div id="affected-students-info"></div>
+                <div id="affected-area-info"></div>
+                <div id="total-area-info"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Widget Button -->
+    <button id="chatbot-widget-button" class="chatbot-widget-btn">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="Chat Bot" width="24" height="24">
+    </button>
+    
+    <!-- Chatbot Widget -->
+    <div id="chatbot-widget" class="d-none">
+        <button id="close-chatbot" class="btn btn-close chatbot-close-btn"></button>
+        <iframe src="http://localhost:8000/chatbot" id="chatbot-iframe" class="chatbot-iframe-widget" style="width: 50%; height: 100%; border: none;"></iframe>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
+
+    <script src="{{ url_for('static', path='javascript/maps.js') }}" defer></script>
+
+    <!-- javascript code for sliding the side bar -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterSidebar = document.getElementById('filterSidebar');
+        const map = document.getElementById('map');
+
+        // Bootstrap Offcanvas Events
+        filterSidebar.addEventListener('show.bs.offcanvas', () => {
+            map.style.transition = 'margin-left 1s ease'; // Smooth transition for map
+            map.style.marginLeft = `${filterSidebar.offsetWidth}px`; // Push map right
+        });
+
+        filterSidebar.addEventListener('hide.bs.offcanvas', () => {
+            map.style.transition = 'margin-left 1s ease'; // Smooth transition for map
+            map.style.marginLeft = '0'; // Reset map position to original
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const logoutButton = document.getElementById('logoutButton');
+
+    logoutButton.addEventListener('click', async (event) => {
+        event.preventDefault(); // Prevent default link behavior
+
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'  // Ensures cookies are sent
+                });
+                if (response.ok) {
+                    window.location.href = '/'; // Redirect to the landing page
+                } else {
+                    alert('Failed to log out. Please try again.');
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                alert('An error occurred during logout.');
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if the page is loaded within an iframe
+        if (window.self !== window.top) {
+            // Hide the navigation bar
+            const navbar = document.getElementById('navbar');
+            if (navbar) {
+                navbar.style.display = 'none';
+            }
+        }
+    });
+    </script> 
 </body>
 </html>

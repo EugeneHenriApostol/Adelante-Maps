@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 from API.register_api import register_api_router
 from API.login_api import login_api_router

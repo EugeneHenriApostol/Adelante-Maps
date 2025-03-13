@@ -13,4 +13,5 @@ templates = Jinja2Templates(directory="HTML")
 def admin_dashboard_page(request: Request, current_user: schemas.UserInDBBase = Depends(auth.get_current_user)):
     if current_user.role_id not in [2, 3]:
         return RedirectResponse(url="/maps", status_code=303)
-    return templates.TemplateResponse("admin-dashboard.html", {"request": request})
+    else:
+        return templates.TemplateResponse("admin-dashboard.html", {"request": request})
