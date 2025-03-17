@@ -12,6 +12,7 @@ def get_users(
     limit: int = Query(5, alias="limit"),  # number of users per page
     offset: int = Query(0, alias="offset")  # where to start fetching users
 ):
-    total_users = db.query(models.User).count()  # get total users count
-    users = db.query(models.User).filter(models.User.email != current_user.email).offset(offset).limit(limit).all()
+    total_users = db.query(models.User).count()
+    users = db.query(models.User).filter(models.User.email != current_user.email).order_by(models.User.created_at.desc()).offset(offset).limit(limit).all()
+
     return {"total_users": total_users, "users": users}

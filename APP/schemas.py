@@ -37,3 +37,7 @@ class TokenData(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class ResetPassword(BaseModel):
+    token: str
+    new_password: str

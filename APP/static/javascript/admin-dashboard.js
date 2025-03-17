@@ -31,6 +31,23 @@ window.addEventListener('resize', () => {
     }
 });
 
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        // Fetch Senior High Students Count
+        const seniorHighResponse = await fetch("/api/senior-high-students/count");
+        const seniorHighData = await seniorHighResponse.json();
+        document.getElementById("seniorHighCount").textContent = seniorHighData.count || 0;
+
+        // Fetch College Students Count
+        const collegeResponse = await fetch("/api/college-students/count");
+        const collegeData = await collegeResponse.json();
+        document.getElementById("collegeCount").textContent = collegeData.count || 0;
+    } catch (error) {
+        console.error("Error fetching student counts:", error);
+    }
+});
+
+
 
 // fetch users and update users registered table dynamically
 document.addEventListener("DOMContentLoaded", function () {
@@ -43,10 +60,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const offset = (page - 1) * usersPerPage;
 
         try {
-            const response = await fetch(`/users?limit=${usersPerPage}&offset=${offset}`, { 
+            const response = await fetch(`/users?limit=${usersPerPage}&offset=${offset}&t=${Date.now()}`, { 
                 method: 'GET',
                 credentials: 'include',
-            });                     
+            });                               
 
             if (!response.ok) {
                 throw new Error("Failed to fetch users");
@@ -61,24 +78,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     // render users
     function renderUsers(users) {
-        usersTableBody.innerHTML = ""; // clear table before adding new rows
-
+        usersTableBody.innerHTML = ""; // Clear table before adding new rows
+    
         users.forEach(user => {
             const row = document.createElement("tr");
             row.classList.add("border-t");
             row.innerHTML = `
-                <tr>
-                    <td class="py-2 md:py-3">${user.email}</td>
-                    <td>${user.first_name} ${user.last_name}</td>
-                    <td>
-                        <a href="#" class="edit-user text-purple-600 hover:text-purple-800 mr-2 md:mr-3" data-id="${user.user_id}">Edit</a>
-                        <a href="#" class="delete-user text-red-600 hover:text-red-800" data-id="${user.user_id}">Delete</a>
-                    </td>
-                </tr>
+                <td class="py-2 md:py-3">${user.email}</td>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>
+                    <a href="#" class="edit-user text-purple-600 hover:text-purple-800 mr-2 md:mr-3" data-id="${user.user_id}">Edit</a>
+                    <a href="#" class="delete-user text-red-600 hover:text-red-800" data-id="${user.user_id}">Delete</a>
+                </td>
             `;
-
+    
             usersTableBody.append(row);
-            
         });
 
         // add event listener to edit button
@@ -111,20 +125,20 @@ document.addEventListener("DOMContentLoaded", function () {
             button.classList.add("px-3", "py-1", "rounded", "ml-2");
     
             if (i === currentPage) {
-                button.classList.add("bg-black", "text-white"); 
+                button.classList.add("bg-black", "text-white");
             } else {
                 button.classList.add("bg-blue-500", "text-white");
             }
     
             button.addEventListener("click", () => {
-                currentPage = i;
-                fetchUsers(currentPage);
+                fetchUsers(i);
             });
     
             paginationContainer.appendChild(button);
         }
     }
-    fetchUsers(currentPage); // fetch users
+    
+    fetchUsers(1); // fetch users
 });
 
 // function to open edit modal
@@ -195,7 +209,7 @@ document.getElementById("saveEditUser").addEventListener("click", async () => {
         if (!response.ok) throw new Error("Failed to update user");
 
         document.getElementById("editModal").classList.add("hidden");
-        fetchUsers();
+        fetchUsers(1);
     } catch (error) {
         console.error("Error updating user:", error);
     }
@@ -222,7 +236,7 @@ document.getElementById("confirmDeleteUser").addEventListener("click", async () 
         // remove user from table without reloading the entire page
         document.querySelector(`.delete-user[data-id="${userId}"]`).closest("tr").remove();
         // refresh the users list dynamically
-        fetchUsers(currentPage);
+        fetchUsers(1);
 
     } catch (error) {
         console.error("Error deleting user:", error);

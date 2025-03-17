@@ -66,7 +66,7 @@ def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
         else:
             raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
 
-        output = io.BytesIO
+        output = io.BytesIO()
         df.to_csv(output, index=False)    
         output.seek(0)
         return output
@@ -136,12 +136,11 @@ def geocode_address(address, api_key):
 
 # geocode senior high student address api
 @senior_high_file_api_router.post('/api/geocode/seniorhigh-file')
-async def geocode_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
-    # check if file is csv
+async def geocode_file(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
     
-    api_key = os.getenv("HERE_GEOCODE_API_KEY")  # replace api key (free but expires after 1000 uses)
+    api_key = "eY_QRv4JiuZ6uNkLicgxHwkS9gCuygfWNkZLKK6meN4"  # replace api key (free but expires after 1000 uses)
 
     try:
         file_content = io.BytesIO(await file.read())
@@ -171,7 +170,7 @@ async def geocode_file(file: UploadFile = File(...), current_user: models.User =
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers={"Content Distribution": "attachment; filename=geocoded_seniorhigh_file.csv"}
+            headers={"Content-Disposition": "attachment; filename=geocoded_seniorhigh_file.csv"}
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {e}")

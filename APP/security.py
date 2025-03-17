@@ -2,8 +2,10 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from fastapi import HTTPException
 from jose import jwt
 from passlib.context import CryptContext
+from jose.exceptions import ExpiredSignatureError, JWTError
 
 import os
 from dotenv import load_dotenv
@@ -29,3 +31,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# for password reset   
+def verify_reset_password_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["sub"]
+    except ExpiredSignatureError:
+        return None  # Instead of raising an exception
+    except JWTError:
+        return None

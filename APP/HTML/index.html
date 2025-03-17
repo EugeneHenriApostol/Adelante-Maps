@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adelante Maps - Geospatial Information System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="flex items-center">
+                        <img src="https://cdn-icons-png.flaticon.com/512/4020/4020798.png?height=40&width=40" alt="Logo" class="h-10 w-10">
+                        <span class="ml-2 text-xl font-semibold text-green-900">Adelante Maps</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-green-700">Features</a>
+                    <a href="#about" class="text-gray-700 hover:text-green-700">About</a>
+                    <a href="#contact" class="text-gray-700 hover:text-green-700">Contact</a>
+                    <a href="/login" class="bg-green-800 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                        Log In
+                    </a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-700 hover:text-green-700">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gray-50 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-green-900 mb-4">
+                        Geospatial Information System
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8">
+                        Utilizing student geospatial data to improve student support services
+                    </p>
+                    <a href="#" class="inline-block bg-green-800 text-white px-8 py-3 rounded-md hover:bg-green-700 transition-colors">
+                        Get Started
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <img src="https://cdn-icons-png.flaticon.com/512/6601/6601241.png?height=400&width=400" alt="Map Illustration" class="w-full">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-green-900 text-center mb-12">Key Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Interactive Map -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-map text-blue-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Interactive Map</h3>
+                    <p class="text-gray-600">Utilize interactive map to analyze and visualize student geospatial data.</p>
+                </div>
+
+                <!-- Student Cluster -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-users text-green-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Student Cluster</h3>
+                    <p class="text-gray-600">Cluster students based on address and previous school attended</p>
+                </div>
+
+                <!-- Student Impact Analysis -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-purple-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Student Impact Analysis</h3>
+                    <p class="text-gray-600">Identify students affected by flood, transport strikes, or mobility restrictions</p>
+                </div>
+
+                <!-- Data Analytics -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-bar text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Data Analytics</h3>
+                    <p class="text-gray-600">Explore insights into student demographics</p>
+                </div>
+
+                <!-- Student Route Mapping -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-route text-yellow-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Student Route Mapping</h3>
+                    <p class="text-gray-600">Visualize student routes towards the nearest campus</p>
+                </div>
+
+                <!-- Chatbot -->
+                <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-robot text-indigo-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-900 mb-2">Chatbot</h3>
+                    <p class="text-gray-600">Chatbot to answer user inqueries about the system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <div id="about" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-green-900 text-center mb-12">About Adelante Maps</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Mission -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-xl font-semibold text-green-900 mb-4 text-center">Mission</h3>
+                    <p class="text-gray-600 text-center">
+                        To improve the institution's support services, better decision making, and planning through analysis and insights of student geospatial data.
+                    </p>
+                </div>
+
+                <!-- Vision -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-xl font-semibold text-green-900 mb-4 text-center">Vision</h3>
+                    <p class="text-gray-600 text-center">
+                        To provide a more efficient and effective way of analyzing student geospatial data, allowing for better decision making and planning.
+                    </p>
+                </div>
+
+                <!-- Team -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-xl font-semibold text-green-900 mb-4 text-center">Team</h3>
+                    <p class="text-gray-600 text-center">
+                        The team who developed this application consists of two computer science students.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div id="contact" class="bg-green-900 py-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-4">
+                Suggestions and Recommendations about the Application?
+            </h2>
+            <p class="text-gray-200 mb-8">
+                Get in touch with the developers to improve the application.
+            </p>
+            <a href="mailto:developers@example.com" class="text-blue-400 hover:text-blue-300">
+                Email the developers
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-400">
+                © 2023 Adelante Maps. All rights reserved.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

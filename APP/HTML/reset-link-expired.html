@@ -1,0 +1,45 @@
+<!-- reset-link-expired.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Link Expired | Adelante Maps</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-8">
+            <!-- Icon -->
+            <div class="flex justify-center mb-6">
+                <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+                </div>
+            </div>
+            
+            <!-- Title -->
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">Reset Link Expired</h1>
+            <p class="text-gray-600 text-center mb-6">Your password reset link has expired. Please request a new one.</p>
+            
+            <!-- Button -->
+            <button 
+                type="button" 
+                class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center justify-center"
+                onclick="window.location.href='/forgot-password'"
+            >
+                <i class="fas fa-sync-alt mr-2"></i>
+                Request New Reset Link
+            </button>
+
+            
+            <!-- Back to login -->
+            <div class="mt-6 text-center">
+                <a href="/login" class="text-red-600 hover:text-red-800 text-sm">
+                    Back to Login
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

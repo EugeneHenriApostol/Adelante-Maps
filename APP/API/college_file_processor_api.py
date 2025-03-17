@@ -3,17 +3,15 @@ import os
 import re
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
-from fastapi import File, HTTPException, UploadFile, requests
+from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 import pandas as pd
 
 import models, auth
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sklearn.cluster import KMeans
-from sqlalchemy.orm import Session
 import requests
-from database import get_db
 
 college_file_api_router = APIRouter()
 
@@ -36,20 +34,20 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
         "previous_school", "city", "province", "barangay"
     ]
 
-    # check column count
+    # Check if the uploaded file matches the expected structure
     if df.shape[1] != len(expected_columns):
         raise HTTPException(
             status_code=400,
             detail=f"Column count mismatch: expected {len(expected_columns)}, got {df.shape[1]}"
         )
 
-    # assign column names
+    # Assign column names to match the uploaded CSV
     df.columns = expected_columns
 
-    # add incremental student id
+    # Add incremental student ID
     df.insert(0, "stud_id", range(1, len(df) + 1))
 
-    # fill missing values
+    # Fill missing values
     df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
     df["course"] = df["course"].fillna("N/A").astype(str).str.strip()
     df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
@@ -59,15 +57,15 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
     df["province"] = df["province"].fillna("Unknown").str.strip()
     df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
 
-    # clean the strand column by removing leading digits
+    # Clean the 'strand' column by removing leading digits
     df["strand"] = df["strand"].apply(lambda x: re.sub(r"^\d{2}", "", x).strip())
 
-    # create the full address column by concatenating city, province, and barangay
+    # Create the full address column by concatenating city, province, and barangay
     df["full_address"] = (
         df["barangay"] + ", " + df["city"] + ", " + df["province"]
     ).str.strip()
 
-    # save the cleaned file
+    # Save the cleaned file
     output = io.BytesIO()
     df.to_csv(output, index=False)
     output.seek(0)
@@ -75,13 +73,13 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
 
 
 # upload raw college file api
-@college_file_api_router.post('/api/upload/collge-file')
-async def upload_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
-    # check if file is csv
+@college_file_api_router.post("/api/upload/raw/college-file")
+async def upload_file(file: UploadFile = File(...)):
+    # Validate file type
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
 
-    # save the uploaded file to a temporary location
+    # Save the uploaded file to a temporary location
     try:
         with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
@@ -96,7 +94,7 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={"Content Disposition": "attachment; filename=cleaned_college_data.csv"}
+        headers={"Content-Disposition": "attachment; filename=cleaned_college_data.csv"}
     )
 
 
@@ -115,16 +113,16 @@ def geocode_address(address, api_key):
 
 # geocode college student address api
 @college_file_api_router.post('/api/geocode/college-file')
-async def geocode_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
-    # check if file is csv
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
+async def geocode_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
     
-    api_key = os.getenv('HERE_GEOCODE_API_KEY') # replace api key (free but expires after 1000 uses)
+    api_key = "eY_QRv4JiuZ6uNkLicgxHwkS9gCuygfWNkZLKK6meN4"  # replace api key (free but expires after 1000 uses)
 
     try:
         file_content = io.BytesIO(await file.read())
-        df = pd.read_csv(file_content, na_values=[''], keep_default_na=False)
+        df = pd.read_csv(file_content, na_values=[""], keep_default_na=False)
+        df.fillna("NA", inplace=True)
 
         # clean specified columns
         columns_to_clean = ['previous_school', 'city', 'province', 'barangay']
@@ -133,10 +131,10 @@ async def geocode_file(file: UploadFile = File(...), current_user: models.User =
                 df[col] = df[col].apply(clean_text)
 
         # combine address (full address)
-        if all(col in df.columns for col in [['barangay', 'city', 'province']]):
+        if all(col in df.columns for col in ['barangay', 'city', 'province']):
             df['full_address'] = df['barangay'] + ', ' + df['city'] + ', ' + df['province']
-        else: 
-            raise HTTPException(status_code=400, detail='Missing required columns needed for geocoding')
+        else:
+            raise HTTPException(status_code=400, detail="Missing required columns needed for geocoding")
         
         # geocode address
         geocoded_data = df['full_address'].apply(lambda x: geocode_address(x, api_key))
@@ -149,9 +147,8 @@ async def geocode_file(file: UploadFile = File(...), current_user: models.User =
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers = {'Content-Disposition': 'attachment; filename=geocoded_college_file.csv'}
+            headers={"Content-Disposition": "attachment; filename=geocoded_seniorhigh_file.csv"}
         )
-    
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {e}")
 

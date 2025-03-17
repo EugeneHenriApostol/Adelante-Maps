@@ -9,7 +9,7 @@ templates = Jinja2Templates(directory="HTML")
 
 # route to serve manage files html
 @manage_files_router.get("/manage-files")
-def admin_dashboard_page(request: Request, current_user: schemas.UserInDBBase = Depends(auth.get_current_user)):
+def admin_dashboard_page(request: Request, current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)):
     if current_user.role_id not in [2, 3]:
         return templates.TemplateResponse("maps.html", {"request": request})
     else:

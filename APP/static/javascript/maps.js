@@ -1005,11 +1005,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 document.getElementById('seniorHighData').addEventListener('click', function() {
-    window.location.href = '/senior-high-data-analytics';
+    window.location.href = '/seniorhigh/data-analytics';
 });
 
 document.getElementById('collegeData').addEventListener('click', function() {
-    window.location.href = '/college-data-analytics';
+    window.location.href = '/college/data-analytics';
 });
 
 document.getElementById('eventReportsLink').addEventListener('click', function () {

@@ -5,12 +5,17 @@ import security
 import random
 
 
-def generate_unique_emails(count: int) -> list:
+def generate_unique_emails(count: int, db: Session) -> list:
     emails = set()
     while len(emails) < count:
         random_number = random.randint(100, 999)  # 3-digit random number
         email = f"user{random_number}@example.com"
-        emails.add(email)  # Ensure uniqueness
+
+        # Check if the email already exists in the database
+        existing_user = db.query(models.User).filter(models.User.email == email).first()
+        if not existing_user:
+            emails.add(email)  # Ensure uniqueness
+
     return list(emails)
 
 
@@ -18,9 +23,9 @@ def seed_users():
     db: Session = SessionLocal()
     
     try:
-        # Generate unique emails for 10 verified and 4 unverified users
-        unique_emails = generate_unique_emails(14)
-        
+        # Generate unique emails that are not in the database
+        unique_emails = generate_unique_emails(14, db)
+
         # Define user data
         users_data = [
             {
@@ -30,27 +35,26 @@ def seed_users():
                 "is_verified": i < 10,  # First 10 are verified, last 4 are not
                 "role_id": 1
             }
-            for i in range(14)
+            for i in range(len(unique_emails))  # Use actual generated count
         ]
 
         # Hash password
         hashed_password = security.get_password_hash("1234")
 
-        # Create user objects
-        users = [
-            models.User(
-                email=user["email"],
-                first_name=user["first_name"],
-                last_name=user["last_name"],
-                is_verified=user["is_verified"],
-                role_id=user["role_id"],
-                hashed_password=hashed_password
-            )
-            for user in users_data
-        ]
+        # Create and insert users only if they do not exist
+        for user_data in users_data:
+            existing_user = db.query(models.User).filter(models.User.email == user_data["email"]).first()
+            if not existing_user:
+                new_user = models.User(
+                    email=user_data["email"],
+                    first_name=user_data["first_name"],
+                    last_name=user_data["last_name"],
+                    is_verified=user_data["is_verified"],
+                    role_id=user_data["role_id"],
+                    hashed_password=hashed_password
+                )
+                db.add(new_user)
 
-        # Add and commit to the database
-        db.add_all(users)
         db.commit()
         print("Database seeded successfully!")
 

@@ -3,19 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Senior High File Processor</title>
+    <title>Senior High File Preprocessor</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="{{ url_for('static', path='javascript/seniorhigh-file-processor.js') }}" defer></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <!-- back button -->
-         <div class="mb-6">
+        <div class="mb-6">
             <a href="/manage-files" class="inline-flex items-center text-green-600 hover:text-green-700 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 <span>Back to Manage Files</span>
             </a>
-         </div>
+        </div>
+
+        <!-- page header -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Senior High File Preprocessor</h1>
+            <p class="text-gray-600">Follow these steps to process your student data file</p>
+        </div>
+        <!-- steps container -->
+        <div class="max-w-3xl mx-auto space-y-6">
+            <!-- step 1 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <span class="text-green-600 font-semibold">1</span>
+                        </div>
+                        <h2 class="text-xl font-semibold">Upload and Preprocess File</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Upload your CSV file to begin the preprocessing stage</p>
+                    <form id="upload-form">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-grow">
+                                <label class="block w-full cursor-pointer">
+                                    <div class="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors">
+                                        <i class="fas fa-cloud-upload-alt text-gray-400 mr-2"></i>
+                                        <span id="preprocess-file-label" class="text-gray-600">Choose file</span>
+                                    </div>
+                                    <input type="file" id="preprocess-file" name="preprocess-file" class="hidden" accept=".csv">
+                                </label>
+                            </div>
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <i class="fas fa-cog mr-2"></i>
+                                Preprocess File
+                            </button>
+                        </div>
+                    </form>
+                    <!-- status messages -->
+                    <p id="preprocess-status" class="text-green-600 mt-2"></p>
+                    <p id="preprocess-error" class="text-red-600 mt-2"></p>
+                </div>
+            </div>
+            <!-- step 2 -->
+             <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <span class="text-green-600 font-semibold">2</span>
+                        </div>
+                        <h2 class="text-xl font-semibold">Remove redundant columns</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Clean data by removing unneccesary columns.</p>
+                    <form id="removeColumn-form">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-grow">
+                                <label class="block w-full cursor-pointer">
+                                    <div class="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg
+                                    hover:border-green-500 transition-colors">
+                                    <i class="fas fa-file-csv text-gray-400 mr-2"></i>
+                                    <span id="removeColumn-file-label" class="text-gray-600">Select preprocessed file</span>
+                                    </div>
+                                    <input type="file" id="removeColumn-file" name="removeColumn-file" class="hidden" accept=".csv">
+                                </label>
+                            </div>
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <i class="fas fa-columns mr-2"></i>
+                                Remove Columns
+                            </button>
+                        </div>
+                    </form>
+                    <!-- status messages -->
+                    <p id="removeColumn-status" class="text-green-600 mt-2"></p>
+                    <p id="removeColumn-error" class="text-red-600 mt-2"></p>
+                </div>
+             </div>
+             <!-- step 3 -->
+             <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <span class="text-green-600 font-semibold">3</span>
+                        </div>
+                        <h2 class="text-xl font-semibold">Geocode Address</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Convert address to coordinates.</p>
+                    <form id="geocode-form">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-grow">
+                                <label class="block w-full cursor-pointer">
+                                    <div class="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg
+                                    hover:border-green-500 transition-colors">
+                                    <i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                                    <span id="geocode-file-label" class="text-gray-600">Select cleaned file</span>
+                                    </div>
+                                    <input  type="file" id="geocode-file" name="geocode-file" class="hidden" accept=".csv">
+                                </label>
+                            </div>
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <i class="fas fa-map-pin mr-2"></i>
+                                Geocode file
+                            </button>
+                        </div>
+                    </form>
+                    <div class="spinner-container hidden flex flex-col items-center justify-center mt-4">
+                        <div class="w-8 h-8 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
+                        <p id="geocode-loading-message" class="text-gray-600 mt-2 hidden">Processing... Please wait.</p>
+                    </div>                    
+                    <!-- status messages -->
+                    <p id="geocode-status" class="text-green-600 mt-2"></p>
+                    <p id="geocode-error" class="text-red-600 mt-2"></p>
+                </div>
+             </div>
+             <!-- step 4 -->
+             <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <span class="text-green-600 font-semibold">4</span>
+                        </div>
+                        <h2 class="text-xl font-semibold">Cluster Students</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Cluster students based on address and proximity</p>
+                    <form id="cluster-form">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-grow">
+                                <label class="block w-full cursor-pointer">
+                                    <div class="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg
+                                    hover:border-green-500 transition-colors">
+                                    <i class="fas fa-users text-gray-400 mr-2"></i>
+                                    <span id="cluster-file-label" class="text-gray-600">Select geocoded file</span>
+                                    </div>
+                                    <input  type="file" id="cluster-file" name="cluster-file" class="hidden" accept=".csv">
+                                </label>
+                            </div>
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <i class="fas fa-object-group mr-2"></i>
+                                Cluster
+                            </button>
+                        </div>
+                    </form>
+                    <!-- status messages -->
+                    <p id="cluster-status" class="text-green-600 mt-2"></p>
+                    <p id="cluster-error" class="text-red-600 mt-2"></p>
+                </div>
+             </div>
+             <!-- navigation buttons -->
+             <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+                <a href="/college/file/processor" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center">
+                    Go to College File Processor
+                </a>
+                <a href="/upload/student-data" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors text-center">
+                    Upload Student Data to Database
+                </a>
+             </div>
+             <!-- help/tips -->
+             <div class="mt-12 max-w-2xl mx-auto bg-blue-50 rounded-xl shadow-md p-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-2xl text-blue-500"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Processing Guide</h3>
+                        <ul class="text-gray-600 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Make sure the CSV file follows the required format
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Complete each step in order to avoid issues
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Save the clustered file to be uploaded in the database afterwards
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+             </div>
     </div>
 </body>
 </html>

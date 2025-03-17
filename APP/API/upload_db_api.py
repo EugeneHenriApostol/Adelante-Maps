@@ -2,17 +2,16 @@
 import csv
 from io import StringIO
 from fastapi import File, HTTPException, UploadFile
-import pandas as pd
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-import auth, models
+import auth, models, schemas
 from database import get_db
 
-upload_student_data_api = APIRouter()
+upload_db_api_router = APIRouter()
 
 # upload senior high students data to database
-@upload_student_data_api.post('/api/upload/senior-high-data')
+@upload_db_api_router.post('/api/upload/senior-high-data')
 async def upload_senior_high_data(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
     if file.content_type != 'text/csv':
@@ -52,13 +51,12 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
     # insert to database
     db.add_all(students)
     db.commit()
-    db.refresh(students)
 
     return {'message': f'Successfully uploaded Senior High School Student Data. Rows inserted: {len(students)}'}
 
 
 # upload college students data to database
-@upload_student_data_api.post('/api/upload/college-data')
+@upload_db_api_router.post('/api/upload/college-data')
 async def upload_college_data(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
     if file.content_type != 'text/csv':
@@ -98,6 +96,25 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     # insert to database
     db.add_all(students)
     db.commit()
-    db.refresh(students)
 
     return {'message': f'Successfully uploaded College Student Data. Rows inserted: {len(students)}'}
+
+# remove senior high student data endpoint
+@upload_db_api_router.post("/api/remove-senior-high-data")
+async def remove_senior_high_data(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserInDBBase = Depends(auth.get_current_admin) 
+):
+    db.query(models.SeniorHighStudents).delete()
+    db.commit()
+    return {"message": "All senior high student data has been removed."}
+
+# remove college data endpoint
+@upload_db_api_router.post("/api/remove-college-data")
+async def remove_college_data(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)  
+):
+    db.query(models.CollegeStudents).delete()
+    db.commit()
+    return {"message": "All college student data has been removed."}
