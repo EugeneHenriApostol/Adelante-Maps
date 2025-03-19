@@ -16,6 +16,7 @@ from API.college_file_processor_api import college_file_api_router
 from API.upload_db_api import upload_db_api_router
 from API.get_students_api import get_students_api_router
 from API.reset_password_api import reset_password_api_router
+from API.event_report_api import event_reports_api_router
 
 from Routes.register_route import register_router
 from Routes.login_route import login_router
@@ -63,6 +64,7 @@ app.include_router(user_info_api_router)
 app.include_router(upload_db_api_router)
 app.include_router(get_students_api_router)
 app.include_router(reset_password_api_router)
+app.include_router(event_reports_api_router)
 
 app.include_router(senior_high_file_api_router)
 app.include_router(college_file_api_router)

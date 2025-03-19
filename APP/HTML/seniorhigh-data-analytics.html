@@ -83,9 +83,6 @@
                 <div class="p-6">
                     <div class="h-64 relative" id="ageChartContainer">
                         <canvas id="ageChart"></canvas>
-                        <div id="ageChartLoader" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -104,9 +101,6 @@
                 <div class="p-6">
                     <div class="h-64 relative" id="strandChartContainer">
                         <canvas id="strandChart"></canvas>
-                        <div id="strandChartLoader" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -155,9 +149,6 @@
 
         async function fetchData() {
             try {
-                // Show loaders
-                document.getElementById('ageChartLoader').style.display = 'flex';
-                document.getElementById('strandChartLoader').style.display = 'flex';
                 
                 const response = await fetch('/api/senior-high-students/all');
                 if (!response.ok) {
@@ -166,18 +157,11 @@
                 
                 const data = await response.json();
                 
-                // Hide loaders
-                document.getElementById('ageChartLoader').style.display = 'none';
-                document.getElementById('strandChartLoader').style.display = 'none';
-                
                 initializeCharts(data);
                 updateSummary(data);
             } catch (error) {
                 console.error('There has been a problem with your fetch operation:', error);
                 
-                // Hide loaders
-                document.getElementById('ageChartLoader').style.display = 'none';
-                document.getElementById('strandChartLoader').style.display = 'none';
             }
         }
 

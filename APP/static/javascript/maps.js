@@ -8,7 +8,6 @@ let currentRoute = null;
 let currentRouteControl = null; 
 let currentRouteMarker = null; 
 let allMarkers = [];
-let populationLayers = []; 
 let currentCircle = null;
 let currentStudentData = [];
 let clusterStatsChart;
@@ -20,6 +19,7 @@ let currentFilters = {
     yearLevel: null,
     age: null,
 };
+
 let shapeAreas = []; 
 let activeCluster = null; 
 let drawControl; 
@@ -40,10 +40,10 @@ let affectedStudents = {
 };
 let drawControlVisible = false;
 // api and ic0n url
-const SENIOR_HIGH_API_URL = 'http://localhost:8000/api/senior-high-student-data';
-const COLLEGE_API_URL = 'http://localhost:8000/api/college-student-data';
+const SENIOR_HIGH_API_URL = '/api/senior-high-student-data';
+const COLLEGE_API_URL = '/api/college-student-data';
 const SCHOOL_ICON_URL = 'static/img/usjr.png';
-const STUDENT_ICON_URL = 'static/img/student-icons.png';
+const STUDENT_ICON_URL = 'static/img/student-icons.png';    
 
 const SHS_DEPARTMENTS = {
     "S.T.E.M.": ["S.T.E.M.-Engg", "S.T.E.M.-SciMed", "S.T.E.M.-Tech",],
@@ -169,12 +169,9 @@ async function initializeMap() {
             },
             marker: false,
             circlemarker: false
-        },
-        edit: {
-            featureGroup: drawnItems, 
-            remove: true 
         }
     });
+    
     function toggleDrawControl() {
         if (drawControlVisible) {
             map.removeControl(drawControl); // remove draw control from the map
@@ -216,33 +213,6 @@ async function initializeMap() {
             drawnItems.removeLayer(layer); // Remove invalid shapes
             alert("Invalid area type. The shape was not added.");
         }
-    });
-}
-
-function initializeChatbot() {
-    const chatbotLink = document.getElementById('chatbot');
-    const chatbotWidget = document.getElementById('chatbot-widget');
-    const chatbotButton = document.getElementById('chatbot-widget-button');
-    const closeChatbotBtn = document.getElementById('close-chatbot');
-
-    // Widget button click
-    chatbotButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        chatbotWidget.classList.toggle('d-none');
-        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
-    });
-
-    // Navbar link click
-    chatbotLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        chatbotWidget.classList.toggle('d-none');
-        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
-    });
-
-    // Close button
-    closeChatbotBtn.addEventListener('click', () => {
-        chatbotWidget.classList.add('d-none');
-        chatbotButton.style.display = 'flex';
     });
 }
 
@@ -302,21 +272,26 @@ async function storeAffectedData() {
         return;
     }
 
-    const numberOfStudentsAffected = affectedStudents[selectedAreaType].length; // get the count for the selected type
-    const totalArea = calculateTotalArea(); // calculate total area
+    const numberOfStudentsAffected = affectedStudents[selectedAreaType].length; 
+    const totalArea = calculateTotalArea(); 
     const geojsonData = affectedAreas[selectedAreaType][0];
 
-    // only send data for the selected area type
+    console.log("GeoJSON data:", geojsonData);
+
     if (numberOfStudentsAffected > 0 || totalArea > 0) {
         const payload = {
             type: selectedAreaType,
             number_of_students_affected: numberOfStudentsAffected,
             total_area: totalArea,
-            geojson_data: geojsonData
+            geojson_data: geojsonData,
+            clustering_type: currentClusterType,          
+            education_level: currentEducationLevel    
         };
 
+        console.log("Payload being sent:", JSON.stringify(payload, null, 2));
+
         try {
-            const response = await fetch('http://localhost:8000/api/affected-areas', {
+            const response = await fetch('/api/affected-areas', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -336,6 +311,7 @@ async function storeAffectedData() {
     }
 }
 
+
 // function to update list of students based on drawn areas
 function updateAffectedStudents() {
     affectedStudents = {
@@ -351,8 +327,8 @@ function updateAffectedStudents() {
 
         for (const areaType in affectedAreas) {
             if (affectedAreas[areaType]) { // Check if areaType array exists
-                affectedAreas[areaType].forEach(area => {
-                    if (turf.booleanPointInPolygon(studentPoint, area)) {
+                affectedAreas[areaType].forEach((geoJsonArea) => {
+                    if (geoJsonArea && geoJsonArea.geometry && turf.booleanPointInPolygon(studentPoint, geoJsonArea)) {
                         affectedStudents[areaType].push(studentData);
                     }
                 });
@@ -502,8 +478,56 @@ function generateFilterCheckboxes(containerId, items, filterType, isGrouped = fa
     }
 }
 
-// Function to toggle clustering
-let activeButton = null; // Store the currently active button
+function addMarkers(data) {
+    markers.clearLayers(); // Reset the marker cluster group
+
+    allMarkers = data.reduce((markerArray, item) => {
+        const { latitude, longitude, cluster_address, cluster_proximity } = item;
+
+        // Exclude students outside Cebu when cluster_proximity is active
+        if (
+            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1) || 
+            (activeCluster.includes("cluster_address") && cluster_address === -1)
+        ) {
+            return markerArray;  // Skip non-Cebu or invalid address students
+        }
+
+        if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
+            const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
+                studentData: item
+            }).bindPopup(() => generatePopupContent(item));
+
+            marker.on('click', () => {
+                console.log('Marker clicked:', item); // Log the data being fetched
+                handleStudentRoute(item);
+            });
+
+            markerArray.push(marker);
+            markers.addLayer(marker); // Add marker to the cluster group
+        }
+        return markerArray;
+    }, []);
+
+    map.addLayer(markers); // Add the cluster group to the map
+
+    const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
+    const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
+
+    generateFilterCheckboxes('strand-checks', SHS_DEPARTMENTS, 'strand', true);
+    generateFilterCheckboxes('year-checks', yearLevels, 'year');
+    generateFilterCheckboxes('course-checks', COLLEGE_DEPARTMENTS, 'course', true);
+    generateFilterCheckboxes('previous-school-checks', previousSchools, 'previous_school');
+    createPopulationDistribution(data);
+    updateAffectedStudents();
+
+    applyFilters();
+}
+
+// function to toggle clustering
+let activeButton = null; // store the currently active button
+let currentClusterType = null;  // store current cluster type (address or proximity)
+let currentEducationLevel = null;  // store current educational level (senior high or college)
+
 
 async function toggleClustering(apiUrl, clusterType, buttonId) {
     console.log(`Fetching: ${apiUrl}?cluster_type=${clusterType}`);
@@ -514,12 +538,14 @@ async function toggleClustering(apiUrl, clusterType, buttonId) {
         clearRoute();
         markers.clearLayers();
         activeCluster = null;
-        button.textContent = button.dataset.defaultText; // Reset button text
-        activeButton = null; // No active button now
+        button.textContent = button.dataset.defaultText; // reset button text
+        activeButton = null; // no active button now
+        currentClusterType = null;
+        currentEducationLevel = null;
         return;
     }
 
-    // Reset the previous active button before switching
+    // reset the previous active button before switching
     if (activeButton && activeButton !== button) {
         activeButton.textContent = activeButton.dataset.defaultText;
     }
@@ -527,7 +553,13 @@ async function toggleClustering(apiUrl, clusterType, buttonId) {
     clearRoute();
     markers.clearLayers();
     activeCluster = `${apiUrl}-${clusterType}`;
-    activeButton = button; // Set new active button
+    activeButton = button; // set new active button
+
+    // capture the current cluster type
+    currentClusterType = clusterType;
+
+    // capture the current educational level 
+    currentEducationLevel = apiUrl.includes("senior") ? "senior_high" : "college";
 
     const data = await fetchData(`${apiUrl}?cluster_type=${clusterType}`);
     console.log("Cluster data received:", data);
@@ -566,7 +598,7 @@ function setupEventListeners() {
 
     clusterButtons.forEach(({ id, clusterType, handler }) => {
         const button = document.getElementById(id);
-        button.dataset.defaultText = button.textContent; // Store original text
+        button.dataset.defaultText = button.textContent; // store original text
         button.addEventListener('click', () => handler(clusterType, id));
     });
 
@@ -652,8 +684,6 @@ function applyFilters() {
     } else {
         filteredMarkers.forEach(marker => markers.addLayer(marker));
     }
-
-    map.addLayer(markers);
     updateMarkers();
 }
 
@@ -806,50 +836,6 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return distance;
 }
 
-
-const originalAddMarkers = addMarkers;
-function addMarkers(data) {
-    markers.clearLayers(); // Reset the marker cluster group
-
-    allMarkers = data.reduce((markerArray, item) => {
-        const { latitude, longitude, cluster } = item;
-
-        // Exclude students outside Cebu when cluster_proximity is active
-        if (activeCluster.includes("cluster_proximity") && cluster === -1) {
-            return markerArray; // Skip non-Cebu students
-        }
-
-        if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-            const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
-                studentData: item
-            }).bindPopup(() => generatePopupContent(item));
-
-            marker.on('click', () => {
-                console.log('Marker clicked:', item); // Log the data being fetched
-                handleStudentRoute(item);
-            });
-
-            markerArray.push(marker);
-            markers.addLayer(marker); // Add marker to the cluster group
-        }
-        return markerArray;
-    }, []);
-
-    map.addLayer(markers); // Add the cluster group to the map
-
-    const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
-    const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
-
-    generateFilterCheckboxes('strand-checks', SHS_DEPARTMENTS, 'strand', true);
-    generateFilterCheckboxes('year-checks', yearLevels, 'year');
-    generateFilterCheckboxes('course-checks', COLLEGE_DEPARTMENTS, 'course', true);
-    generateFilterCheckboxes('previous-school-checks', previousSchools, 'previous_school');
-    createPopulationDistribution(data);
-    updateAffectedStudents();
-
-    applyFilters();
-}
-
 function studentType(student) {
     if (student.course) {
         return true;
@@ -867,19 +853,6 @@ function studentType(student) {
     
     return false;
 }
-
-// function calculateDistance(lat1, lng1, lat2, lng2) {
-//     const R = 6371; // Radius of Earth in kilometers
-//     const dLat = ((lat2 - lat1) * Math.PI) / 180;
-//     const dLng = ((lng2 - lng1) * Math.PI) / 180;
-
-//     const a =
-//         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-//         Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-//         Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-//     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); // Distance in kilometers
-// }
 
 function determineCampus(student) {
     const isCollege = studentType(student);
@@ -992,6 +965,32 @@ function clearRoute() {
     }
 }
 
+function initializeChatbot() {
+    const chatbotLink = document.getElementById('chatbot');
+    const chatbotWidget = document.getElementById('chatbot-widget');
+    const chatbotButton = document.getElementById('chatbot-widget-button');
+    const closeChatbotBtn = document.getElementById('close-chatbot');
+
+    // Widget button click
+    chatbotButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        chatbotWidget.classList.toggle('d-none');
+        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
+    });
+
+    // Navbar link click
+    chatbotLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        chatbotWidget.classList.toggle('d-none');
+        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
+    });
+
+    // Close button
+    closeChatbotBtn.addEventListener('click', () => {
+        chatbotWidget.classList.add('d-none');
+        chatbotButton.style.display = 'flex';
+    });
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     initializeMap();
@@ -1018,43 +1017,6 @@ document.getElementById('eventReportsLink').addEventListener('click', function (
 
 document.getElementById('chatbot').addEventListener('click', function () {
     window.location.href = '/chatbot';
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const filterSidebar = document.getElementById('filterSidebar');
-    const map = document.getElementById('map');
-
-    // Bootstrap Offcanvas Events
-    filterSidebar.addEventListener('show.bs.offcanvas', () => {
-        map.style.transition = 'margin-left 1s ease'; // Smooth transition for map
-        map.style.marginLeft = `${filterSidebar.offsetWidth}px`; // Push map right
-    });
-
-    filterSidebar.addEventListener('hide.bs.offcanvas', () => {
-        map.style.transition = 'margin-left 1s ease'; // Smooth transition for map
-        map.style.marginLeft = '0'; // Reset map position to original
-    });
-});
-
-document.addEventListener('click', async (event) => {
-    if (event.target.id === 'logoutButton') {
-        event.preventDefault();
-
-        try {
-            const response = await fetch('/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-            if (response.ok) {
-                window.location.href = '/login';
-            } else {
-                alert('Failed to log out. Please try again.');
-            }
-        } catch (error) {
-            console.error('Logout failed:', error);
-            alert('An error occurred during logout.');
-        }
-    }
 });
 
 

@@ -41,3 +41,22 @@ class Token(BaseModel):
 class ResetPassword(BaseModel):
     token: str
     new_password: str
+
+class AffectedAreaBase(BaseModel):
+    type: str
+    number_of_students_affected: int
+    total_area: float
+    geojson_data: dict
+    clustering_type: str
+    education_level: str
+
+class AffectedArea(AffectedAreaBase):
+    event_id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[str]  
