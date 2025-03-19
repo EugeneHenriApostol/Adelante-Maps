@@ -9,7 +9,7 @@ get_students_api_router = APIRouter()
 @get_students_api_router.get("/api/senior-high-students")
 def get_senior_high_students(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_admin),
+    current_user: models.User = Depends(auth.get_current_user),
     page: int = 1,
     page_size: int = 10
 ):
@@ -36,7 +36,7 @@ def get_senior_high_students(
 @get_students_api_router.get("/api/college-students")
 def get_college_students(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_admin),
+    current_user: models.User = Depends(auth.get_current_user),
     page: int = 1,
     page_size: int = 10
 ):
@@ -63,19 +63,19 @@ def get_college_students(
 
 
 @get_students_api_router.get("/api/senior-high-students/count")
-def get_senior_high_student_count(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
+def get_senior_high_student_count(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     count = db.query(models.SeniorHighStudents).count()
     return {"count": count}
 
 @get_students_api_router.get("/api/college-students/count")
-def get_college_student_count(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
+def get_college_student_count(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     count = db.query(models.CollegeStudents).count()
     return {"count": count}
 
 # get all seniorhigh students
 @get_students_api_router.get("/api/senior-high-students/all")
 def get_all_senior_high_students(
-    db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)
+    db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)
 ):
     students = db.query(models.SeniorHighStudents).all()
     
@@ -96,7 +96,7 @@ def get_all_senior_high_students(
 # get all college students
 @get_students_api_router.get("/api/college-students/all")
 def get_all_college_students(
-    db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)
+    db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)
 ):
     students = db.query(models.CollegeStudents).all()
     
@@ -120,7 +120,7 @@ def get_all_college_students(
 def get_senior_high_student_data(
     cluster_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_admin)
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     query = db.query(models.SeniorHighStudents)
 
@@ -150,7 +150,7 @@ def get_senior_high_student_data(
 def get_college_student_data(
     cluster_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_admin)
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     query = db.query(models.CollegeStudents)
 
