@@ -96,21 +96,56 @@ collegeUploadForm.addEventListener('submit', async (event) => {
     }
 });
 
-// remove senior high data
-removeSeniorHigh.addEventListener('click', async () => {
+// senior high remove modal
+const openSeniorHighModal = document.getElementById('openSeniorHighModal');
+const seniorHighModal = document.getElementById('seniorHighModal');
+const cancelSeniorHigh = document.getElementById('cancelSeniorHigh');
+const confirmSeniorHigh = document.getElementById('confirmSeniorHigh');
+
+// college remove modal
+const openCollegeModal = document.getElementById('openCollegeModal');
+const collegeModal = document.getElementById('collegeModal');
+const cancelCollege = document.getElementById('cancelCollege');
+const confirmCollege = document.getElementById('confirmCollege');
+
+
+// open modals
+openSeniorHighModal.addEventListener('click', () => {
+    seniorHighModal.classList.remove('hidden');
+    seniorHighModal.classList.add('flex');
+});
+
+openCollegeModal.addEventListener('click', () => {
+    collegeModal.classList.remove('hidden');
+    collegeModal.classList.add('flex');
+});
+
+// close modals
+cancelSeniorHigh.addEventListener('click', () => {
+    seniorHighModal.classList.add('hidden');
+    seniorHighModal.classList.remove('flex');
+});
+
+cancelCollege.addEventListener('click', () => {
+    collegeModal.classList.add('hidden');
+    collegeModal.classList.remove('flex');
+});
+
+// Confirm removal
+confirmSeniorHigh.addEventListener('click', async () => {
     try {
         const response = await fetch('/api/remove-senior-high-data', {
             method: 'POST',
         });
         const result = await response.json();
-        alert(result.message || 'Senior high data removed');
+        alert(result.message || 'Senior High data removed');
     } catch (error) {
-        alert('Failed to remove senior high data');
+        alert('Failed to remove Senior High data');
     }
+    seniorHighModal.classList.add('hidden');
 });
 
-// remove college data
-removeCollege.addEventListener('click', async () => {
+confirmCollege.addEventListener('click', async () => {
     try {
         const response = await fetch('/api/remove-college-data', {
             method: 'POST',
@@ -118,6 +153,7 @@ removeCollege.addEventListener('click', async () => {
         const result = await response.json();
         alert(result.message || 'College data removed');
     } catch (error) {
-        alert('Failed to remove college data');
+        alert('Failed to remove College data');
     }
+    collegeModal.classList.add('hidden');
 });

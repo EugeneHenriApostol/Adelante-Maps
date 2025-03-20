@@ -33,6 +33,7 @@ from Routes.forgot_password_route import forgot_password_router
 from Routes.reset_password_link_route import reset_password_link_router
 from Routes.seniorhigh_data_analytics_route import seniorhigh_analytics_router
 from Routes.college_data_analytics_route import college_analytics_router
+from Routes.event_reports_route import event_reports_router
 
 
 app = FastAPI()
@@ -56,6 +57,7 @@ app.include_router(forgot_password_router)
 app.include_router(reset_password_link_router)
 app.include_router(seniorhigh_analytics_router)
 app.include_router(college_analytics_router)
+app.include_router(event_reports_router)
 
 app.include_router(get_users_api_router)
 app.include_router(edit_users_api_router)
