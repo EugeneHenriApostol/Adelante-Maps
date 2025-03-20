@@ -81,6 +81,7 @@ async function fetchData(url) {
     }
 }
 
+
 // initialize leaflet map
 async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
@@ -183,36 +184,61 @@ async function initializeMap() {
     
     document.getElementById("toggleDrawControl").addEventListener("click", toggleDrawControl);
 
+    // Function to open the modal
+    function openAreaTypeModal() {
+        const modal = document.getElementById('areaTypeModal');
+        modal.style.display = 'flex';
+    }
+
+    // Function to close the modal
+    function closeAreaTypeModal() {
+        const modal = document.getElementById('areaTypeModal');
+        modal.style.display = 'none';
+    }
+
     // function for when a shape is created on the map
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
         drawnItems.addLayer(layer);
     
-        // Clear previous shape areas
-        shapeAreas = []; // reset shapeAreas to clear previous data
-    
-        // Calculate the area of the newly drawn shape
+        shapeAreas = []; // reset shape areas
         const areaInSquareMeters = calculateArea(layer);
-        const areaInSquareKilometers = areaInSquareMeters / 1e6; // convert to square kilometers
-    
-        // Store only the current shape's area
+        const areaInSquareKilometers = areaInSquareMeters / 1e6; // convert to km²
         shapeAreas.push(areaInSquareKilometers);
     
-        // Prompt user for the type of affected area
-        const areaType = prompt("Enter the type of affected area (flood, strike, restricted, or fire):");
-        if (areaType && ['flood', 'strike', 'restricted', 'fire'].includes(areaType.toLowerCase())) {
-            selectedAreaType = areaType.toLowerCase(); // Update the global variable
-            layer.areaType = selectedAreaType;
-            affectedAreas[selectedAreaType] = [layer.toGeoJSON()]; // Reset and store only the current shape
-            updateAffectedStudents();
+        // Store the current layer reference for later use
+        window.currentLayer = layer;
     
-            // Display the affected area info
-            displayAffectedAreaInfo(areaInSquareKilometers);
-            displayTotalAreaInfo(); // Display total area (will only reflect the current shape)
+        // Open the modal
+        openAreaTypeModal();
+    });
+
+    // Handle area type selection
+    document.getElementById('confirmAreaType').addEventListener('click', () => {
+        const selectedRadio = document.querySelector('input[name="areaType"]:checked');
+
+        if (selectedRadio) {
+            const areaType = selectedRadio.value;
+            selectedAreaType = areaType;  // Store the selected area type
+            window.currentLayer.areaType = areaType;  // Add type to layer
+            affectedAreas[areaType] = [window.currentLayer.toGeoJSON()];  // Store shape data
+
+            updateAffectedStudents();
+            displayAffectedAreaInfo(shapeAreas[0]);
+            displayTotalAreaInfo();
+
+            closeAreaTypeModal();
         } else {
-            drawnItems.removeLayer(layer); // Remove invalid shapes
-            alert("Invalid area type. The shape was not added.");
+            alert("Please select an area type.");
         }
+    });
+
+    // Handle modal cancellation
+    document.getElementById('cancelAreaType').addEventListener('click', () => {
+        if (window.currentLayer) {
+            drawnItems.removeLayer(window.currentLayer);  // Remove the shape if cancelled
+        }
+        closeAreaTypeModal();
     });
 }
 
@@ -280,7 +306,7 @@ async function storeAffectedData() {
 
     if (numberOfStudentsAffected > 0 || totalArea > 0) {
         const payload = {
-            type: selectedAreaType,
+            type: selectedAreaType === 'restricted' ? 'Mobility Restrictions' : selectedAreaType,
             number_of_students_affected: numberOfStudentsAffected,
             total_area: totalArea,
             geojson_data: geojsonData,

@@ -1,7 +1,7 @@
 #reset_password_link_router.py
 
 from fastapi import APIRouter, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import security
 
