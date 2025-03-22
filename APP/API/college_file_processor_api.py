@@ -94,9 +94,8 @@ async def upload_file(file: UploadFile = File(...)):
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={"Content-Disposition": "attachment; filename=cleaned_college_data.csv"}
+        headers={"Content-Disposition": "attachment; filename=[1]_preprocessed_college_file.csv"}
     )
-
 
 # function to geocode address using HERE API
 def geocode_address(address, api_key):
@@ -147,13 +146,13 @@ async def geocode_file(file: UploadFile = File(...)):
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers={"Content-Disposition": "attachment; filename=geocoded_seniorhigh_file.csv"}
+            headers={"Content-Disposition": "attachment; filename=[2]_geocoded_seniorhigh_file.csv"}
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {e}")
 
 # college cluster
-@college_file_api_router.post('/api/cluster/collge-file') 
+@college_file_api_router.post('/api/cluster/college-file') 
 async def cluster_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
     # check if file is csv
     if not file.filename.endswith('.csv'):
@@ -163,7 +162,10 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
 
     try:
         file_content = io.BytesIO(await file.read())
-        df = pd.read_csv(file_content)
+        df = pd.read_csv(file_content, index_col=False)
+
+        # remove unnamed columns if any exist
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
         # check if latitude and longitude columns exist
         if 'latitude' not in df.columns or 'longitude' not in df.columns:
@@ -173,7 +175,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         df = df[df['latitude'] != 'Unknown']
         df = df[df['longitude'] != 'Unknown']
 
-        # convert latitude and longitude to number
+        # convert latitude and longitude to numbers
         df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
         df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
 
@@ -185,21 +187,20 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         
         # cluster address in unique lat-long pairs
         unique_lat_long = df[['latitude', 'longitude']].drop_duplicates()
-        # one cluster per unique lat-long pairs
         n_clusters = unique_lat_long.shape[0]
 
         X = df[['latitude', 'longitude']].values
         kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
         df['cluster_address'] = kmeans_address.fit_predict(X)
 
-        # cluster proximity, keep students who are only in cebu. 6 is the optimal k
+        # cluster proximity, keep students who are only in Cebu. 6 is the optimal k
         df_cebu = df[
             df['province'].str.contains('Cebu', na=False, case=False) |
             df['full_address'].str.contains('Cebu', na=False, case=False)
         ].copy()
 
         if not df_cebu.empty:
-            k = 6 # optimal k
+            k = 6  # optimal k
             kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init=10)
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
@@ -207,24 +208,26 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
             df_cebu = df_cebu.drop_duplicates(subset=['latitude', 'longitude'])
             df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
         else:
-            df['cluster_proximity'] = -1 # assign -1 to students who are not from cebu
+            df['cluster_proximity'] = -1  # assign -1 to students who are not from Cebu
 
-        
         # ensure no NaN values
         df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
 
         # Debugging: Print cluster counts
         print(df[['cluster_address', 'cluster_proximity']].value_counts())
 
+        # ensure no unnamed first column
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+
         # convert data frame back to csv
         output = io.BytesIO()
-        df.to_csv(output, index='False')
+        df.to_csv(output, index=False)  # Ensure no index is written
         output.seek(0)
 
         return StreamingResponse(
             output, 
             media_type='text/csv',
-            headers = {'Content-Disposition': 'attachment; filename=clustered_college_file.csv'}
+            headers={'Content-Disposition': 'attachment; filename=[ready_for_upload]_clustered_college_file.csv'}
         )
     
     except Exception as e:

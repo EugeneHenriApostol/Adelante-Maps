@@ -6,35 +6,24 @@ document.getElementById("listTitle").textContent = "College Students List";
 
 async function fetchStudents() {
     try {
-        // Show loading state
-        document.getElementById("studentsTableBody").innerHTML = `
-            <tr class="animate-pulse">
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-8"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-48"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-8"></div></td>
-            </tr>
-            <tr class="animate-pulse">
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-8"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-48"></div></td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-gray-200 rounded w-8"></div></td>
-            </tr>
-        `;
+        const studentsTableBody = document.getElementById("studentsTableBody");
+        
+        // Smooth fade-out animation
+        studentsTableBody.style.opacity = "0";
         
         const response = await fetch(`${apiUrl}?page=${page}&page_size=${pageSize}`);
         const data = await response.json();
-        
-        const studentsTableBody = document.getElementById("studentsTableBody");
+
+        // Clear previous rows
         studentsTableBody.innerHTML = "";
 
-        // Show/hide no results message
         const noResultsMessage = document.getElementById("noResultsMessage");
         if (data.students.length === 0) {
             noResultsMessage.classList.remove("hidden");
         } else {
             noResultsMessage.classList.add("hidden");
-            
+
+            // Add the new rows
             data.students.forEach((student, index) => {
                 const row = document.createElement("tr");
                 row.className = index % 2 === 0 ? "bg-white" : "bg-gray-50";
@@ -49,14 +38,17 @@ async function fetchStudents() {
             });
         }
 
+        // Smooth fade-in animation
+        studentsTableBody.style.opacity = "1";
+
         // Update pagination
         const totalPages = Math.ceil(data.total / data.page_size);
         document.getElementById("paginationInfo").textContent = `Page ${data.page} of ${totalPages}`;
         document.getElementById("prevPage").disabled = page <= 1;
         document.getElementById("nextPage").disabled = page >= totalPages;
     } catch (error) {
-        console.error("Error fetching college students:", error);
-        document.getElementById("studentsTableBody").innerHTML = `
+        console.error("Error fetching senior high students:", error);
+        studentsTableBody.innerHTML = `
             <tr>
                 <td colspan="4" class="px-6 py-4 text-center text-red-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>
@@ -66,6 +58,7 @@ async function fetchStudents() {
         `;
     }
 }
+
 
 document.getElementById("prevPage").addEventListener("click", () => {
     if (page > 1) {

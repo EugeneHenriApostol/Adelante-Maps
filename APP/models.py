@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, Float, Integer, String, ForeignKey, DateTime
+from sqlalchemy import JSON, Boolean, Column, Float, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -54,3 +54,17 @@ class CollegeStudents(Base):
     longitude = Column(Float)
     cluster_address = Column(Integer)
     cluster_proximity = Column(Integer)
+
+class EventReports(Base):
+    __tablename__ = "event_reports"
+    event_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    event_type = Column(String(50), nullable=False)
+    total_area = Column(Float, nullable=False)
+    number_of_students_affected = Column(Integer, nullable=False)
+    geojson_data = Column(JSON, nullable=False)
+    clustering_type = Column(String(100))  
+    education_level = Column(String(100))  
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User")

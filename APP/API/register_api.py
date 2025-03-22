@@ -112,7 +112,7 @@ scheduler = BackgroundScheduler()
 def delete_unverified_users():
     db = SessionLocal()
     try:
-        expiration_time = datetime.now(timezone.utc) - timedelta(minutes=10)
+        expiration_time = datetime.now(timezone.utc) - timedelta(minutes=60)
         print(f"Running clean up at {datetime.now(timezone.utc)}")
 
         unverified_users = db.query(models.User).filter(
@@ -156,7 +156,7 @@ def register(user_in: schemas.UserIn, background_tasks: BackgroundTasks, db: Ses
     return db_user
 
 # auto database cleaner for unverified users after 30 min
-scheduler.add_job(delete_unverified_users, "interval", minutes=5)
+scheduler.add_job(delete_unverified_users, "interval", minutes=15)
 scheduler.start()
 
 # verify email endpoint

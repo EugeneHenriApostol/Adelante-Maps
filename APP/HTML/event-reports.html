@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Report Data Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-red-700 shadow-md">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-4">
+                    <!-- Logo -->
+                    <div class="flex items-center py-4 px-2">
+                        <span class="font-semibold text-white text-lg">Adelante Maps</span>
+                    </div>
+                    <!-- Primary Nav -->
+                    <div class="flex items-center space-x-1">
+                        <a href="/maps" class="py-4 px-3 text-white hover:bg-red-600 transition duration-300 flex items-center">
+                            <i class="fas fa-map-marked-alt mr-2"></i>
+                            Maps
+                        </a>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="mobile-menu-button text-white focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">Event Report Data Analytics</h1>
+        <p class="text-gray-600 text-center mb-8">Analyze and visualize event impact data</p>
+
+        <!-- Analytics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <!-- Bar Chart Card -->
+            <div id="barChartCard" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-bar text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Event Impact Comparison</h3>
+                    <p class="text-gray-600 text-sm">Visualize the number of students affected by each event type</p>
+                </div>
+            </div>
+
+            <!-- Pie Chart Card -->
+            <div id="pieChartCard" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-pie text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Event Proportion Analysis</h3>
+                    <p class="text-gray-600 text-sm">See the proportion of students affected by each event type</p>
+                </div>
+            </div>
+
+            <!-- Line Chart Card -->
+            <div id="lineChartCard" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Student Impact Over Time</h3>
+                    <p class="text-gray-600 text-sm">Track the trend of affected students over time</p>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div id="tableCard" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-table text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Detailed Event Reports</h3>
+                    <p class="text-gray-600 text-sm">View detailed event report data in a table format</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Containers -->
+        <div id="barChartContainer" class="chart-container hidden bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Event Impact Comparison</h2>
+            <div class="w-full h-96">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <div id="pieChartContainer" class="chart-container hidden bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Event Proportion Analysis</h2>
+            <div class="w-full h-96">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <div id="lineChartContainer" class="chart-container hidden bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Student Impact Over Time</h2>
+            <div class="w-full h-96">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div id="tableContainer" class="table-container hidden bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Detailed Event Reports</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students Affected</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Area</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clustering Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Education Level</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Table rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination flex justify-center items-center mt-6 space-x-4">
+                <button id="prevPage" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-chevron-left mr-1"></i> Previous
+                </button>
+                <span id="pageInfo" class="text-gray-600">Page 1</span>
+                <button id="nextPage" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    Next <i class="fas fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-sm mx-auto">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Confirm Deletion</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this report?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDelete" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                    Cancel
+                </button>
+                <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-sm mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modalTitle" class="text-lg font-semibold text-gray-800"></h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <p id="modalMessage" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchEventReportsForCharts() {
+            try {
+                const response = await fetch('/api/event-reports/charts', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch chart data: ${response.statusText}`);
+                }
+
+                const reports = await response.json();
+                return reports;
+
+            } catch (error) {
+                console.error('Error fetching chart reports:', error);
+                return [];
+            }
+        }
+
+        let currentPage = 1;
+        const perPage = 10;
+        // Fetch event reports from the API
+        async function fetchEventReports(page = 1, perPage = 10) {
+            try {
+                const response = await fetch(`/api/event-reports/table?page=${page}&per_page=${perPage}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch reports: ${response.statusText}`);
+                }
+                const { reports, total } = await response.json(); // Expecting an object with reports and total
+                console.log('Reports successfully fetched: ', reports);
+                return { reports, total };  // Return the object
+            } catch (error) {
+                console.error('Error fetching event reports:', error);
+                return { reports: [], total: 0 }; // Return empty reports and total 0 in case of error
+            }
+        }
+
+        function showDeleteConfirmation(reportId) {
+            const modal = document.getElementById('deleteConfirmationModal');
+            modal.classList.remove('hidden');
+
+            // Set the confirm button action
+            const confirmButton = document.getElementById('confirmDelete');
+            confirmButton.onclick = async () => {
+                await deleteReport(reportId);
+                modal.classList.add('hidden');
+            };
+
+            // Close the modal on cancel
+            const cancelButton = document.getElementById('cancelDelete');
+            cancelButton.onclick = () => {
+                modal.classList.add('hidden');
+            };
+        }
+
+        // show modal
+        function showModal(title, message) {
+            const modal = document.getElementById('alertModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+
+            modal.classList.remove('hidden');
+        }
+        // close modal
+        function closeModal() {
+            const modal = document.getElementById('alertModal');
+            modal.classList.add('hidden');
+        }
+
+        async function deleteReport(reportId) {
+            try {
+                const response = await fetch(`/api/event-reports/${reportId}`, {
+                    method: 'DELETE',
+                    credentials: 'include', 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to delete report: ${response.statusText}`);
+                }
+
+                showModal('Success', 'Report deleted successfully.');
+
+                // Refresh the table without reloading the page 
+                updateTable(currentPage);
+
+            } catch (error) {
+                console.error('Error deleting report:', error);
+                showModal('Error', 'An error occurred while deleting the report.');
+            }
+        }
+
+        // Function to extract data for charts
+        function extractChartData(reports) {
+            const eventTypeCounts = { flood: 0, strike: 0, restricted: 0, fire: 0 };
+            const eventTypeLabels = ['Flood', 'Strike', 'Mobility Restrictions', 'Fire'];
+            const eventDateCounts = {};
+
+            reports.forEach(report => {
+                eventTypeCounts[report.type] = (eventTypeCounts[report.type] || 0) + report.number_of_students_affected;
+
+                const eventDate = new Date(report.created_at).toLocaleDateString();
+                if (!eventDateCounts[eventDate]) {
+                    eventDateCounts[eventDate] = 0;
+                }
+                eventDateCounts[eventDate] += report.number_of_students_affected;
+            });
+
+            const dates = Object.keys(eventDateCounts);
+            const studentCountsByDate = Object.values(eventDateCounts);
+
+            return {
+                barChartData: {
+                    labels: eventTypeLabels,
+                    datasets: [{
+                        label: 'Number of Students Affected',
+                        data: [eventTypeCounts.flood, eventTypeCounts.strike, eventTypeCounts.restricted, eventTypeCounts.fire],
+                        backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B'],
+                    }]
+                },
+                pieChartData: {
+                    labels: eventTypeLabels,
+                    datasets: [{
+                        data: [eventTypeCounts.flood, eventTypeCounts.strike, eventTypeCounts.restricted, eventTypeCounts.fire],
+                        backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B'],
+                    }]
+                },
+                lineChartData: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Affected Students Over Time',
+                        data: studentCountsByDate,
+                        fill: false,
+                        borderColor: '#3B82F6',
+                        tension: 0.1
+                    }]
+                }
+            };
+        }
+
+        // Function to populate the table
+        function populateTable(reports) {
+            const tableBody = document.getElementById('eventTableBody');
+            tableBody.innerHTML = '';  // Clear existing table rows
+
+            reports.forEach(report => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.type.charAt(0).toUpperCase() + report.type.slice(1)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.number_of_students_affected}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.total_area.toFixed(2)} km²</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.clustering_type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.education_level}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button onclick="viewReport(${report.event_id})" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-eye mr-1"></i> View
+                        </button>
+                        <button onclick="showDeleteConfirmation(${report.event_id})" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash-alt mr-1"></i> Delete
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function updateTable(page) {
+            const { reports, total } = await fetchEventReports(page, perPage);  // Get reports and total
+            populateTable(reports);  // This should now work since reports is an array
+
+            // Update pagination controls
+            document.getElementById('prevPage').disabled = page === 1;
+            document.getElementById('nextPage').disabled = page * perPage >= total;
+            document.getElementById('pageInfo').innerText = `Page ${page}`;
+        }
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable(currentPage);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            updateTable(currentPage);
+        });
+
+        function viewReport(reportId) {
+            // Redirect to /maps with the report ID as a query parameter
+            window.location.href = `/maps?report_id=${reportId}`;
+        }
+        
+        // Function to toggle visibility and render content
+        function toggleChart(containerId, chart, data) {
+            const container = document.getElementById(containerId);
+            const isExpanded = !container.classList.contains('hidden');
+
+            // Hide all chart and table containers
+            document.querySelectorAll('.chart-container, .table-container').forEach(container => {
+                container.classList.add('hidden');
+            });
+
+            if (isExpanded) {
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+                if (chart) {
+                    chart.data = data; // Update chart data
+                    chart.update();    // Update chart to reflect new data
+                }
+            }
+        }
+
+        // Fetch data from the API and initialize charts and table
+        (async function initializeData() {
+            const { reports } = await fetchEventReports();
+            const { barChartData, pieChartData, lineChartData } = extractChartData(reports);
+
+            // Create charts with responsive options
+            const barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: barChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            const pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: pieChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            });
+
+            const lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: lineChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Populate table
+            populateTable(reports);
+
+            // Expand/Collapse Logic for the Cards
+            document.getElementById('barChartCard').addEventListener('click', () => {
+                toggleChart('barChartContainer', barChart, barChartData);
+            });
+
+            document.getElementById('pieChartCard').addEventListener('click', () => {
+                toggleChart('pieChartContainer', pieChart, pieChartData);
+            });
+
+            document.getElementById('lineChartCard').addEventListener('click', () => {
+                toggleChart('lineChartContainer', lineChart, lineChartData);
+            });
+
+            document.getElementById('tableCard').addEventListener('click', () => {
+                toggleChart('tableContainer');
+            });
+        })();
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            const deleteModal = document.getElementById('deleteConfirmationModal');
+            const alertModal = document.getElementById('alertModal');
+            
+            if (e.target === deleteModal) {
+                deleteModal.classList.add('hidden');
+            }
+            
+            if (e.target === alertModal) {
+                alertModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

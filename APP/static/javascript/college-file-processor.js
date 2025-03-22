@@ -48,7 +48,7 @@ form.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = downloadUrl;
-        downloadLink.download = 'preprocessed_college_file.csv';
+        downloadLink.download = '[1]_preprocessed_college_file.csv';
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -123,7 +123,7 @@ geocodeForm.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement("a");
         downloadLink.href = downloadUrl;
-        downloadLink.download = "geocoded_college_file.csv";
+        downloadLink.download = "[2]_geocoded_college_file.csv";
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -172,7 +172,7 @@ clusterForm.addEventListener('submit', async (event) => {
     formData.append("file", file);
 
     try {
-        const response = await fetch('/api/cluster/collge-file', {
+        const response = await fetch('/api/cluster/college-file', {
             method: 'POST',
             body: formData,
         });
@@ -187,7 +187,7 @@ clusterForm.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement("a");
         downloadLink.href = downloadUrl;
-        downloadLink.download = "clustered_college_file.csv";
+        downloadLink.download = "[ready_for_upload]_clustered_college_file.csv";
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
