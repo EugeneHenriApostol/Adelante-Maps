@@ -48,7 +48,7 @@ form.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = downloadUrl;
-        downloadLink.download = 'preprocessed_seniorhigh_file.csv';
+        downloadLink.download = '[1]_preprocessed_seniorhigh_file.csv';
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -110,7 +110,7 @@ removeColumnForm.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = downloadUrl;
-        downloadLink.download = 'updated_seniorhigh_file.csv';
+        downloadLink.download = '[2]_updated_seniorhigh_file.csv';
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -186,7 +186,7 @@ geocodeForm.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement("a");
         downloadLink.href = downloadUrl;
-        downloadLink.download = "geocoded_seniorhigh_file.csv";
+        downloadLink.download = "[3]_geocoded_seniorhigh_file.csv";
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -250,7 +250,7 @@ clusterForm.addEventListener('submit', async (event) => {
         const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement("a");
         downloadLink.href = downloadUrl;
-        downloadLink.download = "clustered_seniorhigh_file.csv";
+        downloadLink.download = "[ready_for_upload]_clustered_seniorhigh_file.csv";
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);

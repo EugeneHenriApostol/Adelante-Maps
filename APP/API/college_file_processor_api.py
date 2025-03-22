@@ -72,6 +72,24 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
     return output
 
 
+# # remove column function
+# def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
+#     try:
+#         df = pd.read_csv(file_content)
+
+#         if column_name in df.columns:
+#             df.drop(columns=[column_name], inplace=True)
+#         else:
+#             raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
+
+#         output = io.BytesIO()
+#         df.to_csv(output, index=False)    
+#         output.seek(0)
+#         return output
+
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=f'Error processfile file {e}')  
+
 # upload raw college file api
 @college_file_api_router.post("/api/upload/raw/college-file")
 async def upload_file(file: UploadFile = File(...)):
@@ -96,6 +114,25 @@ async def upload_file(file: UploadFile = File(...)):
         media_type='text/csv',
         headers={"Content-Disposition": "attachment; filename=cleaned_college_data.csv"}
     )
+
+
+# @college_file_api_router.post('/api/remove-column')
+# async def remove_strand_abbrev(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
+#     # check if file is csv
+#     if not file.filename.endswith('.csv'):
+#         raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
+    
+#     try:
+#         file_content = io.BytesIO(await file.read())
+#         processed_file = remove_column(file_content, 'strand_abbrev')
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+    
+#     return StreamingResponse(
+#         processed_file,
+#         media_type='text/csv',
+#         headers={'Content-Disposition': 'attachment; filename=[2]_updated_college_file.csv'}
+#     )
 
 
 # function to geocode address using HERE API
