@@ -166,7 +166,7 @@ clusterForm.addEventListener('submit', async (event) => {
     formData.append("file", file);
 
     try {
-        const response = await fetch('/api/cluster/collge-file', {
+        const response = await fetch('/api/cluster/college-file', {
             method: 'POST',
             body: formData,
         });

@@ -115,7 +115,7 @@ async def remove_strand_abbrev(file: UploadFile = File(...), current_user: model
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=updated_seniorhigh_file.csv'}
+        headers={'Content-Disposition': 'attachment; filename=[2]_updated_seniorhigh_file.csv'}
     )
 
 def clean_text(text):
@@ -170,7 +170,7 @@ async def geocode_file(file: UploadFile = File(...)):
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers={"Content-Disposition": "attachment; filename=geocoded_seniorhigh_file.csv"}
+            headers={"Content-Disposition": "attachment; filename=[3]_geocoded_seniorhigh_file.csv"}
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {e}")
@@ -241,7 +241,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         return StreamingResponse(
             output,
             media_type='text/csv',
-            headers={"Content-Disposition": "attachment; filename=clustered_seniorhigh_file.csv"}
+            headers={"Content-Disposition": "attachment; filename=[ready_for_upload]_clustered_seniorhigh_file.csv"}
         )
 
     except Exception as e:
