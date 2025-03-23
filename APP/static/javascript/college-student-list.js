@@ -29,6 +29,7 @@ async function fetchStudents() {
                 row.className = index % 2 === 0 ? "bg-white" : "bg-gray-50";
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.year}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.course}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.strand}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.previous_school}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.age}</td>

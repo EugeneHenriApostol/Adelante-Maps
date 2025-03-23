@@ -8,53 +8,49 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="{{ url_for('static', path='javascript/upload-db.js') }}" defer></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6">
         <!-- Back Button -->
-        <div class="mb-6">
-            <a href="/manage-files" class="inline-flex items-center text-green-600 hover:text-green-700 transition-colors">
+        <div class="mb-4">
+            <a href="/manage-files" class="text-green-600 hover:text-green-700">
                 <i class="fas fa-arrow-left mr-2"></i>
-                <span>Back to Manage Files</span>
+                Back to Manage Files
             </a>
         </div>
 
         <!-- Page Header -->
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Database Management</h1>
-            <p class="text-gray-600">Upload or remove student records from the database</p>
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-bold text-gray-800">Database Management</h1>
+            <p class="text-gray-600 text-sm">Upload or remove student records from the database</p>
         </div>
 
         <!-- Main Content -->
         <div class="max-w-4xl mx-auto">
             <!-- Upload Section -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-                <div class="border-b border-gray-200">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-cloud-upload-alt text-xl text-green-600"></i>
-                            </div>
-                            <h2 class="text-2xl font-semibold">Upload Student Data</h2>
-                        </div>
-                        <p class="text-gray-600">Add new student records to the database</p>
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="border-b border-gray-200 p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-cloud-upload-alt text-green-600 mr-2"></i>
+                        <h2 class="text-xl font-medium">Upload Student Data</h2>
                     </div>
+                    <p class="text-gray-600 text-sm mt-1">Add new student records to the database</p>
                 </div>
 
                 <!-- Senior High Upload -->
-                <div class="p-6 border-b border-gray-100">
-                    <h3 class="text-lg font-semibold mb-4">Senior High School Students</h3>
+                <div class="p-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium mb-3">Senior High School Students</h3>
                     <form id="seniorHighFileUploadForm">
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-col sm:flex-row gap-3">
                             <div class="flex-grow">
-                                <label class="block w-full cursor-pointer">
-                                    <div class="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors">
+                                <label class="block w-full">
+                                    <div class="border border-gray-300 rounded px-3 py-2 cursor-pointer hover:border-green-500">
                                         <i class="fas fa-file-upload text-gray-400 mr-2"></i>
-                                        <span id="seniorhigh-file-label" class="text-gray-600">Choose processed SHS file</span>
+                                        <span id="seniorhigh-file-label" class="text-gray-500">Choose processed SHS file</span>
                                     </div>
                                     <input type="file" id="seniorHighFile" class="hidden" accept=".csv">
                                 </label>
                             </div>
-                            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                                 <i class="fas fa-upload mr-2"></i>
                                 Upload
                             </button>
@@ -63,20 +59,20 @@
                 </div>
 
                 <!-- College Upload -->
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">College Students</h3>
+                <div class="p-4">
+                    <h3 class="text-lg font-medium mb-3">College Students</h3>
                     <form id="collegeUploadForm">
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-col sm:flex-row gap-3">
                             <div class="flex-grow">
-                                <label class="block w-full cursor-pointer">
-                                    <div class="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors">
+                                <label class="block w-full">
+                                    <div class="border border-gray-300 rounded px-3 py-2 cursor-pointer hover:border-green-500">
                                         <i class="fas fa-file-upload text-gray-400 mr-2"></i>
-                                        <span id="college-file-label" class="text-gray-600">Choose processed college file</span>
+                                        <span id="college-file-label" class="text-gray-500">Choose processed college file</span>
                                     </div>
                                     <input type="file" id="collegeFile" class="hidden" accept=".csv">
                                 </label>
                             </div>
-                            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                                 <i class="fas fa-upload mr-2"></i>
                                 Upload
                             </button>
@@ -86,93 +82,81 @@
             </div>
 
             <!-- Remove Section -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="border-b border-gray-200">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-trash-alt text-xl text-red-600"></i>
-                            </div>
-                            <h2 class="text-2xl font-semibold">Remove Student Data</h2>
-                        </div>
-                        <p class="text-gray-600">Remove existing student records from the database</p>
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="border-b border-gray-200 p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-trash-alt text-red-600 mr-2"></i>
+                        <h2 class="text-xl font-medium">Remove Student Data</h2>
                     </div>
+                    <p class="text-gray-600 text-sm mt-1">Remove existing student records from the database</p>
                 </div>
 
-                <div class="p-6">
-                    <div class="grid md:grid-cols-2 gap-6">
+                <div class="p-4">
+                    <div class="grid md:grid-cols-2 gap-4">
                         <!-- Senior High Remove -->
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold mb-2">Senior High School</h3>
-                            <p class="text-gray-600 text-sm mb-4">Remove all Senior High School student records</p>
-                            <button id="removeSeniorHigh" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                        <div class="bg-gray-50 rounded p-4">
+                            <h3 class="text-lg font-medium mb-2">Senior High School</h3>
+                            <p class="text-gray-600 text-sm mb-3">Remove all Senior High School student records</p>
+                            <button id="removeSeniorHigh" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700">
                                 <i class="fas fa-trash-alt mr-2"></i>
                                 Remove SHS Data
                             </button>
                         </div>
 
                         <!-- College Remove -->
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold mb-2">College</h3>
-                            <p class="text-gray-600 text-sm mb-4">Remove all College student records</p>
-                            <button id="removeCollege" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                        <div class="bg-gray-50 rounded p-4">
+                            <h3 class="text-lg font-medium mb-2">College</h3>
+                            <p class="text-gray-600 text-sm mb-3">Remove all College student records</p>
+                            <button id="removeCollege" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700">
                                 <i class="fas fa-trash-alt mr-2"></i>
                                 Remove College Data
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- remove senior high modal -->
-                <div id="seniorHighModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-                    <div class="bg-white rounded-lg p-6 w-96">
-                        <h2 class="text-lg font-bold mb-4">Confirm Removal</h2>
-                        <p class="text-gray-700 mb-4">Are you sure you want to remove all Senior High School student records?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="cancelSeniorHigh" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-                            <button id="confirmSeniorHigh" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button>
-                        </div>
+            <!-- Senior High Confirmation Modal -->
+            <div id="confirmSeniorHighModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+                    <h2 class="text-xl font-semibold mb-4">Confirm Removal</h2>
+                    <p>Are you sure you want to remove all Senior High School student records?</p>
+                    <div class="flex justify-end mt-4">
+                        <button id="cancelSeniorHigh" class="bg-gray-300 px-4 py-2 rounded mr-2">Cancel</button>
+                        <button id="confirmSeniorHigh" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Confirm</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- remove college modal -->
-                <div id="collegeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-                    <div class="bg-white rounded-lg p-6 w-96">
-                        <h2 class="text-lg font-bold mb-4">Confirm Removal</h2>
-                        <p class="text-gray-700 mb-4">Are you sure you want to remove all College student records?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="cancelCollege" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-                            <button id="confirmCollege" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button>
-                        </div>
+            <!-- College Confirmation Modal -->
+            <div id="confirmCollegeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+                    <h2 class="text-xl font-semibold mb-4">Confirm Removal</h2>
+                    <p>Are you sure you want to remove all College student records?</p>
+                    <div class="flex justify-end mt-4">
+                        <button id="cancelCollege" class="bg-gray-300 px-4 py-2 rounded mr-2">Cancel</button>
+                        <button id="confirmCollege" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Confirm</button>
                     </div>
                 </div>
             </div>
 
             <!-- Warning Card -->
-            <div class="mt-8 bg-yellow-50 rounded-xl shadow-sm p-6">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
+            <div class="bg-yellow-50 rounded p-4 text-sm">
+                <div class="flex">
+                    <div>
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
                     </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Important Notes</h3>
-                        <ul class="text-gray-600 space-y-2">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-yellow-500 mr-2"></i>
-                                Only upload processed and verified data files
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-yellow-500 mr-2"></i>
-                                Removing data is permanent and cannot be undone
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-yellow-500 mr-2"></i>
-                                Make sure to backup important data before removal
-                            </li>
+                    <div>
+                        <h3 class="font-medium text-gray-800 mb-2">Important Notes</h3>
+                        <ul class="text-gray-600 space-y-1">
+                            <li>• Only upload processed and verified data files</li>
+                            <li>• Removing data is permanent and cannot be undone</li>
+                            <li>• Make sure to backup important data before removal</li>
                         </ul>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </body>

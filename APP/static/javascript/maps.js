@@ -163,11 +163,7 @@ async function initializeMap() {
                     color: '#004a80'
                 }
             },
-            circle: {
-                shapeOptions: {
-                    color: '#004a80'
-                }
-            },
+            circle: false,
             marker: false,
             circlemarker: false
         }

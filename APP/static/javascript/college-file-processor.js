@@ -45,13 +45,10 @@ form.addEventListener('submit', async (event) => {
 
         // download the file
         const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
-        downloadLink.href = downloadUrl;
+        downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = 'preprocessed_college_file.csv';
-        document.body.appendChild(downloadLink);
         downloadLink.click();
-        document.body.removeChild(downloadLink);
 
         statusMessage.textContent = "File preprocessed and downloaded successfully.";
     } catch (error) {
@@ -120,13 +117,10 @@ geocodeForm.addEventListener('submit', async (event) => {
         }
 
         const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
-        const downloadLink = document.createElement("a");
-        downloadLink.href = downloadUrl;
-        downloadLink.download = "geocoded_college_file.csv";
-        document.body.appendChild(downloadLink);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = 'geocoded_college_file.csv';
         downloadLink.click();
-        document.body.removeChild(downloadLink);
 
         geocodeStatus.textContent = "Geocoding completed and file downloaded successfully!";
     } catch (error) {
@@ -184,13 +178,10 @@ clusterForm.addEventListener('submit', async (event) => {
         }
 
         const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
-        const downloadLink = document.createElement("a");
-        downloadLink.href = downloadUrl;
-        downloadLink.download = "clustered_college_file.csv";
-        document.body.appendChild(downloadLink);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = 'clustered_college_file.csv';
         downloadLink.click();
-        document.body.removeChild(downloadLink);
 
         clusterStatus.textContent = "Clustering completed and file downloaded successfully!";
     } catch (error) {
