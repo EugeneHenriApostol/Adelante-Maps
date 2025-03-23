@@ -267,12 +267,12 @@ async function fetchAndRenderGeoJSON(reportId) {
         }
         const report = await response.json();
 
-        // Parse and render GeoJSON on the map
+        // parse and render GeoJSON on the map
         const geojsonLayer = L.geoJSON(report.geojson, {
             style: {
                 color: report.type === 'flood' ? 'blue' : 
                        report.type === 'strike' ? 'red' : 
-                       report.type === 'restricted' ? 'green' : 
+                       report.type === 'mobility restriction' ? 'green' : 
                        report.type === 'fire' ? 'orange' : 'gray',
                 weight: 2,
                 fillOpacity: 0.5
@@ -280,7 +280,7 @@ async function fetchAndRenderGeoJSON(reportId) {
         });
         geojsonLayer.addTo(map);
 
-        // Adjust map view to fit the GeoJSON bounds
+        // adjust map view to fit the GeoJSON bounds
         map.fitBounds(geojsonLayer.getBounds());
     } catch (error) {
         console.error('Error fetching or rendering GeoJSON:', error);
@@ -302,7 +302,7 @@ async function storeAffectedData() {
 
     if (numberOfStudentsAffected > 0 || totalArea > 0) {
         const payload = {
-            type: selectedAreaType === 'restricted' ? 'Mobility Restrictions' : selectedAreaType,
+            type: selectedAreaType === 'restricted' ? 'mobility restriction' : selectedAreaType,
             number_of_students_affected: numberOfStudentsAffected,
             total_area: totalArea,
             geojson_data: geojsonData,
@@ -348,7 +348,7 @@ function updateAffectedStudents() {
         const studentData = marker.options.studentData;
 
         for (const areaType in affectedAreas) {
-            if (affectedAreas[areaType]) { // Check if areaType array exists
+            if (affectedAreas[areaType]) { // check if areaType array exists
                 affectedAreas[areaType].forEach((geoJsonArea) => {
                     if (geoJsonArea && geoJsonArea.geometry && turf.booleanPointInPolygon(studentPoint, geoJsonArea)) {
                         affectedStudents[areaType].push(studentData);
