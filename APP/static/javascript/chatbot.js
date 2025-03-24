@@ -1,60 +1,258 @@
-// chatbot.js
-let history = [];
-
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-document.getElementById('user-input').addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-});
-
-async function sendMessage() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value;
-
-    if (!message.trim()) return;
-
-    // Display the user message
-    displayMessage(message, 'user');
-
-    // Add the user's message to history
-    history.push(`User: ${message}`);
-
-    // Clear input field
-    userInput.value = '';
-
-    // Send the message to the backend
-    try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message, history }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-
-        // Display the bot response
-        displayMessage(data.answer, 'bot');
-
-        // Add the bot's response to history
-        history.push(`Bot: ${data.answer}`);
-    } catch (error) {
-        console.error('Error:', error);
-        displayMessage("I'm sorry, there was an error processing your request.", 'bot');
-    }
-}
-
-function displayMessage(message, sender) {
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const chatbotWidget = document.getElementById('chatbot-widget');
+    const chatbotButton = document.getElementById('chatbot-widget-button');
+    const closeButton = document.getElementById('close-chatbot');
     const chatBox = document.getElementById('chat-box');
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message', `${sender}-message`);
-    messageDiv.innerHTML = `<p>${message}</p>`;
-    chatBox.appendChild(messageDiv);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
-}
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-btn');
+
+    // Check if all elements exist
+    if (!chatbotWidget || !chatbotButton || !closeButton || !chatBox || !userInput || !sendButton) {
+        console.error('One or more chatbot elements not found:', {
+            chatbotWidget: !!chatbotWidget,
+            chatbotButton: !!chatbotButton,
+            closeButton: !!closeButton,
+            chatBox: !!chatBox,
+            userInput: !!userInput,
+            sendButton: !!sendButton
+        });
+        return;
+    }
+
+    console.log('All chatbot elements found');
+
+    const welcomeMessage = {
+        text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
+        sender: 'bot'
+    };
+
+    // predefined responses for common questions
+    // const predefinedResponses = {
+    //     'help': "I can help you with:<br>- Finding locations on the map<br>- Explaining filter options<br>- Information about clusters<br>- Data analytics features<br>- Using the geospatial event tool",
+    //     'filter': "You can use the Filter Controls to narrow down data by strand, course, previous school, year level, and age. Click the 'Filter Controls' button in the navbar to access these options.",
+    //     'cluster': "Clusters group students based on location. You can view Senior High or College clusters by address or proximity from the Clusters dropdown menu.",
+    //     'data': "The Data Analytics section provides visualizations for Senior High and College data. Access these from the Data Analytics dropdown in the navbar.",
+    //     'event': "The Geospatial Event Tool allows you to mark areas affected by events like floods or strikes. Click the tool icon in the navbar to activate it.",
+    //     'radius': "You can adjust the circle radius using the slider in the navbar. This affects the area of influence for proximity calculations.",
+    //     'map': "The map displays student locations and various data points. You can interact with it by clicking on markers or using the controls in the navbar.",
+    //     'location': "You can find specific locations by using the search feature or by manually navigating the map.",
+    //     'marker': "Markers on the map represent students or points of interest. Different colors may indicate different categories.",
+    //     'search': "You can search for specific locations or students using the search bar at the top of the map.",
+    //     'zoom': "Use the + and - buttons on the map, or your mouse wheel, to zoom in and out.",
+    //     'export': "You can export data by using the export options in the Data Analytics section.",
+    //     'report': "Event reports can be accessed by clicking on the 'Event Reports' link in the navbar.",
+    //     'login': "You can log in by clicking the user icon in the top right corner.",
+    //     'logout': "To log out, click on the user icon in the top right corner and select 'Logout' from the dropdown menu.",
+    //     'profile': "You can edit your profile by clicking the user icon and selecting 'Edit Profile'.",
+    //     'app': "This app helps you visualize and analyze student data on a map. You can use filters to narrow down data, view clusters of students, and analyze data through various visualizations."
+    // };
+
+    // function to add message to chat box
+    function addMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', message.sender);
+        
+        // create message content
+        const contentElement = document.createElement('div');
+        contentElement.classList.add('content');
+        contentElement.innerHTML = message.text;
+        
+        // add timestamp
+        const timestamp = document.createElement('div');
+        timestamp.classList.add('timestamp');
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        timestamp.textContent = `${hours}:${minutes}`;
+        
+        messageElement.appendChild(contentElement);
+        messageElement.appendChild(timestamp);
+        
+        chatBox.appendChild(messageElement);
+        
+        // scroll to the bottom after adding a message
+        scrollToBottom();
+    }
+
+    // function to process user input and generate a response
+    async function processUserInput(input) {
+        // trim and lowercase the input for easier matching
+        const processedInput = input.trim().toLowerCase();
+        
+        // Add user message to chat
+        addMessage({
+            text: input,
+            sender: 'user'
+        });
+        
+        // show typing indicator
+        showTypingIndicator();
+        
+        // delays response
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // remove typing indicator
+        hideTypingIndicator();
+        
+        // generate response based on input
+        let response = "I'm not sure how to help with that specific question. You can ask me about using the map, filters, clusters, data analytics, or the geospatial event tool.";
+        addMessage({ text: response, sender: 'bot' });
+        
+        // check for predefined responses
+        for (const [keyword, reply] of Object.entries(predefinedResponses)) {
+            if (processedInput.includes(keyword)) {
+                response = reply;
+                break;
+            }
+        }
+        
+        // special case for general help or app usage
+        if (processedInput === 'help' || processedInput.includes('what can you do')) {
+            response = predefinedResponses['help'];
+        } else if (processedInput.includes('how to use') || processedInput.includes('how do i use')) {
+            response = predefinedResponses['app'];
+        }
+        
+        // add bot response to chat
+        addMessage({
+            text: response,
+            sender: 'bot'
+        });
+    }
+    
+    // function to show typing indicator
+    function showTypingIndicator() {
+        const typingIndicator = document.createElement('div');
+        typingIndicator.classList.add('message', 'bot', 'typing-indicator');
+        typingIndicator.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+        typingIndicator.id = 'typing-indicator';
+        chatBox.appendChild(typingIndicator);
+        scrollToBottom();
+    }
+    
+    // function to hide typing indicator
+    function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+    
+    // function to handle user input submission
+    function handleSubmit() {
+        const message = userInput.value.trim();
+        if (message) {
+            processUserInput(message);
+            userInput.value = '';
+        }
+    }
+    
+    // function to toggle chatbot visibility
+    function toggleChatbot() {
+        console.log('Toggling chatbot visibility');
+        
+        // toggle visibility using inline styles
+        if (chatbotWidget.style.display === 'none' || !chatbotWidget.style.display) {
+            chatbotWidget.style.display = 'flex';
+            console.log('Showing chatbot');
+            console.log('Chatbot should now be visible');
+            
+            // if opening the widget and no messages yet, add welcome message
+            if (chatBox.children.length === 0) {
+                addMessage(welcomeMessage);
+                addSuggestions();
+            }
+            
+            // focus on input field
+            setTimeout(() => {
+                userInput.focus();
+            }, 100);
+        } else {
+            chatbotWidget.style.display = 'none';
+            console.log('Hiding chatbot');
+        }
+    }
+    
+    // ensures that chatbox defaults to the bottom of the chat box upon initializing
+    chatbotButton.addEventListener('click', function () {
+        chatbotWidget.style.display = 'flex';
+        setTimeout(scrollToBottom, 100);
+    });
+
+    closeButton.addEventListener('click', function(e) {
+        console.log('Close button clicked');
+        e.preventDefault();
+        e.stopPropagation();
+        chatbotWidget.style.display = 'none';
+        localStorage.setItem('adelanteChatHistory', chatBox.innerHTML);
+    });
+    
+    sendButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleSubmit();
+    });
+    
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit();
+        }
+    });
+    
+    // prevent clicks inside the chatbot from closing it
+    chatbotWidget.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    // suggestions functionality
+    function addSuggestions() {
+        const suggestions = [
+            "How do I use filters?",
+            "What are clusters?",
+            "Help me with data analytics",
+            "Explain the geospatial tool"
+        ];
+        
+        const suggestionsContainer = document.createElement('div');
+        suggestionsContainer.classList.add('suggestions');
+        
+        suggestions.forEach(suggestion => {
+            const suggestionButton = document.createElement('button');
+            suggestionButton.classList.add('suggestion-btn');
+            suggestionButton.textContent = suggestion;
+            
+            suggestionButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                userInput.value = suggestion;
+                handleSubmit();
+            });
+            
+            suggestionsContainer.appendChild(suggestionButton);
+        });
+        
+        chatBox.appendChild(suggestionsContainer);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    
+    // initialize chatbot
+    chatbotWidget.style.display = 'none';
+    
+    // load chat history if available
+    const chatHistory = localStorage.getItem('adelanteChatHistory');
+    if (chatHistory) {
+        chatBox.innerHTML = chatHistory;
+    }
+    
+    // clear chat history function
+    window.clearChatHistory = function() {
+        chatBox.innerHTML = '';
+        localStorage.removeItem('adelanteChatHistory');
+        addMessage(welcomeMessage);
+        addSuggestions();
+    };
+    
+    // debug logging
+    console.log('Chatbot initialized');
+});

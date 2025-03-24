@@ -987,39 +987,11 @@ function clearRoute() {
     }
 }
 
-function initializeChatbot() {
-    const chatbotLink = document.getElementById('chatbot');
-    const chatbotWidget = document.getElementById('chatbot-widget');
-    const chatbotButton = document.getElementById('chatbot-widget-button');
-    const closeChatbotBtn = document.getElementById('close-chatbot');
-
-    // Widget button click
-    chatbotButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        chatbotWidget.classList.toggle('d-none');
-        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
-    });
-
-    // Navbar link click
-    chatbotLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        chatbotWidget.classList.toggle('d-none');
-        chatbotButton.style.display = chatbotWidget.classList.contains('d-none') ? 'flex' : 'none';
-    });
-
-    // Close button
-    closeChatbotBtn.addEventListener('click', () => {
-        chatbotWidget.classList.add('d-none');
-        chatbotButton.style.display = 'flex';
-    });
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     initializeMap();
     setupEventListeners();
     addFilterControls();
     initializePopulationDistribution();
-    initializeChatbot();
 
     markers = L.markerClusterGroup();
     map.addLayer(markers);
@@ -1036,11 +1008,6 @@ document.getElementById('collegeData').addEventListener('click', function() {
 document.getElementById('eventReportsLink').addEventListener('click', function () {
     window.location.href = '/event-reports';
 });
-
-document.getElementById('chatbot').addEventListener('click', function () {
-    window.location.href = '/chatbot';
-});
-
 
 document.addEventListener('DOMContentLoaded', () => {
     // Check if the page is loaded within an iframe
