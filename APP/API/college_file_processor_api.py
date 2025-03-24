@@ -94,7 +94,7 @@ async def upload_file(file: UploadFile = File(...)):
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={"Content-Disposition": "attachment; filename=[1]_preprocessed_college_file.csv"}
+        headers={"Content-Disposition": "attachment; filename=preprocessed_college_file.csv"}
     )
 
 # function to geocode address using HERE API
