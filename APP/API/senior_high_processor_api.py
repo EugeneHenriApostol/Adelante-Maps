@@ -96,7 +96,7 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
     return StreamingResponse(
         processed_file, 
         media_type='text/csv', 
-        headers={'Content-Disposition': 'attachment; filename=[1]_preprocessed_seniorhigh_file.csv'}
+        headers={'Content-Disposition': 'attachment; filename=preprocessed_seniorhigh_file.csv'}
         )
 
 # api endpoint to remove column

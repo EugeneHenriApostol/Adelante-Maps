@@ -44,8 +44,11 @@ collegeFileInput.addEventListener('change', function () {
 
 const seniorHighUploadForm = document.getElementById('seniorHighFileUploadForm');
 const collegeUploadForm = document.getElementById('collegeUploadForm');
+
 const removeSeniorHigh = document.getElementById('removeSeniorHigh');
 const removeCollege = document.getElementById('removeCollege');
+const confirmSeniorHighModal = document.getElementById('confirmSeniorHighModal');
+const confirmCollegeModal = document.getElementById('confirmCollegeModal');
 
 // upload senior high file
 seniorHighUploadForm.addEventListener('submit', async (event) => {
@@ -96,43 +99,28 @@ collegeUploadForm.addEventListener('submit', async (event) => {
     }
 });
 
-// senior high remove modal
-const openSeniorHighModal = document.getElementById('openSeniorHighModal');
-const seniorHighModal = document.getElementById('seniorHighModal');
-const cancelSeniorHigh = document.getElementById('cancelSeniorHigh');
-const confirmSeniorHigh = document.getElementById('confirmSeniorHigh');
-
-// college remove modal
-const openCollegeModal = document.getElementById('openCollegeModal');
-const collegeModal = document.getElementById('collegeModal');
-const cancelCollege = document.getElementById('cancelCollege');
-const confirmCollege = document.getElementById('confirmCollege');
-
-
-// open modals
-openSeniorHighModal.addEventListener('click', () => {
-    seniorHighModal.classList.remove('hidden');
-    seniorHighModal.classList.add('flex');
+// Show modals on button click
+removeSeniorHigh.addEventListener('click', () => {
+    confirmSeniorHighModal.classList.remove('hidden');
+    confirmSeniorHighModal.classList.add('flex');
 });
 
-openCollegeModal.addEventListener('click', () => {
-    collegeModal.classList.remove('hidden');
-    collegeModal.classList.add('flex');
+removeCollege.addEventListener('click', () => {
+    confirmCollegeModal.classList.remove('hidden');
+    confirmCollegeModal.classList.add('flex');
 });
 
-// close modals
-cancelSeniorHigh.addEventListener('click', () => {
-    seniorHighModal.classList.add('hidden');
-    seniorHighModal.classList.remove('flex');
+// Close modals
+document.getElementById('cancelSeniorHigh').addEventListener('click', () => {
+    confirmSeniorHighModal.classList.add('hidden');
 });
 
-cancelCollege.addEventListener('click', () => {
-    collegeModal.classList.add('hidden');
-    collegeModal.classList.remove('flex');
+document.getElementById('cancelCollege').addEventListener('click', () => {
+    confirmCollegeModal.classList.add('hidden');
 });
 
 // Confirm removal
-confirmSeniorHigh.addEventListener('click', async () => {
+document.getElementById('confirmSeniorHigh').addEventListener('click', async () => {
     try {
         const response = await fetch('/api/remove-senior-high-data', {
             method: 'POST',
@@ -141,11 +129,12 @@ confirmSeniorHigh.addEventListener('click', async () => {
         alert(result.message || 'Senior High data removed');
     } catch (error) {
         alert('Failed to remove Senior High data');
+    } finally {
+        confirmSeniorHighModal.classList.add('hidden');
     }
-    seniorHighModal.classList.add('hidden');
 });
 
-confirmCollege.addEventListener('click', async () => {
+document.getElementById('confirmCollege').addEventListener('click', async () => {
     try {
         const response = await fetch('/api/remove-college-data', {
             method: 'POST',
@@ -154,6 +143,7 @@ confirmCollege.addEventListener('click', async () => {
         alert(result.message || 'College data removed');
     } catch (error) {
         alert('Failed to remove College data');
+    } finally {
+        confirmCollegeModal.classList.add('hidden');
     }
-    collegeModal.classList.add('hidden');
 });

@@ -19,6 +19,12 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Email not verified. Please verify your email before logging in."
+        )
 
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)

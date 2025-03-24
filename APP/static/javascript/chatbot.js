@@ -22,44 +22,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('All chatbot elements found');
 
-    // Initial welcome message
     const welcomeMessage = {
         text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
         sender: 'bot'
     };
 
-    // Predefined responses for common questions
-    const predefinedResponses = {
-        'help': "I can help you with:<br>- Finding locations on the map<br>- Explaining filter options<br>- Information about clusters<br>- Data analytics features<br>- Using the geospatial event tool",
-        'filter': "You can use the Filter Controls to narrow down data by strand, course, previous school, year level, and age. Click the 'Filter Controls' button in the navbar to access these options.",
-        'cluster': "Clusters group students based on location. You can view Senior High or College clusters by address or proximity from the Clusters dropdown menu.",
-        'data': "The Data Analytics section provides visualizations for Senior High and College data. Access these from the Data Analytics dropdown in the navbar.",
-        'event': "The Geospatial Event Tool allows you to mark areas affected by events like floods or strikes. Click the tool icon in the navbar to activate it.",
-        'radius': "You can adjust the circle radius using the slider in the navbar. This affects the area of influence for proximity calculations.",
-        'map': "The map displays student locations and various data points. You can interact with it by clicking on markers or using the controls in the navbar.",
-        'location': "You can find specific locations by using the search feature or by manually navigating the map.",
-        'marker': "Markers on the map represent students or points of interest. Different colors may indicate different categories.",
-        'search': "You can search for specific locations or students using the search bar at the top of the map.",
-        'zoom': "Use the + and - buttons on the map, or your mouse wheel, to zoom in and out.",
-        'export': "You can export data by using the export options in the Data Analytics section.",
-        'report': "Event reports can be accessed by clicking on the 'Event Reports' link in the navbar.",
-        'login': "You can log in by clicking the user icon in the top right corner.",
-        'logout': "To log out, click on the user icon in the top right corner and select 'Logout' from the dropdown menu.",
-        'profile': "You can edit your profile by clicking the user icon and selecting 'Edit Profile'.",
-        'app': "This app helps you visualize and analyze student data on a map. You can use filters to narrow down data, view clusters of students, and analyze data through various visualizations."
-    };
+    // predefined responses for common questions
+    // const predefinedResponses = {
+    //     'help': "I can help you with:<br>- Finding locations on the map<br>- Explaining filter options<br>- Information about clusters<br>- Data analytics features<br>- Using the geospatial event tool",
+    //     'filter': "You can use the Filter Controls to narrow down data by strand, course, previous school, year level, and age. Click the 'Filter Controls' button in the navbar to access these options.",
+    //     'cluster': "Clusters group students based on location. You can view Senior High or College clusters by address or proximity from the Clusters dropdown menu.",
+    //     'data': "The Data Analytics section provides visualizations for Senior High and College data. Access these from the Data Analytics dropdown in the navbar.",
+    //     'event': "The Geospatial Event Tool allows you to mark areas affected by events like floods or strikes. Click the tool icon in the navbar to activate it.",
+    //     'radius': "You can adjust the circle radius using the slider in the navbar. This affects the area of influence for proximity calculations.",
+    //     'map': "The map displays student locations and various data points. You can interact with it by clicking on markers or using the controls in the navbar.",
+    //     'location': "You can find specific locations by using the search feature or by manually navigating the map.",
+    //     'marker': "Markers on the map represent students or points of interest. Different colors may indicate different categories.",
+    //     'search': "You can search for specific locations or students using the search bar at the top of the map.",
+    //     'zoom': "Use the + and - buttons on the map, or your mouse wheel, to zoom in and out.",
+    //     'export': "You can export data by using the export options in the Data Analytics section.",
+    //     'report': "Event reports can be accessed by clicking on the 'Event Reports' link in the navbar.",
+    //     'login': "You can log in by clicking the user icon in the top right corner.",
+    //     'logout': "To log out, click on the user icon in the top right corner and select 'Logout' from the dropdown menu.",
+    //     'profile': "You can edit your profile by clicking the user icon and selecting 'Edit Profile'.",
+    //     'app': "This app helps you visualize and analyze student data on a map. You can use filters to narrow down data, view clusters of students, and analyze data through various visualizations."
+    // };
 
-    // Function to add a message to the chat box
+    // function to add message to chat box
     function addMessage(message) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', message.sender);
         
-        // Create message content
+        // create message content
         const contentElement = document.createElement('div');
         contentElement.classList.add('content');
         contentElement.innerHTML = message.text;
         
-        // Add timestamp
+        // add timestamp
         const timestamp = document.createElement('div');
         timestamp.classList.add('timestamp');
         const now = new Date();
@@ -67,20 +66,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const minutes = now.getMinutes().toString().padStart(2, '0');
         timestamp.textContent = `${hours}:${minutes}`;
         
-        // Assemble message
         messageElement.appendChild(contentElement);
         messageElement.appendChild(timestamp);
         
-        // Add to chat box
         chatBox.appendChild(messageElement);
         
-        // Scroll to the bottom
-        chatBox.scrollTop = chatBox.scrollHeight;
+        // scroll to the bottom after adding a message
+        scrollToBottom();
     }
 
-    // Function to process user input and generate a response
+    // function to process user input and generate a response
     async function processUserInput(input) {
-        // Trim and lowercase the input for easier matching
+        // trim and lowercase the input for easier matching
         const processedInput = input.trim().toLowerCase();
         
         // Add user message to chat
@@ -89,19 +86,20 @@ document.addEventListener('DOMContentLoaded', function() {
             sender: 'user'
         });
         
-        // Show typing indicator
+        // show typing indicator
         showTypingIndicator();
         
-        // Simulate processing delay for a more natural feel
+        // delays response
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Remove typing indicator
+        // remove typing indicator
         hideTypingIndicator();
         
-        // Generate response based on input
+        // generate response based on input
         let response = "I'm not sure how to help with that specific question. You can ask me about using the map, filters, clusters, data analytics, or the geospatial event tool.";
+        addMessage({ text: response, sender: 'bot' });
         
-        // Check for predefined responses
+        // check for predefined responses
         for (const [keyword, reply] of Object.entries(predefinedResponses)) {
             if (processedInput.includes(keyword)) {
                 response = reply;
@@ -109,31 +107,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Special case for general help or app usage
+        // special case for general help or app usage
         if (processedInput === 'help' || processedInput.includes('what can you do')) {
             response = predefinedResponses['help'];
         } else if (processedInput.includes('how to use') || processedInput.includes('how do i use')) {
             response = predefinedResponses['app'];
         }
         
-        // Add bot response to chat
+        // add bot response to chat
         addMessage({
             text: response,
             sender: 'bot'
         });
     }
     
-    // Function to show typing indicator
+    // function to show typing indicator
     function showTypingIndicator() {
         const typingIndicator = document.createElement('div');
         typingIndicator.classList.add('message', 'bot', 'typing-indicator');
         typingIndicator.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
         typingIndicator.id = 'typing-indicator';
         chatBox.appendChild(typingIndicator);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        scrollToBottom();
     }
     
-    // Function to hide typing indicator
+    // function to hide typing indicator
     function hideTypingIndicator() {
         const typingIndicator = document.getElementById('typing-indicator');
         if (typingIndicator) {
@@ -141,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to handle user input submission
+    // function to handle user input submission
     function handleSubmit() {
         const message = userInput.value.trim();
         if (message) {
@@ -150,23 +148,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to toggle chatbot visibility
+    // function to toggle chatbot visibility
     function toggleChatbot() {
         console.log('Toggling chatbot visibility');
         
-        // Toggle visibility using inline styles
+        // toggle visibility using inline styles
         if (chatbotWidget.style.display === 'none' || !chatbotWidget.style.display) {
             chatbotWidget.style.display = 'flex';
             console.log('Showing chatbot');
             console.log('Chatbot should now be visible');
             
-            // If opening the widget and no messages yet, add welcome message
+            // if opening the widget and no messages yet, add welcome message
             if (chatBox.children.length === 0) {
                 addMessage(welcomeMessage);
                 addSuggestions();
             }
             
-            // Focus on input field
+            // focus on input field
             setTimeout(() => {
                 userInput.focus();
             }, 100);
@@ -176,20 +174,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Event Listeners
-    chatbotButton.addEventListener('click', function(e) {
-        console.log('Chatbot button clicked');
-        e.preventDefault();
-        e.stopPropagation(); // Prevent event bubbling
-        toggleChatbot();
+    // ensures that chatbox defaults to the bottom of the chat box upon initializing
+    chatbotButton.addEventListener('click', function () {
+        chatbotWidget.style.display = 'flex';
+        setTimeout(scrollToBottom, 100);
     });
-    
+
     closeButton.addEventListener('click', function(e) {
         console.log('Close button clicked');
         e.preventDefault();
-        e.stopPropagation(); // Prevent event bubbling
+        e.stopPropagation();
         chatbotWidget.style.display = 'none';
-        // Save chat history
         localStorage.setItem('adelanteChatHistory', chatBox.innerHTML);
     });
     
@@ -205,12 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Prevent clicks inside the chatbot from closing it
+    // prevent clicks inside the chatbot from closing it
     chatbotWidget.addEventListener('click', function(e) {
         e.stopPropagation();
     });
     
-    // Suggestions functionality
+    // suggestions functionality
     function addSuggestions() {
         const suggestions = [
             "How do I use filters?",
@@ -241,17 +236,16 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
     
-    // Initialize chatbot
-    // Hide chatbot widget initially using inline style
+    // initialize chatbot
     chatbotWidget.style.display = 'none';
     
-    // Load chat history if available
+    // load chat history if available
     const chatHistory = localStorage.getItem('adelanteChatHistory');
     if (chatHistory) {
         chatBox.innerHTML = chatHistory;
     }
     
-    // Clear chat history function
+    // clear chat history function
     window.clearChatHistory = function() {
         chatBox.innerHTML = '';
         localStorage.removeItem('adelanteChatHistory');
@@ -259,6 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addSuggestions();
     };
     
-    // Debug logging
+    // debug logging
     console.log('Chatbot initialized');
 });

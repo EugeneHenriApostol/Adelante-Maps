@@ -25,7 +25,7 @@ llm = ChatOpenAI(temperature=0.5, model='gpt-4o-mini')
 
 # connect to the chromadb
 vector_store = Chroma(
-    collection_name="example_collection",
+    collection_name="data_collection",
     embedding_function=embeddings_model,
     persist_directory=CHROMA_PATH, 
 )
