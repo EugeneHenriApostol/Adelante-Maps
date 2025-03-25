@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-btn');
 
-    // Check if all elements exist
+    // check if all elements exist
     if (!chatbotWidget || !chatbotButton || !closeButton || !chatBox || !userInput || !sendButton) {
         console.error('One or more chatbot elements not found:', {
             chatbotWidget: !!chatbotWidget,
@@ -29,20 +29,20 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const parsedHistory = JSON.parse(storedChatHistory);
                 
-                // Validate and ensure all messages have necessary properties
+                // validate and ensure all messages have necessary properties
                 chatHistory = parsedHistory.map(msg => {
-                    // If message is missing timestamp, add current timestamp
+                    // if message is missing timestamp, add current timestamp
                     if (!msg.timestamp) {
                         msg.timestamp = new Date().toISOString();
                     }
                     
-                    // Ensure all required fields exist
+                    // ensure all required fields exist
                     return {
                         text: msg.text || '',
                         sender: msg.sender || 'bot',
                         timestamp: msg.timestamp
                     };
-                }).filter(msg => msg.text); // Remove any empty messages
+                }).filter(msg => msg.text);
 
                 return chatHistory;
             } catch (error) {
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // function to add message to chat box
     function addMessage(message) {
-        // Ensure message has a timestamp
+        // ensure message has a timestamp
         const messageToAdd = {
             ...message,
             timestamp: message.timestamp || new Date().toISOString()
@@ -67,12 +67,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', messageToAdd.sender);
         
-        // Create message content
+        // create message content
         const contentElement = document.createElement('div');
         contentElement.classList.add('content');
         contentElement.innerHTML = messageToAdd.text;
         
-        // Format timestamp
+        // format timestamp
         const timestamp = document.createElement('div');
         timestamp.classList.add('timestamp');
         const date = new Date(messageToAdd.timestamp);
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         chatBox.appendChild(messageElement);
         
-        // Scroll to the bottom
+        // scroll to the bottom
         chatBox.scrollTop = chatBox.scrollHeight;
 
         return messageToAdd;
@@ -94,14 +94,14 @@ document.addEventListener('DOMContentLoaded', function () {
     async function processUserInput(input) {
         const processedInput = input.trim();
         
-        // Add user message with current timestamp
+        // add user message with current timestamp
         const userMessage = addMessage({ 
             text: processedInput, 
             sender: 'user',
             timestamp: new Date().toISOString()
         });
 
-        // Add to chat history
+        // add to chat history
         chatHistory.push(userMessage);
 
         showTypingIndicator();
@@ -132,17 +132,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const botResponse = data.response || "Sorry, I couldn't retrieve an answer.";
             
-            // Add bot message with current timestamp
+            // add bot message with current timestamp
             const botMessage = addMessage({ 
                 text: botResponse, 
                 sender: 'bot',
                 timestamp: new Date().toISOString()
             });
 
-            // Add to chat history
+            // add to chat history
             chatHistory.push(botMessage);
 
-            // Update localStorage with complete chat history
+            // update localStorage with complete chat history
             localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
 
         } catch (error) {
@@ -242,18 +242,18 @@ document.addEventListener('DOMContentLoaded', function () {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
     
-    // Initialize chat on page load
+    // initialize chat on page load
     function initializeChat() {
-        // Load existing chat history
+        // load existing chat history
         const existingHistory = loadChatHistory();
 
-        // Clear existing chat box content
+        // clear existing chat box content
         chatBox.innerHTML = '';
 
-        // Render existing messages
+        // render existing messages
         existingHistory.forEach(msg => addMessage(msg));
 
-        // If no messages, show welcome message
+        // if no messages, show welcome message
         if (existingHistory.length === 0) {
             const welcomeMessage = {
                 text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
@@ -266,16 +266,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Event Listeners
+    // event Listeners
     chatbotButton.addEventListener('click', function () {
         chatbotWidget.style.display = 'flex';
         initializeChat();
     });
 
+    // submits chat
     sendButton.addEventListener('click', function(e) {
         e.preventDefault();
         handleSubmit();
     });
+
     
     userInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -300,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // initialize chatbot
     chatbotWidget.style.display = 'none';
     
-    // Initialize chat when DOM is loaded
+    // initialize chatbot when DOM is loaded
     initializeChat();
     
     // debug logging
