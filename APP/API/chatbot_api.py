@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-import schemas
+from schemas import ChatRequest, ChatMessage
 from database import get_db
 
 from langchain_community.document_loaders import PyPDFDirectoryLoader
@@ -34,12 +34,21 @@ vector_store = Chroma(
 num_results = 2
 retriever = vector_store.as_retriever(search_kwargs={'k': num_results})
 
-@chatbot_api_router.post('/api/chat')
-async def chat_endpoint(chat_request: schemas.ChatRequest):
-    message = chat_request.message
-    history = chat_request.history
+@chatbot_api_router.post('/maps/chat')
+async def chat_endpoint(chat_request: ChatRequest):
+    # Normalize history to extract text
+    normalized_history = []
+    for item in chat_request.history:
+        if isinstance(item, str):
+            normalized_history.append(item)
+        elif isinstance(item, dict):
+            normalized_history.append(item.get('text', ''))
+        elif isinstance(item, ChatMessage):
+            normalized_history.append(item.text)
 
-    # Retrieve relevant chunks based on the question asked
+    message = chat_request.message
+
+    # Rest of your existing logic remains the same
     docs = retriever.invoke(message)
 
     # Prepare the knowledge string from retrieved documents
@@ -54,7 +63,7 @@ async def chat_endpoint(chat_request: schemas.ChatRequest):
 
     The question: {message}
 
-    Conversation history: {history}
+    Conversation history: {' | '.join(normalized_history)}
 
     The knowledge: {knowledge}
     """
@@ -64,5 +73,5 @@ async def chat_endpoint(chat_request: schemas.ChatRequest):
     for response in llm.stream(rag_prompt):
         full_response += response.content
 
-    # Return the full response as JSON
-    return JSONResponse(content={"answer": full_response})
+    # Return the response with the key expected by frontend
+    return JSONResponse(content={"response": full_response})

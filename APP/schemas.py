@@ -2,8 +2,8 @@
 # pydantic models are responsible for telling the API how the request body should look like
 
 from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel
+from typing import List, Union, Optional
+from pydantic import BaseModel, Field
 
 class Role(BaseModel):
     role_id: int
@@ -63,6 +63,10 @@ class PaginatedResponse(BaseModel):
     reports: List[AffectedArea]  
     total: int
 
+class ChatMessage(BaseModel):
+    text: str
+    sender: str = Field(default='user')
+
 class ChatRequest(BaseModel):
     message: str
-    history: list[str]  
+    history: List[Union[str, ChatMessage, dict]] = Field(default_factory=list)

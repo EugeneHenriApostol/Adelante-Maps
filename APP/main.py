@@ -17,6 +17,7 @@ from API.upload_db_api import upload_db_api_router
 from API.get_students_api import get_students_api_router
 from API.reset_password_api import reset_password_api_router
 from API.event_report_api import event_reports_api_router
+from API.chatbot_api import chatbot_api_router
 
 from Routes.register_route import register_router
 from Routes.login_route import login_router
@@ -70,6 +71,8 @@ app.include_router(event_reports_api_router)
 
 app.include_router(senior_high_file_api_router)
 app.include_router(college_file_api_router)
+
+app.include_router(chatbot_api_router)
 
 if __name__ == "__main__":
     uvicorn.run(app=app, host="localhost", port=8000)

@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    
     // DOM Elements
     const chatbotWidget = document.getElementById('chatbot-widget');
     const chatbotButton = document.getElementById('chatbot-widget-button');
@@ -6,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-btn');
+    const storedChatHistory = localStorage.getItem('adelanteChatHistory');
 
     // Check if all elements exist
     if (!chatbotWidget || !chatbotButton || !closeButton || !chatBox || !userInput || !sendButton) {
@@ -20,33 +22,44 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    let chatHistory = [];
+
+    if (storedChatHistory) {
+        try {
+            const parsedHistory = JSON.parse(storedChatHistory);
+            
+            // Validate and convert history if needed
+            chatHistory = parsedHistory.map(item => {
+                // If item is a string, convert to object
+                if (typeof item === 'string') {
+                    return { 
+                        text: item, 
+                        sender: chatHistory.length % 2 === 0 ? 'user' : 'bot' 
+                    };
+                }
+                return item;
+            });
+
+            // Render messages from history
+            chatHistory.forEach(msg => {
+                if (msg.text) {  // Ensure message has content
+                    addMessage(msg);
+                }
+            });
+        } catch (error) {
+            console.error("Error parsing chat history:", error);
+            localStorage.removeItem('adelanteChatHistory');
+            chatHistory = [];
+        }
+    }
+
+
     console.log('All chatbot elements found');
 
     const welcomeMessage = {
         text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
         sender: 'bot'
     };
-
-    // predefined responses for common questions
-    // const predefinedResponses = {
-    //     'help': "I can help you with:<br>- Finding locations on the map<br>- Explaining filter options<br>- Information about clusters<br>- Data analytics features<br>- Using the geospatial event tool",
-    //     'filter': "You can use the Filter Controls to narrow down data by strand, course, previous school, year level, and age. Click the 'Filter Controls' button in the navbar to access these options.",
-    //     'cluster': "Clusters group students based on location. You can view Senior High or College clusters by address or proximity from the Clusters dropdown menu.",
-    //     'data': "The Data Analytics section provides visualizations for Senior High and College data. Access these from the Data Analytics dropdown in the navbar.",
-    //     'event': "The Geospatial Event Tool allows you to mark areas affected by events like floods or strikes. Click the tool icon in the navbar to activate it.",
-    //     'radius': "You can adjust the circle radius using the slider in the navbar. This affects the area of influence for proximity calculations.",
-    //     'map': "The map displays student locations and various data points. You can interact with it by clicking on markers or using the controls in the navbar.",
-    //     'location': "You can find specific locations by using the search feature or by manually navigating the map.",
-    //     'marker': "Markers on the map represent students or points of interest. Different colors may indicate different categories.",
-    //     'search': "You can search for specific locations or students using the search bar at the top of the map.",
-    //     'zoom': "Use the + and - buttons on the map, or your mouse wheel, to zoom in and out.",
-    //     'export': "You can export data by using the export options in the Data Analytics section.",
-    //     'report': "Event reports can be accessed by clicking on the 'Event Reports' link in the navbar.",
-    //     'login': "You can log in by clicking the user icon in the top right corner.",
-    //     'logout': "To log out, click on the user icon in the top right corner and select 'Logout' from the dropdown menu.",
-    //     'profile': "You can edit your profile by clicking the user icon and selecting 'Edit Profile'.",
-    //     'app': "This app helps you visualize and analyze student data on a map. You can use filters to narrow down data, view clusters of students, and analyze data through various visualizations."
-    // };
 
     // function to add message to chat box
     function addMessage(message) {
@@ -72,54 +85,42 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.appendChild(messageElement);
         
         // scroll to the bottom after adding a message
-        scrollToBottom();
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // function to process user input and generate a response
     async function processUserInput(input) {
-        // trim and lowercase the input for easier matching
-        const processedInput = input.trim().toLowerCase();
+        const processedInput = input.trim();
         
-        // Add user message to chat
-        addMessage({
-            text: input,
-            sender: 'user'
-        });
-        
-        // show typing indicator
+        addMessage({ text: processedInput, sender: 'user' });
+
         showTypingIndicator();
-        
-        // delays response
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // remove typing indicator
-        hideTypingIndicator();
-        
-        // generate response based on input
-        let response = "I'm not sure how to help with that specific question. You can ask me about using the map, filters, clusters, data analytics, or the geospatial event tool.";
-        addMessage({ text: response, sender: 'bot' });
-        
-        // check for predefined responses
-        for (const [keyword, reply] of Object.entries(predefinedResponses)) {
-            if (processedInput.includes(keyword)) {
-                response = reply;
-                break;
-            }
+
+        try {
+            const cleanedHistory = (chatHistory || []).filter(item => typeof item === "string");
+
+            const response = await fetch("/maps/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: processedInput, history: cleanedHistory }) // Ensure history contains only strings
+            });
+
+            const data = await response.json();
+
+            hideTypingIndicator();
+
+            addMessage({ text: data.response || "Sorry, I couldn't retrieve an answer.", sender: 'bot' });
+
+            chatHistory.push(processedInput);  // Store user input
+            chatHistory.push(data.response);   // Store bot response
+
+        } catch (error) {
+            console.error("Error fetching response:", error);
+            hideTypingIndicator();
+            addMessage({ text: "Oops! Something went wrong. Please try again.", sender: 'bot' });
         }
-        
-        // special case for general help or app usage
-        if (processedInput === 'help' || processedInput.includes('what can you do')) {
-            response = predefinedResponses['help'];
-        } else if (processedInput.includes('how to use') || processedInput.includes('how do i use')) {
-            response = predefinedResponses['app'];
-        }
-        
-        // add bot response to chat
-        addMessage({
-            text: response,
-            sender: 'bot'
-        });
     }
+
+
     
     // function to show typing indicator
     function showTypingIndicator() {
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         typingIndicator.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
         typingIndicator.id = 'typing-indicator';
         chatBox.appendChild(typingIndicator);
-        scrollToBottom();
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
     
     // function to hide typing indicator
@@ -177,16 +178,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // ensures that chatbox defaults to the bottom of the chat box upon initializing
     chatbotButton.addEventListener('click', function () {
         chatbotWidget.style.display = 'flex';
-        setTimeout(scrollToBottom, 100);
     });
 
     closeButton.addEventListener('click', function(e) {
         console.log('Close button clicked');
         e.preventDefault();
         e.stopPropagation();
+
+        localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));  // ✅ Store JSON properly
         chatbotWidget.style.display = 'none';
-        localStorage.setItem('adelanteChatHistory', chatBox.innerHTML);
     });
+
+
     
     sendButton.addEventListener('click', function(e) {
         e.preventDefault();
@@ -239,19 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // initialize chatbot
     chatbotWidget.style.display = 'none';
     
-    // load chat history if available
-    const chatHistory = localStorage.getItem('adelanteChatHistory');
-    if (chatHistory) {
-        chatBox.innerHTML = chatHistory;
-    }
-    
-    // clear chat history function
-    window.clearChatHistory = function() {
-        chatBox.innerHTML = '';
-        localStorage.removeItem('adelanteChatHistory');
-        addMessage(welcomeMessage);
-        addSuggestions();
-    };
     
     // debug logging
     console.log('Chatbot initialized');
