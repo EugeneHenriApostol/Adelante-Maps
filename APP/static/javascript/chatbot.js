@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-btn');
-    const storedChatHistory = localStorage.getItem('adelanteChatHistory');
 
     // Check if all elements exist
     if (!chatbotWidget || !chatbotButton || !closeButton || !chatBox || !userInput || !sendButton) {
@@ -23,60 +22,62 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let chatHistory = [];
-
-    if (storedChatHistory) {
-        try {
-            const parsedHistory = JSON.parse(storedChatHistory);
-            
-            // Validate and convert history if needed
-            chatHistory = parsedHistory.map(item => {
-                // If item is a string, convert to object
-                if (typeof item === 'string') {
-                    return { 
-                        text: item, 
-                        sender: chatHistory.length % 2 === 0 ? 'user' : 'bot' 
+    function loadChatHistory() {
+        const storedChatHistory = localStorage.getItem('adelanteChatHistory');
+        
+        if (storedChatHistory) {
+            try {
+                const parsedHistory = JSON.parse(storedChatHistory);
+                
+                // Validate and ensure all messages have necessary properties
+                chatHistory = parsedHistory.map(msg => {
+                    // If message is missing timestamp, add current timestamp
+                    if (!msg.timestamp) {
+                        msg.timestamp = new Date().toISOString();
+                    }
+                    
+                    // Ensure all required fields exist
+                    return {
+                        text: msg.text || '',
+                        sender: msg.sender || 'bot',
+                        timestamp: msg.timestamp
                     };
-                }
-                return item;
-            });
+                }).filter(msg => msg.text); // Remove any empty messages
 
-            // Render messages from history
-            chatHistory.forEach(msg => {
-                if (msg.text) {  // Ensure message has content
-                    addMessage(msg);
-                }
-            });
-        } catch (error) {
-            console.error("Error parsing chat history:", error);
-            localStorage.removeItem('adelanteChatHistory');
-            chatHistory = [];
+                return chatHistory;
+            } catch (error) {
+                console.error("Error parsing chat history:", error);
+                localStorage.removeItem('adelanteChatHistory');
+                return [];
+            }
         }
+        return [];
     }
-
 
     console.log('All chatbot elements found');
 
-    const welcomeMessage = {
-        text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
-        sender: 'bot'
-    };
-
     // function to add message to chat box
     function addMessage(message) {
+        // Ensure message has a timestamp
+        const messageToAdd = {
+            ...message,
+            timestamp: message.timestamp || new Date().toISOString()
+        };
+
         const messageElement = document.createElement('div');
-        messageElement.classList.add('message', message.sender);
+        messageElement.classList.add('message', messageToAdd.sender);
         
-        // create message content
+        // Create message content
         const contentElement = document.createElement('div');
         contentElement.classList.add('content');
-        contentElement.innerHTML = message.text;
+        contentElement.innerHTML = messageToAdd.text;
         
-        // add timestamp
+        // Format timestamp
         const timestamp = document.createElement('div');
         timestamp.classList.add('timestamp');
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const date = new Date(messageToAdd.timestamp);
+        const hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
         timestamp.textContent = `${hours}:${minutes}`;
         
         messageElement.appendChild(contentElement);
@@ -84,43 +85,80 @@ document.addEventListener('DOMContentLoaded', function () {
         
         chatBox.appendChild(messageElement);
         
-        // scroll to the bottom after adding a message
+        // Scroll to the bottom
         chatBox.scrollTop = chatBox.scrollHeight;
+
+        return messageToAdd;
     }
 
     async function processUserInput(input) {
         const processedInput = input.trim();
         
-        addMessage({ text: processedInput, sender: 'user' });
+        // Add user message with current timestamp
+        const userMessage = addMessage({ 
+            text: processedInput, 
+            sender: 'user',
+            timestamp: new Date().toISOString()
+        });
+
+        // Add to chat history
+        chatHistory.push(userMessage);
 
         showTypingIndicator();
 
         try {
-            const cleanedHistory = (chatHistory || []).filter(item => typeof item === "string");
-
             const response = await fetch("/maps/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: processedInput, history: cleanedHistory }) // Ensure history contains only strings
+                body: JSON.stringify({ 
+                    message: processedInput, 
+                    history: chatHistory.map(msg => ({
+                        text: msg.text,
+                        sender: msg.sender,
+                        timestamp: msg.timestamp
+                    }))
+                })
             });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                throw new Error(`Server responded with ${response.status}: ${errorText}`);
+            }
 
             const data = await response.json();
 
             hideTypingIndicator();
 
-            addMessage({ text: data.response || "Sorry, I couldn't retrieve an answer.", sender: 'bot' });
+            const botResponse = data.response || "Sorry, I couldn't retrieve an answer.";
+            
+            // Add bot message with current timestamp
+            const botMessage = addMessage({ 
+                text: botResponse, 
+                sender: 'bot',
+                timestamp: new Date().toISOString()
+            });
 
-            chatHistory.push(processedInput);  // Store user input
-            chatHistory.push(data.response);   // Store bot response
+            // Add to chat history
+            chatHistory.push(botMessage);
+
+            // Update localStorage with complete chat history
+            localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
 
         } catch (error) {
             console.error("Error fetching response:", error);
             hideTypingIndicator();
-            addMessage({ text: "Oops! Something went wrong. Please try again.", sender: 'bot' });
+            
+            const errorMessage = addMessage({ 
+                text: `Error: ${error.message}`, 
+                sender: 'bot',
+                timestamp: new Date().toISOString()
+            });
+
+            chatHistory.push(errorMessage);
+            localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
         }
     }
-
-
     
     // function to show typing indicator
     function showTypingIndicator() {
@@ -157,12 +195,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (chatbotWidget.style.display === 'none' || !chatbotWidget.style.display) {
             chatbotWidget.style.display = 'flex';
             console.log('Showing chatbot');
-            console.log('Chatbot should now be visible');
             
             // if opening the widget and no messages yet, add welcome message
             if (chatBox.children.length === 0) {
-                addMessage(welcomeMessage);
-                addSuggestions();
+                initializeChat();
             }
             
             // focus on input field
@@ -174,39 +210,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Hiding chatbot');
         }
     }
-    
-    // ensures that chatbox defaults to the bottom of the chat box upon initializing
-    chatbotButton.addEventListener('click', function () {
-        chatbotWidget.style.display = 'flex';
-    });
-
-    closeButton.addEventListener('click', function(e) {
-        console.log('Close button clicked');
-        e.preventDefault();
-        e.stopPropagation();
-
-        localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));  // ✅ Store JSON properly
-        chatbotWidget.style.display = 'none';
-    });
-
-
-    
-    sendButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        handleSubmit();
-    });
-    
-    userInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSubmit();
-        }
-    });
-    
-    // prevent clicks inside the chatbot from closing it
-    chatbotWidget.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
     
     // suggestions functionality
     function addSuggestions() {
@@ -239,9 +242,66 @@ document.addEventListener('DOMContentLoaded', function () {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
     
+    // Initialize chat on page load
+    function initializeChat() {
+        // Load existing chat history
+        const existingHistory = loadChatHistory();
+
+        // Clear existing chat box content
+        chatBox.innerHTML = '';
+
+        // Render existing messages
+        existingHistory.forEach(msg => addMessage(msg));
+
+        // If no messages, show welcome message
+        if (existingHistory.length === 0) {
+            const welcomeMessage = {
+                text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
+                sender: 'bot',
+                timestamp: new Date().toISOString()
+            };
+            addMessage(welcomeMessage);
+            chatHistory.push(welcomeMessage);
+            addSuggestions();
+        }
+    }
+
+    // Event Listeners
+    chatbotButton.addEventListener('click', function () {
+        chatbotWidget.style.display = 'flex';
+        initializeChat();
+    });
+
+    sendButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleSubmit();
+    });
+    
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit();
+        }
+    });
+    
+    closeButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
+        chatbotWidget.style.display = 'none';
+    });
+    
+    // prevent clicks inside the chatbot from closing it
+    chatbotWidget.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
     // initialize chatbot
     chatbotWidget.style.display = 'none';
     
+    // Initialize chat when DOM is loaded
+    initializeChat();
     
     // debug logging
     console.log('Chatbot initialized');
