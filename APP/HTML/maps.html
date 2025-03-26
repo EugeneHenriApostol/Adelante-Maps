@@ -157,14 +157,17 @@
 
     <!-- Floating Chatbot Widget -->
     <div id="chatbot-container">
-        <button id="chatbot-widget-button" class="chatbot-widget-btn">
+        <button id="chatbot-widget-button" class="chatbot-widget-btn" aria-label="Open chat assistant">
             <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="Chat Bot" width="30" height="30">
         </button>
     
         <div id="chatbot-widget">
             <div class="chatbot-header">
                 <h5>Adelante Maps Assistant</h5>
-                <button id="close-chatbot" class="chatbot-close-btn">×</button>
+                <div class="chatbot-controls">
+                    <button id="minimize-chatbot" class="chatbot-minimize-btn" aria-label="Minimize chat">–</button>
+                    <button id="close-chatbot" class="chatbot-close-btn" aria-label="Close chat">×</button>
+                </div>
             </div>
             <div class="chatbot-body">
                 <div id="chat-box" class="chat-box"></div>

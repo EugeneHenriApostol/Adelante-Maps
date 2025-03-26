@@ -4,16 +4,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatbotWidget = document.getElementById('chatbot-widget');
     const chatbotButton = document.getElementById('chatbot-widget-button');
     const closeButton = document.getElementById('close-chatbot');
+    const minimizeButton = document.getElementById('minimize-chatbot');
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-btn');
 
     // Check if all elements exist
-    if (!chatbotWidget || !chatbotButton || !closeButton || !chatBox || !userInput || !sendButton) {
+    if (!chatbotWidget || !chatbotButton || !closeButton || !minimizeButton || !chatBox || !userInput || !sendButton) {
         console.error('One or more chatbot elements not found:', {
             chatbotWidget: !!chatbotWidget,
             chatbotButton: !!chatbotButton,
             closeButton: !!closeButton,
+            minimizeButton: !!minimizeButton,
             chatBox: !!chatBox,
             userInput: !!userInput,
             sendButton: !!sendButton
@@ -56,6 +58,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     console.log('All chatbot elements found');
 
+    // Function to scroll to the bottom of the chat box
+    function scrollToBottom() {
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+            console.log('Scrolled to bottom, height:', chatBox.scrollHeight);
+        }
+    }
+
     // function to add message to chat box
     function addMessage(message) {
         // Ensure message has a timestamp
@@ -85,8 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
         
         chatBox.appendChild(messageElement);
         
-        // Scroll to the bottom
-        chatBox.scrollTop = chatBox.scrollHeight;
+        // Scroll to the bottom after adding a message
+        setTimeout(scrollToBottom, 10);
 
         return messageToAdd;
     }
@@ -167,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
         typingIndicator.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
         typingIndicator.id = 'typing-indicator';
         chatBox.appendChild(typingIndicator);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        scrollToBottom();
     }
     
     // function to hide typing indicator
@@ -187,28 +197,46 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    // function to toggle chatbot visibility
-    function toggleChatbot() {
-        console.log('Toggling chatbot visibility');
+    // Function to toggle minimize state
+    function toggleMinimize() {
+        console.log('Toggling minimize state');
+        chatbotWidget.classList.toggle('minimized');
         
-        // toggle visibility using inline styles
-        if (chatbotWidget.style.display === 'none' || !chatbotWidget.style.display) {
-            chatbotWidget.style.display = 'flex';
-            console.log('Showing chatbot');
-            
-            // if opening the widget and no messages yet, add welcome message
-            if (chatBox.children.length === 0) {
-                initializeChat();
-            }
-            
-            // focus on input field
-            setTimeout(() => {
-                userInput.focus();
-            }, 100);
+        if (chatbotWidget.classList.contains('minimized')) {
+            minimizeButton.textContent = '+';
+            minimizeButton.title = 'Maximize';
         } else {
-            chatbotWidget.style.display = 'none';
-            console.log('Hiding chatbot');
+            minimizeButton.textContent = '–';
+            minimizeButton.title = 'Minimize';
+            // When maximizing, scroll to bottom
+            setTimeout(scrollToBottom, 100);
         }
+    }
+    
+    // Function to show chatbot
+    function showChatbot() {
+        console.log('Showing chatbot');
+        chatbotWidget.style.display = 'flex';
+        chatbotWidget.classList.remove('minimized');
+        minimizeButton.textContent = '–';
+        minimizeButton.title = 'Minimize';
+        
+        // Initialize chat if needed
+        initializeChat();
+        
+        // Focus on input field
+        setTimeout(() => {
+            userInput.focus();
+            scrollToBottom();
+        }, 100);
+    }
+    
+    // Function to hide chatbot
+    function hideChatbot() {
+        console.log('Hiding chatbot');
+        chatbotWidget.style.display = 'none';
+        // Save chat history
+        localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
     }
     
     // suggestions functionality
@@ -239,39 +267,69 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         
         chatBox.appendChild(suggestionsContainer);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        scrollToBottom();
     }
     
     // Initialize chat on page load
     function initializeChat() {
-        // Load existing chat history
-        const existingHistory = loadChatHistory();
+        // Only initialize if not already initialized
+        if (chatBox.children.length === 0) {
+            // Load existing chat history
+            const existingHistory = loadChatHistory();
 
-        // Clear existing chat box content
-        chatBox.innerHTML = '';
+            // Clear existing chat box content
+            chatBox.innerHTML = '';
 
-        // Render existing messages
-        existingHistory.forEach(msg => addMessage(msg));
+            // Render existing messages
+            existingHistory.forEach(msg => addMessage(msg));
 
-        // If no messages, show welcome message
-        if (existingHistory.length === 0) {
-            const welcomeMessage = {
-                text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
-                sender: 'bot',
-                timestamp: new Date().toISOString()
-            };
-            addMessage(welcomeMessage);
-            chatHistory.push(welcomeMessage);
-            addSuggestions();
+            // If no messages, show welcome message
+            if (existingHistory.length === 0) {
+                const welcomeMessage = {
+                    text: "Hello! I'm your Adelante Maps Assistant. How can I help you today?",
+                    sender: 'bot',
+                    timestamp: new Date().toISOString()
+                };
+                addMessage(welcomeMessage);
+                chatHistory.push(welcomeMessage);
+                addSuggestions();
+            }
         }
     }
 
     // Event Listeners
-    chatbotButton.addEventListener('click', function () {
-        chatbotWidget.style.display = 'flex';
-        initializeChat();
+    chatbotButton.addEventListener('click', function(e) {
+        console.log('Chatbot button clicked');
+        e.preventDefault();
+        e.stopPropagation(); // Prevent event bubbling
+        
+        // Always ensure the button is visible
+        chatbotButton.style.display = 'flex';
+        
+        if (chatbotWidget.style.display === 'none' || !chatbotWidget.style.display) {
+            showChatbot();
+        } else {
+            hideChatbot();
+        }
     });
 
+    closeButton.addEventListener('click', function(e) {
+        console.log('Close button clicked');
+        e.preventDefault();
+        e.stopPropagation(); // Prevent event bubbling
+        hideChatbot();
+        
+        // Ensure the button is visible
+        chatbotButton.style.display = 'flex';
+    });
+    
+    minimizeButton.addEventListener('click', function(e) {
+        console.log('Minimize button clicked');
+        e.preventDefault();
+        e.stopPropagation(); // Prevent event bubbling
+        toggleMinimize();
+    });
+    
     sendButton.addEventListener('click', function(e) {
         e.preventDefault();
         handleSubmit();
@@ -284,15 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    closeButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
-        chatbotWidget.style.display = 'none';
-    });
-    
-    // prevent clicks inside the chatbot from closing it
+    // Prevent clicks inside the chatbot from closing it
     chatbotWidget.addEventListener('click', function(e) {
         e.stopPropagation();
     });
@@ -300,8 +350,39 @@ document.addEventListener('DOMContentLoaded', function () {
     // initialize chatbot
     chatbotWidget.style.display = 'none';
     
-    // Initialize chat when DOM is loaded
-    initializeChat();
+    // Ensure the button is always visible
+    chatbotButton.style.display = 'flex';
+    
+    // Handle window events to ensure button visibility
+    window.addEventListener('click', function() {
+        // Always ensure the button is visible
+        chatbotButton.style.display = 'flex';
+    });
+    
+    // Prevent the button from being hidden
+    setInterval(function() {
+        if (chatbotButton.style.display !== 'flex') {
+            chatbotButton.style.display = 'flex';
+        }
+    }, 500);
+    
+    // Add event listener for window resize to ensure proper scrolling
+    window.addEventListener('resize', function() {
+        if (chatbotWidget.style.display !== 'none') {
+            setTimeout(scrollToBottom, 100);
+        }
+    });
+    
+    // MutationObserver to watch for changes in the chat box and scroll to bottom
+    const observer = new MutationObserver(function(mutations) {
+        scrollToBottom();
+    });
+    
+    observer.observe(chatBox, { 
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
     
     // debug logging
     console.log('Chatbot initialized');
