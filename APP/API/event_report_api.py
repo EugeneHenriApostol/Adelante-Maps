@@ -3,6 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 import models, auth, schemas
 from database import get_db
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+from datetime import datetime, timezone
 
 event_reports_api_router = APIRouter()
 
@@ -95,6 +103,66 @@ def get_all_event_reports(db: Session = Depends(get_db), current_user: models.Us
         for report in reports
     ]
 
+@event_reports_api_router.get("/api/event-reports/export/pdf")
+async def export_event_reports_pdf(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserInDBBase = Depends(auth.get_current_user)
+):
+    try:
+        # get report for current user
+        reports = db.query(models.EventReports).filter(
+            models.EventReports.user_id == current_user.user_id
+        ).all()
+
+        if not reports:
+            raise HTTPException(status_code=404, detail="No event reports found")
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        
+        # extract table data
+        table_data = [
+            ['Event Type', 'Students Affected', 'Total Area (km²)', 'Date', 'Clustering Type', 'Education Level']
+        ]
+        
+        for report in reports:
+            table_data.append([
+                report.event_type or 'N/A',
+                str(report.number_of_students_affected or 0),
+                f"{report.total_area or 0:.2f}",
+                report.created_at.strftime("%Y-%m-%d") if report.created_at else "N/A",
+                report.clustering_type or 'N/A',
+                report.education_level or 'N/A'
+            ])
+
+        # table pdf output
+        table = Table(table_data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#065F46")),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 12),
+            ('BOTTOMPADDING', (0,0), (-1,0), 12),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#E6F2EF")),
+            ('GRID', (0,0), (-1,-1), 1, colors.black)
+        ]))
+
+        # build pdf
+        doc.build([table])
+
+        # prepare response
+        buffer.seek(0)
+        filename = f"event_reports_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return StreamingResponse(
+            buffer,
+            media_type='application/pdf',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
 
 # API to delete an event report by ID
 @event_reports_api_router.delete('/api/event-reports/{report_id}', status_code=204)
