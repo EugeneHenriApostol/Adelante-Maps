@@ -207,7 +207,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         n_clusters = unique_lat_long.shape[0]
 
         X = df[['latitude', 'longitude']].values
-        kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
         df['cluster_address'] = kmeans_address.fit_predict(X)
 
         # cluster proximity, keep students who are only in cebu. 6 is the optimal k
@@ -218,14 +218,17 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
 
         if not df_cebu.empty:
             k = 6  # optimal K
-            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init=10)
+            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto')
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
-            # prevent duplicate rows during merge
-            df_cebu = df_cebu.drop_duplicates(subset=['latitude', 'longitude'])
+            # Merge with all latitude-longitude pairs
             df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
+
+            # Ensure unique student IDs by keeping the first occurrence
+            df = df.groupby('stud_id', as_index=False).first()
         else:
             df['cluster_proximity'] = -1  # assign -1 for students outside Cebu
+
 
         # make sure no NaN values remain
         df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
