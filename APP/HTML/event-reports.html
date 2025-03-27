@@ -25,6 +25,9 @@
                             Maps
                         </a>
                     </div>
+                    <button id="exportPdfBtn" class="py-3 px-3 text-white hover:bg-red-600">
+                        <i class="fas fa-file-pdf mr-2"></i>Export to PDF
+                    </button>
                 </div>
             </div>
         </div>
@@ -310,6 +313,33 @@
                 }
             };
         }
+
+        // pdf extracting
+        document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/event-reports/export/pdf', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('PDF export failed');
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `event_reports_${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error('PDF Export Error:', error);
+                    showModal('Export Error', 'Failed to generate PDF. Please try again.');
+                }
+            });
 
         // Function to populate the table
         function populateTable(reports) {
