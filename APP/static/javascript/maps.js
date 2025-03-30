@@ -900,76 +900,116 @@ function handleStudentRoute(student, focusRoute = true) {
     const studentLat = parseFloat(student.latitude);
     const studentLng = parseFloat(student.longitude);
 
+    // validate stidemt coordinates
     if (isNaN(studentLat) || isNaN(studentLng)) {
-        console.error(`Invalid lat/lng for student: ${student.name}`);
+        console.error('Invalid student coordinates:', student.latitude, student.longitude);
         return;
     }
 
     const selectedCampus = determineCampus(student);
     if (!selectedCampus) {
-        console.error('Unable to determine the campus for:', student);
+        console.error('Unable to determine campus for student:', student);
         return;
     }
+
+    // clear any existing route first
+    clearRoute();
+
+    const campusLat = selectedCampus.lat;
+    const campusLng = selectedCampus.lng;
+
+    // create waypoints array
+    const waypoints = [
+        L.latLng(studentLat, studentLng),
+        L.latLng(campusLat, campusLng)
+    ];
 
     const routeColor = studentType(student) ? 'blue' : 'green';
 
-    // Find the marker for this student
+    // configure the routing control
+    currentRouteControl = L.Routing.control({
+        waypoints: waypoints,
+        routeWhileDragging: false,
+        showAlternatives: true,
+        fitSelectedRoutes: focusRoute,
+        createMarker: function(i, wp, nWps) {
+            // ensures that start and end points are consistent (student loc to respective campuses)
+            if (i === 0 || i === nWps - 1) {
+                return L.marker(wp.latLng, {
+                    icon: i === 0 ? 
+                        L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div style='background-color:#4a83ec;' class='marker-pin'></div>",
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        }) : 
+                        L.icon({
+                            iconUrl: SCHOOL_ICON_URL, 
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 40]
+                        })
+                }).bindPopup(i === 0 ? `Student: ${student.name}` : `Campus: ${selectedCampus.name}`);
+            }
+            return null;
+        },
+        lineOptions: {
+            styles: [{color: routeColor, weight: 5, opacity: 0.8}]
+        },
+        altLineOptions: {
+            styles: [
+                {color: '#800000', weight: 4, opacity: 0.7, dashArray: '5,10'},
+                {color: '#000080', weight: 4, opacity: 0.6, dashArray: '5,10'},
+                {color: '#006400', weight: 4, opacity: 0.5, dashArray: '5,10'}
+            ]
+        }
+    }).addTo(map);
+
+    // handle routes found
+    currentRouteControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        console.log('Found routes:', routes);
+        
+        // clear previous routes
+        routesLayer.clearLayers();
+        
+        // add all routes to the map layer
+        routes.forEach((route, index) => {
+            const isMainRoute = index === 0;
+            const style = isMainRoute ? 
+                {color: routeColor, weight: 5, opacity: 0.8} : 
+                currentRouteControl.options.altLineOptions.styles[index - 1];
+            
+            const routeLine = L.polyline(route.coordinates, style);
+            
+            // Add routes info
+            routeLine.bindTooltip(
+                `${isMainRoute ? 'Main' : 'Alt'} route: ${(route.summary.totalDistance / 1000).toFixed(1)} km, ` +
+                `${Math.round(route.summary.totalTime / 60)} min`
+            );
+            
+            // switching to either main or alt routes
+            routeLine.on('click', function() {
+                routesLayer.removeLayer(routeLine);
+                routesLayer.addLayer(routeLine);
+                
+                if (currentRouteControl._plan) {
+                    currentRouteControl._plan.setWaypoints(route.waypoints);
+                }
+            });
+            
+            routesLayer.addLayer(routeLine);
+        });
+    });
+
+    currentRouteControl.on('routingerror', function(e) {
+        console.error('Routing error:', e.error);
+        alert(`Could not calculate route: ${e.error.message}`);
+    });
+
     const clickedMarker = markers.getLayers().find(marker => 
         marker.options.studentData === student
     );
-
-    // If clicking on the same marker, clear the route and reset the icon
-    if (currentRouteMarker === clickedMarker) {
-        console.log('Clearing existing route');
-        clearRoute();
-        return;
-    }
-
-    // Clear any existing route
-    clearRoute();
-
-    currentRouteControl = L.Routing.control({
-        waypoints: [
-            L.latLng(studentLat, studentLng),
-            L.latLng(selectedCampus.lat, selectedCampus.lng),
-        ],
-        lineOptions: {
-            styles: [{ color: routeColor, weight: 4 }],
-        },
-        createMarker: (i, wp, nWps) => {
-            if (i === 0) return L.marker(wp.latLng).bindPopup(`Student: ${student.name}`);
-            if (i === nWps - 1) return L.marker(wp.latLng, {
-                icon: L.icon({ iconUrl: SCHOOL_ICON_URL, iconSize: [40, 40], iconAnchor: [20, 40] })
-            }).bindPopup(`Campus: ${selectedCampus.name}`);
-        },
-    }).addTo(map);
-
-    currentRouteControl.on('routesfound', e => {
-        const routes = e.routes;
-        console.log('Route found:', routes);
-        currentRoute = L.polyline(routes[0].coordinates, { color: routeColor });
-        routesLayer.addLayer(currentRoute);
-    });
-
-    // store the current marker and change its icon
     currentRouteMarker = clickedMarker;
-    if (currentRouteMarker) {
-        currentRouteMarker.setIcon(L.divIcon({
-            className: 'custom-div-icon',
-            html: "<div style='background-color:#4a83ec;' class='marker-pin'></div>",
-            iconSize: [30, 42],
-            iconAnchor: [15, 42]
-        }));
-    }
-    console.log('Current route marker set:', currentRouteMarker);
-}
-
-function toggleRouteVisibility(isVisible) {
-    if (currentRouteControl) currentRouteControl.getContainer().style.display = isVisible ? 'block' : 'none';
-    if (currentRoute) {
-        isVisible ? routesLayer.addLayer(currentRoute) : routesLayer.removeLayer(currentRoute);
-    }
-    if (!isVisible) clearRoute();
 }
 
 function clearRoute() {
@@ -977,14 +1017,47 @@ function clearRoute() {
         map.removeControl(currentRouteControl);
         currentRouteControl = null;
     }
-    if (currentRoute) {
-        routesLayer.removeLayer(currentRoute);
-        currentRoute = null;
-    }
+    routesLayer.clearLayers();
+    
     if (currentRouteMarker) {
         currentRouteMarker.setIcon(L.Icon.Default.prototype);
         currentRouteMarker = null;
     }
+    currentRoute = null;
+}
+
+function toggleRouteVisibility(isVisible) {
+    if (currentRouteControl) {
+        currentRouteControl.getContainer().style.display = isVisible ? 'block' : 'none';
+        
+        // toggle visibility of alternatives too
+        if (currentRouteControl.options.showAlternatives) {
+            const containers = document.querySelectorAll('.leaflet-routing-alt');
+            containers.forEach(container => {
+                container.style.display = isVisible ? 'block' : 'none';
+            });
+        }
+        
+        // also toggle the route lines
+        if (!isVisible && routesLayer) {
+            routesLayer.eachLayer(layer => {
+                layer.setStyle({ opacity: 0 });
+            });
+        } else if (isVisible && routesLayer) {
+            routesLayer.eachLayer((layer, index) => {
+                if (layer === currentRoute) {
+                    layer.setStyle({ opacity: 0.8 });
+                } else {
+                    // alternative routes
+                    const altIndex = index - 1;
+                    const opacity = altIndex >= 0 ? 0.7 - (altIndex * 0.1) : 0.7;
+                    layer.setStyle({ opacity: opacity });
+                }
+            });
+        }
+    }
+    
+    if (!isVisible) clearRoute();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
