@@ -11,6 +11,7 @@ let allMarkers = [];
 let currentCircle = null;
 let currentStudentData = [];
 let clusterStatsChart;
+let previouslySelectedStudent = null;
 
 let currentFilters = {
     course: new Set(),
@@ -750,8 +751,21 @@ function getAffectedIcon() {
 }
 
 function generatePopupContent(student, isAffected) {
-    let content = "";
+    if (!student) {
+        console.error('Student data is undefined in generatePopupContent');
+        return "Error loading student data";
+    }
 
+    let content = "<div class='student-popup'>";
+
+    // Add a header with student name if available
+    if (student.name) {
+        content += `<h4>${student.name}</h4>`;
+    } else {
+        content += `<h4>Student Information</h4>`;
+    }
+
+    // Add educational information
     if (student.strand && !student.course) {
         content += `<b>Strand:</b> ${student.strand}<br>`;
     }
@@ -764,14 +778,31 @@ function generatePopupContent(student, isAffected) {
     content += `<b>Coordinates:</b> (${student.latitude}, ${student.longitude})<br>`;
     content += `<b>Previous School:</b> ${student.previous_school}<br>`;
 
+    // Display affected status if applicable
     if (isAffected) {
-        content += '<b>Affected by:</b> ';
-        if (affectedStudents.flood.includes(student)) content += 'Flood ';
-        if (affectedStudents.strike.includes(student)) content += 'Transport Strike ';
-        if (affectedStudents.restricted.includes(student)) content += 'Mobility Restriction';
-        if (affectedStudents.fire.includes(student)) content += 'Fire';
+        content += '<div class="affected-status"><b>Affected by:</b> ';
+        if (affectedStudents.flood.includes(student)) content += '<span class="flood-tag">Flood</span> ';
+        if (affectedStudents.strike.includes(student)) content += '<span class="strike-tag">Transport Strike</span> ';
+        if (affectedStudents.restricted.includes(student)) content += '<span class="restricted-tag">Mobility Restriction</span> ';
+        if (affectedStudents.fire.includes(student)) content += '<span class="fire-tag">Fire</span>';
+        content += '</div>';
     }
 
+    // Check if this student is the one with an active route
+    const isActiveRoute = previouslySelectedStudent === student;
+    
+    // Add route controls
+    content += '<div class="route-controls">';
+    if (isActiveRoute) {
+        content += `<button class="route-btn hide-route-btn" onclick="clearRoute()">Hide Route</button>`;
+    } else {
+        content += `<button class="route-btn show-route-btn" onclick="handleStudentRoute(${JSON.stringify(student)})">Show Route to Campus</button>`;
+    }
+    content += '</div>';
+
+    content += '</div>';
+
+    // Return the HTML content for the popup
     return content;
 }
 
@@ -900,20 +931,30 @@ function handleStudentRoute(student, focusRoute = true) {
     const studentLat = parseFloat(student.latitude);
     const studentLng = parseFloat(student.longitude);
 
-    // validate stidemt coordinates
+    // validate student coordinates
     if (isNaN(studentLat) || isNaN(studentLng)) {
         console.error('Invalid student coordinates:', student.latitude, student.longitude);
         return;
     }
+
+    // check if clicking the same student
+    if (previouslySelectedStudent === student) {
+        // Clear the route when clicking the same student
+        clearRoute();
+        return;
+    }
+
+    // clear any existing route first
+    clearRoute();
+
+    // set the newly selected student
+    previouslySelectedStudent = student;
 
     const selectedCampus = determineCampus(student);
     if (!selectedCampus) {
         console.error('Unable to determine campus for student:', student);
         return;
     }
-
-    // clear any existing route first
-    clearRoute();
 
     const campusLat = selectedCampus.lat;
     const campusLng = selectedCampus.lng;
@@ -981,7 +1022,7 @@ function handleStudentRoute(student, focusRoute = true) {
             
             const routeLine = L.polyline(route.coordinates, style);
             
-            // Add routes info
+            // add routes info
             routeLine.bindTooltip(
                 `${isMainRoute ? 'Main' : 'Alt'} route: ${(route.summary.totalDistance / 1000).toFixed(1)} km, ` +
                 `${Math.round(route.summary.totalTime / 60)} min`
@@ -1006,10 +1047,19 @@ function handleStudentRoute(student, focusRoute = true) {
         alert(`Could not calculate route: ${e.error.message}`);
     });
 
+    // find and store the clicked marker
     const clickedMarker = markers.getLayers().find(marker => 
         marker.options.studentData === student
     );
+    
     currentRouteMarker = clickedMarker;
+    
+    // update the popup content to show the hide route button
+    if (clickedMarker && clickedMarker.isPopupOpen()) {
+        clickedMarker.setPopupContent(
+            generatePopupContent(student, isStudentAffected(student))
+        );
+    }
 }
 
 function clearRoute() {
@@ -1020,9 +1070,18 @@ function clearRoute() {
     routesLayer.clearLayers();
     
     if (currentRouteMarker) {
-        currentRouteMarker.setIcon(L.Icon.Default.prototype);
+        // update the popup content when clearing the route
+        if (currentRouteMarker.isPopupOpen()) {
+            currentRouteMarker.setPopupContent(
+                generatePopupContent(currentRouteMarker.options.studentData, 
+                isStudentAffected(currentRouteMarker.options.studentData))
+            );
+        }
         currentRouteMarker = null;
     }
+    
+    // reset the previously selected student
+    previouslySelectedStudent = null;
     currentRoute = null;
 }
 
@@ -1038,7 +1097,7 @@ function toggleRouteVisibility(isVisible) {
             });
         }
         
-        // also toggle the route lines
+        // toggle the route lines
         if (!isVisible && routesLayer) {
             routesLayer.eachLayer(layer => {
                 layer.setStyle({ opacity: 0 });
@@ -1054,6 +1113,14 @@ function toggleRouteVisibility(isVisible) {
                     layer.setStyle({ opacity: opacity });
                 }
             });
+        }
+        
+        // update current marker popup if it's open
+        if (currentRouteMarker && currentRouteMarker.isPopupOpen()) {
+            currentRouteMarker.setPopupContent(
+                generatePopupContent(currentRouteMarker.options.studentData, 
+                isStudentAffected(currentRouteMarker.options.studentData))
+            );
         }
     }
     
