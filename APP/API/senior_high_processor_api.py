@@ -41,14 +41,14 @@ def preprocess_file_seniorhigh(file_path: str) -> io.BytesIO:
     # add incremental student id
     df.insert(0, 'stud_id', range(1, len(df) + 1))
 
-    # fill missing values and preprocess
-    df['year'] = df['year'].fillna('N/A').astype(str).str.strip()
-    df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0)
-    df['full_address'] = (
-        df['barangay'].fillna('Unknown') + ', ' +
-        df['city'].fillna('Unknown') + ', ' + 
-        df['province'].fillna('Unknown')
-    ).str.strip()
+    # fill missing values 
+    df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
+    df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
+    df["strand"] = df["strand"].fillna("N/A").astype(str).str.strip()
+    df["previous_school"] = df["previous_school"].fillna("Unknown").str.strip()
+    df["city"] = df["city"].fillna("Unknown").str.strip()
+    df["province"] = df["province"].fillna("Unknown").str.strip()
+    df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
 
     # save the cleaned data in an in-memory file
     output = io.BytesIO()
@@ -56,24 +56,6 @@ def preprocess_file_seniorhigh(file_path: str) -> io.BytesIO:
     output.seek(0)
     return output
 
-# remove column function
-def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
-    try:
-        df = pd.read_csv(file_content)
-
-        if column_name in df.columns:
-            df.drop(columns=[column_name], inplace=True)
-        else:
-            raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
-
-        output = io.BytesIO()
-        df.to_csv(output, index=False)    
-        output.seek(0)
-        return output
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Error processfile file {e}')     
-    
 # upload raw senior high student file api
 @senior_high_file_api_router.post('/api/upload/raw/seniorhigh-file')
 async def upload_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
@@ -96,9 +78,27 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
     return StreamingResponse(
         processed_file, 
         media_type='text/csv', 
-        headers={'Content-Disposition': 'attachment; filename=preprocessed_seniorhigh_file.csv'}
+        headers={'Content-Disposition': 'attachment; filename=[1]_preprocessed_seniorhigh_file.csv'}
         )
 
+# remove column function
+def remove_column(file_content: io.BytesIO, column_name: str) -> io.BytesIO:
+    try:
+        df = pd.read_csv(file_content)
+
+        if column_name in df.columns:
+            df.drop(columns=[column_name], inplace=True)
+        else:
+            raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
+
+        output = io.BytesIO()
+        df.to_csv(output, index=False)    
+        output.seek(0)
+        return output
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f'Error processfile file {e}')     
+    
 # api endpoint to remove column
 @senior_high_file_api_router.post('/api/remove-column')
 async def remove_strand_abbrev(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
@@ -140,7 +140,7 @@ async def geocode_file(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
     
-    api_key = "eY_QRv4JiuZ6uNkLicgxHwkS9gCuygfWNkZLKK6meN4"  # replace api key (free but expires after 1000 uses)
+    api_key = os.getenv("GEOCODE_API_KEY")  # replace api key (free but expires after 1000 uses)
 
     try:
         file_content = io.BytesIO(await file.read())
@@ -210,31 +210,28 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
         df['cluster_address'] = kmeans_address.fit_predict(X)
 
-        # cluster proximity, keep students who are only in cebu. 6 is the optimal k
+        # cluster proximity, keep students who are only in cebu
         df_cebu = df[
             df['province'].str.contains('Cebu', na=False, case=False) |
             df['full_address'].str.contains('Cebu', na=False, case=False)
         ].copy()
 
         if not df_cebu.empty:
-            k = 6  # optimal K
-            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto')
+            k = 6 
+            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto', init='k-means++')
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
-            # Merge with all latitude-longitude pairs
+            # merge with all latitude-longitude pairs
             df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
 
-            # Ensure unique student IDs by keeping the first occurrence
+            # ensure unique student IDs by keeping the first occurrence
             df = df.groupby('stud_id', as_index=False).first()
         else:
-            df['cluster_proximity'] = -1  # assign -1 for students outside Cebu
+            df['cluster_proximity'] = -1  # assign -1 for students who are not from Cebu
 
 
-        # make sure no NaN values remain
+        # make sure no NAN values remain
         df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
-
-        # print cluster counts
-        print(df[['cluster_address', 'cluster_proximity']].value_counts())
 
         # convert DataFrame back to CSV
         output = io.BytesIO()

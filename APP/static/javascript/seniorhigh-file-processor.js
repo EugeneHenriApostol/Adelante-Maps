@@ -47,7 +47,7 @@ form.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'preprocessed_seniorhigh_file.csv';
+        downloadLink.download = '[1]_preprocessed_seniorhigh_file.csv';
         downloadLink.click();
 
         statusMessage.textContent = "File preprocessed and downloaded successfully.";
@@ -106,7 +106,7 @@ removeColumnForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'updated_seniorhigh_file.csv';
+        downloadLink.download = '[2]_updated_seniorhigh_file.csv';
         downloadLink.click();
 
 
@@ -179,7 +179,7 @@ geocodeForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'geocoded_seniorhigh_file.csv';
+        downloadLink.download = '[3]_geocoded_seniorhigh_file.csv';
         downloadLink.click();
 
         geocodeStatus.textContent = "Geocoding completed and file downloaded successfully!";
@@ -240,7 +240,7 @@ clusterForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'clustered_seniorhigh_file.csv';
+        downloadLink.download = '[4]_clustered_seniorhigh_file.csv';
         downloadLink.click();
 
         clusterStatus.textContent = "Clustering completed and file downloaded successfully!";

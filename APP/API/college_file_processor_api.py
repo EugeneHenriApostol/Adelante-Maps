@@ -34,20 +34,20 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
         "previous_school", "city", "province", "barangay"
     ]
 
-    # Check if the uploaded file matches the expected structure
+    # check if the uploaded file matches the expected structure
     if df.shape[1] != len(expected_columns):
         raise HTTPException(
             status_code=400,
             detail=f"Column count mismatch: expected {len(expected_columns)}, got {df.shape[1]}"
         )
 
-    # Assign column names to match the uploaded CSV
+    # assign column names to match the uploaded CSV
     df.columns = expected_columns
 
-    # Add incremental student ID
+    # add incremental student ID
     df.insert(0, "stud_id", range(1, len(df) + 1))
 
-    # Fill missing values
+    # fill missing values
     df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
     df["course"] = df["course"].fillna("N/A").astype(str).str.strip()
     df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
@@ -57,15 +57,15 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
     df["province"] = df["province"].fillna("Unknown").str.strip()
     df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
 
-    # Clean the 'strand' column by removing leading digits
+    # clean the strand column by removing leading digits
     df["strand"] = df["strand"].apply(lambda x: re.sub(r"^\d{2}", "", x).strip())
 
-    # Create the full address column by concatenating city, province, and barangay
+    # create the full address column by concatenating city, province, and barangay columns
     df["full_address"] = (
         df["barangay"] + ", " + df["city"] + ", " + df["province"]
     ).str.strip()
 
-    # Save the cleaned file
+    # save the cleaned file
     output = io.BytesIO()
     df.to_csv(output, index=False)
     output.seek(0)
@@ -75,11 +75,11 @@ def preprocess_file_college(file_path: str) -> io.BytesIO:
 # upload raw college file api
 @college_file_api_router.post("/api/upload/raw/college-file")
 async def upload_file(file: UploadFile = File(...)):
-    # Validate file type
+    # validate file type
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
 
-    # Save the uploaded file to a temporary location
+    # save the uploaded file to a temporary location
     try:
         with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
@@ -90,11 +90,11 @@ async def upload_file(file: UploadFile = File(...)):
     finally:
         os.remove(tmp_path)  # delete temp file after preprocessing
 
-    # return the processed file as a response without saving to the server
+    # return the processed file
     return StreamingResponse(
         processed_file,
         media_type='text/csv',
-        headers={"Content-Disposition": "attachment; filename=preprocessed_college_file.csv"}
+        headers={"Content-Disposition": "attachment; filename=[1]_preprocessed_college_file.csv"}
     )
 
 # function to geocode address using HERE API
@@ -116,7 +116,7 @@ async def geocode_file(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
     
-    api_key = "eY_QRv4JiuZ6uNkLicgxHwkS9gCuygfWNkZLKK6meN4"  # replace api key (free but expires after 1000 uses)
+    api_key = os.getenv("GEOCODE_API_KEY")  # replace api key (free but expires after 1000 uses)
 
     try:
         file_content = io.BytesIO(await file.read())
@@ -179,7 +179,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
         df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
 
-        # drop rows with NaN values
+        # drop rows with NAN values
         df.dropna(subset=['latitude', 'longitude'], inplace=True)
 
         if df.empty:
@@ -193,30 +193,27 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
         df['cluster_address'] = kmeans_address.fit_predict(X)
 
-        # cluster proximity, keep students who are only in Cebu. 6 is the optimal k
+        # cluster proximity, keep students who are only in cebu
         df_cebu = df[
             df['province'].str.contains('Cebu', na=False, case=False) |
             df['full_address'].str.contains('Cebu', na=False, case=False)
         ].copy()
 
         if not df_cebu.empty:
-            k = 6  # optimal K
-            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto')
+            k = 6  
+            kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto', init='k-means++')
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
-            # Merge with all latitude-longitude pairs
+            # merge with all latitude-longitude pairs
             df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
 
-            # Ensure unique student IDs by keeping the first occurrence
+            # ensure unique student IDs by keeping the first occurrence
             df = df.groupby('stud_id', as_index=False).first()
         else:
-            df['cluster_proximity'] = -1  # assign -1 for students outside Cebu
+            df['cluster_proximity'] = -1  # assign -1 for students who are not from Cebu
 
-        # ensure no NaN values
+        # ensure no NAN values
         df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
-
-        # Debugging: Print cluster counts
-        print(df[['cluster_address', 'cluster_proximity']].value_counts())
 
         # ensure no unnamed first column
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
