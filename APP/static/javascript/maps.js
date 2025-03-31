@@ -1009,6 +1009,54 @@ function handleStudentRoute(student, focusRoute = true) {
     currentRouteControl.on('routesfound', function(e) {
         const routes = e.routes;
         console.log('Found routes:', routes);
+
+        if (routes && routes.length > 0) {
+            console.log("🟢 Routes exist, proceeding...");
+            try {
+                // Extract distances and times from all routes
+                const distances = routes.map(route => (route.summary.totalDistance / 1000).toFixed(2));
+                const times = routes.map(route => (route.summary.totalTime / 60).toFixed(2));
+                
+                // Create the payload exactly matching the RouteDataInput model
+                const payload = {
+                    student_name: student.name || "Unknown Student",
+                    campus_name: selectedCampus.name || "Unknown Campus",
+                    distances: distances.map(Number),  // Convert string to number
+                    times: times.map(Number)          // Convert string to number
+                };
+                
+                console.log("📦 Payload constructed:", payload);
+                console.log("🚀 Preparing to send POST request to /evaluate-routes-data");
+
+                fetch('/evaluate-routes-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(`API error: ${JSON.stringify(err)}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("✅ Route evaluation successful:", data);
+                    // Handle successful response here
+                })
+                .catch(error => { 
+                    console.error("❌ Fetch API call failed:", error);
+                });
+
+            } catch (error) {
+                console.error("❌ Error occurred inside routesfound before fetch:", error);
+            }
+        } else {
+            console.warn("🟡 routesfound fired, but no routes available.");
+        }
         
         // clear previous routes
         routesLayer.clearLayers();
@@ -1125,6 +1173,115 @@ function toggleRouteVisibility(isVisible) {
     }
     
     if (!isVisible) clearRoute();
+}
+
+function evaluateRoutes(student, campus, routes) {
+    if (!routes || routes.length === 0) {
+        console.warn(`No routes found for ${student.name} to ${campus.name}`);
+        return;
+    }
+
+    const mainRoute = routes[0];
+    const alternativeRoutes = routes.slice(1);
+
+    // Compute evaluation metrics
+    const evaluationResults = {
+        routeDiversity: calculateRouteDiversity(routes),
+        coverageAnalysis: calculateCoverage(routes),
+        distanceVariation: analyzeDistanceVariation(routes),
+        timeVariation: analyzeTimeVariation(routes),
+        congestionEstimation: estimateCongestion(routes),
+        routeQualityIndex: computeRouteQuality(routes)
+    };
+
+    console.log(`Evaluation for ${student.name} -> ${campus.name}:`, evaluationResults);
+    return evaluationResults;
+}
+
+/** 1. Route Diversity Score (Normalized) */
+function calculateRouteDiversity(routes) {
+    const alternatives = routes.length - 1;
+    return {
+        alternativeCount: alternatives,
+        diversityScore: alternatives / routes.length // Normalized value [0-1]
+    };
+}
+
+/** 2. Coverage Analysis: Proportion of routes with alternatives */
+function calculateCoverage(routes) {
+    return routes.length > 1 ? routes.length / (routes.length + 1) : 0; // Ratio of diverse routes
+}
+
+/** 3. Distance Variation: Min, Max, Avg, Standard Deviation, Percentiles */
+function analyzeDistanceVariation(routes) {
+    const distances = routes.map(r => r.summary.totalDistance / 1000);
+    return {
+        min: Math.min(...distances),
+        max: Math.max(...distances),
+        avg: distances.reduce((a, b) => a + b, 0) / distances.length,
+        stdDev: standardDeviation(distances),
+        percentiles: {
+            p25: percentile(distances, 25),
+            p50: percentile(distances, 50),
+            p75: percentile(distances, 75)
+        },
+        coefficientOfVariation: standardDeviation(distances) / (distances.reduce((a, b) => a + b, 0) / distances.length)
+    };
+}
+
+/** 4. Time Variation: Min, Max, Avg, Standard Deviation, Percentiles */
+function analyzeTimeVariation(routes) {
+    const times = routes.map(r => r.summary.totalTime / 60);
+    return {
+        min: Math.min(...times),
+        max: Math.max(...times),
+        avg: times.reduce((a, b) => a + b, 0) / times.length,
+        stdDev: standardDeviation(times),
+        percentiles: {
+            p25: percentile(times, 25),
+            p50: percentile(times, 50),
+            p75: percentile(times, 75)
+        },
+        coefficientOfVariation: standardDeviation(times) / (times.reduce((a, b) => a + b, 0) / times.length)
+    };
+}
+
+/** 5. Congestion Estimation: Higher ratio means potential traffic issues */
+function estimateCongestion(routes) {
+    const timePerKm = routes.map(r => (r.summary.totalTime / 60) / (r.summary.totalDistance / 1000));
+    return {
+        avgTimePerKm: timePerKm.reduce((a, b) => a + b, 0) / timePerKm.length,
+        congestionScore: Math.max(...timePerKm) / Math.min(...timePerKm) // Ratio of worst to best case
+    };
+}
+
+/** 6. Route Quality Index (Weighted Score) */
+function computeRouteQuality(routes) {
+    const distances = routes.map(r => r.summary.totalDistance / 1000);
+    const times = routes.map(r => r.summary.totalTime / 60);
+    const minTime = Math.min(...times);
+    const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+    const minDistance = Math.min(...distances);
+    const avgDistance = distances.reduce((a, b) => a + b, 0) / distances.length;
+
+    // Weighted formula: 50% time efficiency, 30% distance efficiency, 20% congestion factor
+    return {
+        score: ((minTime / avgTime) * 0.5 + (minDistance / avgDistance) * 0.3 + (1 / estimateCongestion(routes).congestionScore) * 0.2) * 10
+    };
+}
+
+/** Utility: Standard Deviation Calculation */
+function standardDeviation(values) {
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const squareDiffs = values.map(v => (v - avg) ** 2);
+    return Math.sqrt(squareDiffs.reduce((a, b) => a + b, 0) / values.length);
+}
+
+/** Utility: Percentile Calculation */
+function percentile(arr, p) {
+    arr.sort((a, b) => a - b);
+    const index = Math.floor((p / 100) * arr.length);
+    return arr[index];
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
