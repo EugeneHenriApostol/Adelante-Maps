@@ -226,7 +226,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         return StreamingResponse(
             output, 
             media_type='text/csv',
-            headers={'Content-Disposition': 'attachment; filename=[ready_for_upload]_clustered_college_file.csv'}
+            headers={'Content-Disposition': 'attachment; filename=[ready_to_upload]_clustered_college_file.csv'}
         )
     
     except Exception as e:
