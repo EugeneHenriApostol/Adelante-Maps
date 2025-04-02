@@ -4,23 +4,17 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 import math
 import statistics
-from datetime import datetime # To timestamp stored data
+from datetime import datetime
 
 # Global dictionary to store the latest evaluations
 latest_evaluations_store: Dict[tuple, Dict[str, Any]] = {}
 
-# --- Pydantic Model for Input Data (Keep as before) ---
 class RouteDataInput(BaseModel):
     student_name: str = "Unknown Student"
     campus_name: str = "Unknown Campus"
     distances: List[float] = Field(..., description="List of route distances in km", min_items=1)
     times: List[float] = Field(..., description="List of route times in minutes", min_items=1)
 
-# --- Python Helper Functions (Keep ALL ported functions as before) ---
-# safe_division, standard_deviation, percentile, calculate_route_diversity,
-# calculate_coverage, analyze_variation, estimate_congestion, compute_route_quality
-# (Include the full code for these helpers from the previous answer)
-# ... (paste helper functions here) ...
 def safe_division(numerator, denominator, default=0.0):
     """Avoid division by zero."""
     if denominator == 0:
@@ -51,9 +45,6 @@ def calculate_route_diversity(routes_count: int) -> Dict[str, Any]:
         "alternativeCount": alternatives,
         "diversityScore": safe_division(alternatives, routes_count)
     }
-
-def calculate_coverage(routes_count: int) -> float:
-    return safe_division(max(0, routes_count - 1), routes_count)
 
 def analyze_variation(values: List[float]) -> Dict[str, Any]:
     if not values: return {"min": None, "max": None, "avg": None, "stdDev": None, "range": None, "coefficientOfVariation": None, "percentiles": {"p25": None, "p50": None, "p75": None}, "values": []}
@@ -88,11 +79,8 @@ def compute_route_quality(distances_km: List[float], times_min: List[float]) -> 
     best_route_index = times_min.index(min_time) if times_min else -1
     return {"score": quality_score, "bestRouteIndex": best_route_index, "components": {"timeEfficiencyRatio": time_eff, "distanceEfficiencyRatio": dist_eff, "inverseCongestionRatio": congestion_factor}}
 
-
-
 route_evaluation_router = APIRouter()
 
-# --- Modified POST Endpoint (Receives data from Frontend, Calculates, Stores) ---
 @route_evaluation_router.post('/evaluate-routes-data', summary="Calculate and store route evaluation from frontend data")
 async def evaluate_and_store_routes_from_data(
     route_data: RouteDataInput = Body(...)
@@ -109,57 +97,48 @@ async def evaluate_and_store_routes_from_data(
 
     # --- Perform Calculations ---
     diversity_metrics = calculate_route_diversity(route_count)
-    coverage_metric = calculate_coverage(route_count)
     distance_stats_detailed = analyze_variation(distances)
     time_stats_detailed = analyze_variation(times)
     congestion_metrics = estimate_congestion(distances, times)
     quality_metrics = compute_route_quality(distances, times)
 
-    # --- Structure the evaluation results dictionary (payload for storage & response) ---
-    # This structure should contain everything the Notebook needs, including raw values
     evaluation_results = {
         "metadata": {
             "studentName": student_name,
             "campusName": campus_name,
             "routeCount": route_count,
-            "calculationTimestamp": datetime.now().isoformat() # Add calc time
+            "calculationTimestamp": datetime.now().isoformat() 
         },
         "routeDiversity": {
              "alternativeCount": diversity_metrics["alternativeCount"],
              "diversityScore": diversity_metrics["diversityScore"],
              "hasDiversity": diversity_metrics["alternativeCount"] > 0
          },
-         "coverageAnalysis": { # Optional, depending if Notebook needs it
-             "coverageRatio": coverage_metric
-         },
         "distanceStats": {
-            "values": distance_stats_detailed["values"], # <-- REAL RAW DATA
+            "values": distance_stats_detailed["values"], 
             "min": distance_stats_detailed["min"],
             "max": distance_stats_detailed["max"],
             "avg": distance_stats_detailed["avg"],
             "stdDev": distance_stats_detailed["stdDev"],
             "range": distance_stats_detailed["range"],
-            "percentiles": distance_stats_detailed["percentiles"] # Include if needed
+            "percentiles": distance_stats_detailed["percentiles"]
         },
         "timeStats": {
-            "values": time_stats_detailed["values"], # <-- REAL RAW DATA
+            "values": time_stats_detailed["values"], 
             "min": time_stats_detailed["min"],
             "max": time_stats_detailed["max"],
             "avg": time_stats_detailed["avg"],
             "stdDev": time_stats_detailed["stdDev"],
             "range": time_stats_detailed["range"],
-            "percentiles": time_stats_detailed["percentiles"] # Include if needed
+            "percentiles": time_stats_detailed["percentiles"]
         },
         "efficiencyMetrics": {
-            # Calculate time/distance ratio using the REAL data
             "timeDistanceRatios": [round(safe_division(t, d), 3) for t, d in zip(times, distances) if d > 0],
             "averageTimePerKm": congestion_metrics["avgTimePerKm"],
             "congestionScore": congestion_metrics["congestionScore"], # Added
             "routeQualityScore": quality_metrics["score"],
             "bestRouteIndex": quality_metrics["bestRouteIndex"]
         }
-        # Add quality score components if needed:
-        # "qualityScoreComponents": quality_metrics.get("components", {})
     }
 
     # --- Store the result ---
@@ -174,8 +153,6 @@ async def evaluate_and_store_routes_from_data(
     return JSONResponse(content=evaluation_results)
 
 
-# --- Modified GET Endpoint (Retrieves stored data for Notebook) ---
-# Use the original path the notebook expects
 @route_evaluation_router.get('/evaluate-routes', summary="Get latest stored route evaluation for Notebook")
 async def get_latest_evaluation_for_notebook(
     student_name: str = Query("Unknown Student"),  # Match the exact default 
