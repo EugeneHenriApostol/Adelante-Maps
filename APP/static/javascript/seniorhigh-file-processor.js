@@ -48,7 +48,6 @@ form.addEventListener('submit', async (event) => {
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = '[1]_preprocessed_seniorhigh_file.csv';
-        console.log('Download filename:', downloadLink.download);
         downloadLink.click();
 
         statusMessage.textContent = "File preprocessed and downloaded successfully.";
@@ -107,7 +106,7 @@ removeColumnForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = '2_updated_seniorhigh_file.csv';
+        downloadLink.download = '[2]_updated_seniorhigh_file.csv';
         downloadLink.click();
 
 
@@ -180,7 +179,7 @@ geocodeForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = '3_geocoded_seniorhigh_file.csv';
+        downloadLink.download = '[3]_geocoded_seniorhigh_file.csv';
         downloadLink.click();
 
         geocodeStatus.textContent = "Geocoding completed and file downloaded successfully!";
