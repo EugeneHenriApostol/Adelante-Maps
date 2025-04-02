@@ -48,13 +48,11 @@ async def chat_endpoint(chat_request: ChatRequest):
 
     message = chat_request.message
 
-    # Rest of your existing logic remains the same
     docs = retriever.invoke(message)
 
-    # Prepare the knowledge string from retrieved documents
+    # knowledge string from retrieved documents
     knowledge = "\n\n".join(doc.page_content for doc in docs)
 
-    # Prepare the RAG prompt
     rag_prompt = f"""
     You are an assistant which answers questions based on knowledge which is provided to you.
     While answering, you don't use your internal knowledge, 
@@ -68,10 +66,10 @@ async def chat_endpoint(chat_request: ChatRequest):
     The knowledge: {knowledge}
     """
 
-    # Generate the response
+    # generate the response
     full_response = ""
     for response in llm.stream(rag_prompt):
         full_response += response.content
 
-    # Return the response with the key expected by frontend
+    # return the response with the key expected by frontend
     return JSONResponse(content={"response": full_response})

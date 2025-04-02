@@ -240,7 +240,7 @@ clusterForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'ready_to_upload_clustered_seniorhigh_file.csv';
+        downloadLink.download = '[ready_to_upload]_clustered_seniorhigh_file.csv';
         downloadLink.click();
 
         clusterStatus.textContent = "Clustering completed and file downloaded successfully!";
