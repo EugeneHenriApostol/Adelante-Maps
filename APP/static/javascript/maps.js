@@ -1009,6 +1009,50 @@ function handleStudentRoute(student, focusRoute = true) {
     currentRouteControl.on('routesfound', function(e) {
         const routes = e.routes;
         console.log('Found routes:', routes);
+
+        if (routes && routes.length > 0) {
+            try {
+                // distances and times for all found routes
+                const distances = routes.map(route => (route.summary.totalDistance / 1000).toFixed(2));
+                const times = routes.map(route => (route.summary.totalTime / 60).toFixed(2));
+                
+                // create payload to be sent to be
+                const payload = {
+                    student_name: student.name || "Unknown Student",
+                    campus_name: selectedCampus.name || "Unknown Campus",
+                    distances: distances.map(Number),
+                    times: times.map(Number)
+                };
+    
+                fetch('/evaluate-routes-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(`API error: ${JSON.stringify(err)}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                   
+                    // payload error handling
+                })
+                .catch(error => { 
+                    console.error("Fetch API call failed:", error);
+                });
+
+            } catch (error) {
+                console.error("Error occurred inside routesfound before fetch:", error);
+            }
+        } else {
+            console.warn("routesfound fired, but no routes available.");
+        }
         
         // clear previous routes
         routesLayer.clearLayers();
