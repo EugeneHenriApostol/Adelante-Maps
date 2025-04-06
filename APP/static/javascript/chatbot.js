@@ -56,13 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return [];
     }
 
-    console.log('All chatbot elements found');
-
     // Function to scroll to the bottom of the chat box
     function scrollToBottom() {
         if (chatBox) {
             chatBox.scrollTop = chatBox.scrollHeight;
-            console.log('Scrolled to bottom, height:', chatBox.scrollHeight);
         }
     }
 
@@ -199,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Function to toggle minimize state
     function toggleMinimize() {
-        console.log('Toggling minimize state');
         chatbotWidget.classList.toggle('minimized');
         
         if (chatbotWidget.classList.contains('minimized')) {
@@ -215,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Function to show chatbot
     function showChatbot() {
-        console.log('Showing chatbot');
         chatbotWidget.style.display = 'flex';
         chatbotWidget.classList.remove('minimized');
         minimizeButton.textContent = '–';
@@ -233,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Function to hide chatbot
     function hideChatbot() {
-        console.log('Hiding chatbot');
         chatbotWidget.style.display = 'none';
         // Save chat history
         localStorage.setItem('adelanteChatHistory', JSON.stringify(chatHistory));
@@ -299,7 +293,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Event Listeners
     chatbotButton.addEventListener('click', function(e) {
-        console.log('Chatbot button clicked');
         e.preventDefault();
         e.stopPropagation(); // Prevent event bubbling
         
@@ -314,7 +307,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     closeButton.addEventListener('click', function(e) {
-        console.log('Close button clicked');
         e.preventDefault();
         e.stopPropagation(); // Prevent event bubbling
         hideChatbot();
@@ -324,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     minimizeButton.addEventListener('click', function(e) {
-        console.log('Minimize button clicked');
         e.preventDefault();
         e.stopPropagation(); // Prevent event bubbling
         toggleMinimize();
@@ -384,7 +375,5 @@ document.addEventListener('DOMContentLoaded', function () {
         subtree: true,
         characterData: true
     });
-    
-    // debug logging
-    console.log('Chatbot initialized');
+
 });
