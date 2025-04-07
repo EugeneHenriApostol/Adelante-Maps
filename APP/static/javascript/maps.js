@@ -373,10 +373,6 @@ function calculateArea(layer) {
         // calculate area using Turf.js (area in square meters)
         const area = turf.area(geoJsonLayer);
         return area; // return area in square meters
-    } else if (layer instanceof L.Circle) {
-        // for circles, the area is π * radius^2
-        const radius = layer.getRadius();
-        return Math.PI * Math.pow(radius, 2); // return area in square meters
     }
     return 0; // return 0 if not a supported shape
 }
@@ -505,12 +501,11 @@ function addMarkers(data) {
     markers.clearLayers(); // reset the marker cluster group
 
     allMarkers = data.reduce((markerArray, item) => {
-        const { latitude, longitude, cluster_address, cluster_proximity } = item;
+        const { latitude, longitude, cluster_proximity } = item;
 
         // exclude students outside Cebu when cluster_proximity is active
         if (
-            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1) || 
-            (activeCluster.includes("cluster_address") && cluster_address === -1)
+            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1)
         ) {
             return markerArray;  // skip non-Cebu or invalid address students
         }

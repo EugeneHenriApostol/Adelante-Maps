@@ -191,8 +191,6 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
             tmp_path = tmp.name
 
         df = pd.read_csv(tmp_path, index_col=False)
-        
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
         if 'latitude' not in df.columns or 'longitude' not in df.columns:
             raise HTTPException(status_code=400, detail="File must contain latitude and longitude columns.")

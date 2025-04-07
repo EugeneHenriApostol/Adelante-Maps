@@ -163,13 +163,10 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
             tmp_path = tmp.name
 
         df = pd.read_csv(tmp_path, index_col=False)
-        # remove unnamed columns if any exist
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
         # check if latitude and longitude columns exist
         if 'latitude' not in df.columns or 'longitude' not in df.columns:
             raise HTTPException(status_code=400, detail='File must contain latitude and longitude columns.')
-
 
         # convert latitude and longitude to numbers
         df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
@@ -196,7 +193,7 @@ async def cluster_file(file: UploadFile = File(...), current_user: models.User =
         ].copy()
 
         if not df_cebu.empty:
-            k = 5  
+            k = 10  
             kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto', init='k-means++')
             df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
 
