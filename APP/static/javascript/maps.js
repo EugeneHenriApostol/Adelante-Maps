@@ -247,13 +247,11 @@ function initializePopulationDistribution() {
         const newRadius = parseInt(radiusSlider.value, 10);
         radiusValue.textContent = newRadius;
     
-        // Update the radius for all population circles
-        populationLayer.eachLayer(layer => {
-            if (layer instanceof L.Circle) {
-                layer.setRadius(newRadius);
-                updateCirclePopup(layer, layer.school, currentStudentData);
-            }
-        });
+        // treat each campus radius as individual for size slider
+        if (currentCircle) {
+            currentCircle.setRadius(newRadius);
+            updateCirclePopup(currentCircle, currentCircle.school, currentStudentData);
+        }
     });
     
 }
@@ -814,11 +812,14 @@ function createPopulationDistribution(data) {
     populationLayer.clearLayers();
     const radiusSlider = document.getElementById('radius-slider');
     const initialRadius = parseInt(radiusSlider.value, 10);
+    
+    // Track the currently selected circle
+    let currentCircle = null;
 
     schools.forEach(school => {
         const circle = L.circle([school.lat, school.lng], {
-            color: '#FF0000',
-            fillColor: '#FF0000',
+            color: '#065F46',
+            fillColor: '#065F46',
             fillOpacity: 0.2,
             radius: initialRadius
         }).addTo(map);
@@ -827,13 +828,39 @@ function createPopulationDistribution(data) {
         updateCirclePopup(circle, school, currentStudentData);
 
         circle.on('click', () => {
+            // set circle as currently selected one
             currentCircle = circle;
+            
+            // match slider with radius circle
             radiusSlider.value = circle.getRadius();
             document.getElementById('radius-value').textContent = circle.getRadius();
+            
+            // highlight clicked circle
+            populationLayer.eachLayer(layer => {
+                if (layer === circle) {
+                    layer.setStyle({ color: '#ff0000', fillColor: '#ff0000' });
+                } else {
+                    layer.setStyle({ color: '#065F46', fillColor: '#065F46' });
+                }
+            });
+            
             updateCirclePopup(circle, school, currentStudentData);
         });
 
         populationLayer.addLayer(circle);
+    });
+    
+    // update only clicked circle
+    radiusSlider.addEventListener('input', function() {
+        const radius = parseInt(this.value, 10);
+        document.getElementById('radius-value').textContent = radius;
+        
+        if (currentCircle) {
+            currentCircle.setRadius(radius);
+            
+            // update popup for clicked
+            updateCirclePopup(currentCircle, currentCircle.school, currentStudentData);
+        }
     });
 }
 
