@@ -22,13 +22,21 @@ class Role(Base):
     role_id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(50), unique=True, nullable=False)
 
+class PreviousSchool(Base):
+    __tablename__ = 'previous_schools'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), index=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
+
+    students = relationship('SeniorHighStudents', back_populates='previous_school')
+
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
     stud_id = Column(Integer, primary_key=True, index=True)
     year = Column(Integer)
     strand = Column(String(50))
     age = Column(Integer)
-    previous_school = Column(String(255))
     city = Column(String(100))
     province = Column(String(100))
     barangay = Column(String(255))
@@ -37,6 +45,9 @@ class SeniorHighStudents(Base):
     longitude = Column(Float)
     cluster_address = Column(Integer)
     cluster_proximity = Column(Integer)
+
+    previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
+    previous_school = relationship('PreviousSchool', back_populates='students')
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
