@@ -88,7 +88,7 @@ async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
+        maxZoom: 20,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     // layers for markers, routes and population data

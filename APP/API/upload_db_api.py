@@ -28,12 +28,25 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
     students = []
     for row in csv_data:
         try:
+            prev_school = db.query(models.PreviousSchool).filter(models.PreviousSchool.name == row['previous_school']).first()
+
+            if not prev_school:
+                prev_school = models.PreviousSchool(
+                    name = row['previous_school'],
+                    latitude = float(row['latitude']),
+                    longitude = float(row['longitude'])
+                )
+
+                db.add(prev_school)
+                db.commit()
+                db.refresh(prev_school)
+
             student = models.SeniorHighStudents(
                 stud_id = int(row['stud_id']),
                 year = int(row['year']),
                 strand = row['strand'],
                 age = int(row['age']),
-                previous_school = row['previous_school'],
+                previous_school = prev_school,
                 city = row['city'],
                 province = row['province'],
                 barangay = row['barangay'],
@@ -43,6 +56,7 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 cluster_address = int(row['cluster_address']),
                 cluster_proximity = int(row['cluster_proximity'])
                 if row['cluster_proximity'] else None,
+                previous_school_id=prev_school.id
             )
             students.append(student)
         except Exception as e:
