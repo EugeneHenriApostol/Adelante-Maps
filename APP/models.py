@@ -9,7 +9,7 @@ class User(Base):
     email = Column(String(50), unique=True, index=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
-    hashed_password = Column(String(255)) # store a hashed version of the password instead of plain text so if our db gets compromised the attackers cant get or do anything
+    hashed_password = Column(String(255))
     is_verified = Column(Boolean, default=False)
     role_id = Column(Integer, ForeignKey("roles.role_id"), default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -29,7 +29,8 @@ class PreviousSchool(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
-    students = relationship('SeniorHighStudents', back_populates='previous_school')
+    shs_students = relationship('SeniorHighStudents', back_populates='previous_school')
+    college_students = relationship('CollegeStudents', back_populates='previous_school')
 
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
@@ -47,7 +48,16 @@ class SeniorHighStudents(Base):
     cluster_proximity = Column(Integer)
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
-    previous_school = relationship('PreviousSchool', back_populates='students')
+    previous_school = relationship('PreviousSchool', back_populates='shs_students')
+    
+    # tracks user who created and updated the record
+    created_by = Column(Integer, ForeignKey("users.user_id"))
+    updated_by = Column(Integer, ForeignKey("users.user_id"))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_shs_students")
+    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_shs_students")
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
@@ -65,6 +75,18 @@ class CollegeStudents(Base):
     longitude = Column(Float)
     cluster_address = Column(Integer)
     cluster_proximity = Column(Integer)
+    
+    previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
+    previous_school = relationship('PreviousSchool', back_populates='college_students')
+    
+    # tracks user who created and updated the record
+    created_by = Column(Integer, ForeignKey("users.user_id"))
+    updated_by = Column(Integer, ForeignKey("users.user_id"))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_college_students")
+    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_college_students")
 
 class EventReports(Base):
     __tablename__ = "event_reports"
