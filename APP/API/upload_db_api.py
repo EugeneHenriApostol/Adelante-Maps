@@ -93,7 +93,7 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
                 course=row["course"],
                 strand=row["strand"],
                 age=int(row["age"]),
-                previous_school=row["previous_school"],
+                # previous_school=row["previous_school"],
                 city=row["city"],
                 province=row["province"],
                 barangay=row["barangay"],

@@ -201,3 +201,88 @@ body {
     background: #45a049;
 
   }
+
+  .leaflet-control-geocoder {
+      border-radius: 4px;
+      background: white;
+      min-width: 26px;
+      min-height: 26px;
+  }
+
+  .leaflet-control-geocoder-form input {
+      font-size: 16px;
+      border: 0;
+      background-color: transparent;
+      width: 246px;
+      padding: 0 8px;
+      height: 36px;
+      outline: none;
+  }
+
+  .leaflet-control-geocoder-form {
+      display: flex;
+      align-items: center;
+  }
+
+  .leaflet-control-geocoder-icon {
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTUuNSAxNGgtLjc5bC0uMjgtLjI3QzE1LjQxIDEyLjU5IDE2IDExLjExIDE2IDkuNSAxNiA1LjkxIDEzLjA5IDMgOS41IDNTMyA1LjkxIDMgOS41IDUuOTEgMTYgOS41IDE2YzEuNjEgMCAzLjA5LS41OSA0LjIzLTEuNTdsLjI3LjI4di43OWw1IDQuOTlMMjAuNDkgMTlsLTQuOTktNXptLTYgMEM3LjAxIDE0IDUgMTEuOTkgNSA5LjVTNy4wMSA1IDkuNSA1IDE0IDcuMDEgMTQgOS41IDExLjk5IDE0IDkuNSAxNHoiLz48L3N2Zz4=);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 16px;
+      height: 100%;
+      width: 30px;
+      position: absolute;
+      right: 0;
+      cursor: pointer;
+      opacity: 0.7;
+  }
+
+  .leaflet-control-geocoder-alternatives {
+      width: 100%;
+      max-height: 280px;
+      overflow-y: auto;
+      background-color: white;
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+  }
+
+  .leaflet-control-geocoder-alternatives-minimized {
+      display: none;
+  }
+
+  .leaflet-control-geocoder-alternatives li {
+      white-space: nowrap;
+      display: block;
+      overflow: hidden;
+      padding: 8px 12px;
+      text-overflow: ellipsis;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+  }
+
+  .leaflet-control-geocoder-alternatives li:last-child {
+      border-bottom: none;
+  }
+
+  .leaflet-control-geocoder-alternatives li:hover,
+  .leaflet-control-geocoder-selected {
+      background-color: #f5f5f5;
+  }
+
+  .search-highlight {
+      animation: pulse 2s;
+  }
+
+  @keyframes pulse {
+      0% {
+          opacity: 0.8;
+      }
+
+      50% {
+          opacity: 0.4;
+      }
+
+      100% {
+          opacity: 0.8;
+      }
+  }
