@@ -31,9 +31,9 @@ const createErrorElement = (id, message) => {
     if (!errorElement) {
         errorElement = document.createElement("p");
         errorElement.id = id;
-        errorElement.className = "error-message"; // Use CSS for positioning
+        errorElement.className = "error-message"; 
         errorElement.textContent = message;
-        errorElement.style.marginTop = "0"; // Ensure no extra spacing
+        errorElement.style.marginTop = "0"; 
     }
     return errorElement;
 };
@@ -69,7 +69,7 @@ emailInput.addEventListener("blur", async () => {
     const emailErrorId = "email-exists-error";
     const errorElement = createErrorElement(emailErrorId, "This email is already registered.");
 
-    if (emailValue === "") return; // Skip check if email is empty
+    if (emailValue === "") return; // skip check if email is empty
 
     try {
         const response = await fetch(`/api/check-email?email=${encodeURIComponent(emailValue)}`);
@@ -173,7 +173,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         password: document.getElementById("password").value
     };
 
-    console.log("Sending data:", formData);  // Check if data matches API schema
+    console.log("Sending data:", formData);  // check if data matches API schema
 
     try {
         const response = await fetch('/api/register', {
@@ -183,10 +183,10 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         });
 
         if (response.ok) {
-            document.getElementById("emailModal").classList.remove("hidden"); // Show modal
+            document.getElementById("emailModal").classList.remove("hidden"); // show modal
 
             document.getElementById("closeModal").addEventListener("click", () => {
-                window.location.href = "/login"; // Redirect after closing modal
+                window.location.href = "/login"; // redirect after closing modal
             });
         } else {
             const errorData = await response.json();

@@ -12,7 +12,7 @@ body {
     z-index: 1050;
 }
 
-/* Sidebar Styling */
+/* sidebar style */
 .offcanvas {
     width: 250px;
     background-color: #ffffff !important; 
@@ -20,20 +20,20 @@ body {
     transition: transform 1s ease;
 }
 
-/* Sidebar header styling */
+/* sidebar header style */
 .offcanvas-header {
     background-color: #f8f9fa; 
     color: #333;
     border-bottom: 1px solid #ddd;
 }
 
-/* Sidebar body content */
+/* sidebar body content */
 .offcanvas-body {
     background-color: #ffffff; 
     color: #333; 
 }
 
-/* Buttons inside the sidebar */
+/* buttons inside  sidebar */
 #apply-filters {
     background-color: #28a745; 
     color: white;
@@ -46,11 +46,10 @@ body {
 
 #map {
     height: calc(100vh - 56px);
-    /* Full height minus navbar */
     transition: margin-left 1s ease;
 }
 
-/* Custom styles for multi-level dropdown */
+/* custom styles for multi-level dropdown */
 .dropdown-submenu {
     position: relative;
 }
@@ -61,7 +60,7 @@ body {
     margin-top: -1px;
 }
 
-/* Dropdown menu styling */
+/* dropdown menu styling */
 .dropdown-menu {
     background-color: white;
     border: 1px solid #ddd;
@@ -85,7 +84,7 @@ body {
 
 #userDropdown .dropdown-menu .dropdown-item:hover {
     background-color: #f1f1f1;
-    color: #333; /* Ensures consistency */
+    color: #333; 
 }
 
 
@@ -118,9 +117,7 @@ body {
 #chatbot-widget {
     position: fixed;
     bottom: 10px;
-    /* Adjusted for better spacing */
     right: 10px;
-    /* Adjusted for better spacing */
     width: 400px;
     height: 600px;
     border: 1px solid #ddd;

@@ -25,14 +25,14 @@ let shapeAreas = [];
 let activeCluster = null; 
 let drawControl; 
 let drawnItems; 
-// tracks drawn areas, arrays are populated when user draws a shape and select its area type
+// tracks drawn areas
 let affectedAreas = {
     flood: [],
     strike: [],
     restricted: [],
     fire: []
 };
-// track students affected by flood, strike or mobility restrictions, data is populated based on affected of students
+// track students affected by flood, strike or mobility restrictions
 let affectedStudents = {
     flood: [],
     strike: [],
@@ -158,7 +158,7 @@ async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
+        maxZoom: 20,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
@@ -286,13 +286,13 @@ async function initializeMap() {
     
     document.getElementById("toggleDrawControl").addEventListener("click", toggleDrawControl);
 
-    // Function to open the modal
+    // function to open the modal
     function openAreaTypeModal() {
         const modal = document.getElementById('areaTypeModal');
         modal.style.display = 'flex';
     }
 
-    // Function to close the modal
+    // function to close the modal
     function closeAreaTypeModal() {
         const modal = document.getElementById('areaTypeModal');
         modal.style.display = 'none';
@@ -308,21 +308,21 @@ async function initializeMap() {
         const areaInSquareKilometers = areaInSquareMeters / 1e6; // convert to km²
         shapeAreas.push(areaInSquareKilometers);
     
-        // Store the current layer reference for later use
+        // store the current layer reference for later use
         window.currentLayer = layer;
     
-        // Open the modal
+        // open the modal
         openAreaTypeModal();
     });
 
-    // Handle area type selection
+    // handle area type selection
     document.getElementById('confirmAreaType').addEventListener('click', () => {
         const selectedRadio = document.querySelector('input[name="areaType"]:checked');
 
         if (selectedRadio) {
             const areaType = selectedRadio.value;
-            selectedAreaType = areaType;  // Store the selected area type
-            window.currentLayer.areaType = areaType;  // Add type to layer
+            selectedAreaType = areaType;  // store the selected area type
+            window.currentLayer.areaType = areaType;  // add type to layer
             affectedAreas[areaType] = [window.currentLayer.toGeoJSON()];  // Store shape data
 
             updateAffectedStudents();
@@ -335,10 +335,10 @@ async function initializeMap() {
         }
     });
 
-    // Handle modal cancellation
+    // modal cancel
     document.getElementById('cancelAreaType').addEventListener('click', () => {
         if (window.currentLayer) {
-            drawnItems.removeLayer(window.currentLayer);  // Remove the shape if cancelled
+            drawnItems.removeLayer(window.currentLayer);  // remove the shape if cancelled
         }
         closeAreaTypeModal();
     });
@@ -361,17 +361,17 @@ function initializePopulationDistribution() {
     
 }
 
-// async function to fetch and render geojson (restore shape on map)
+// async function to fetch and render geojson to restore shape on map
 async function fetchAndRenderGeoJSON(reportId) {
     try {
-        // Fetch the report data from the API
+        // fetch the report data from the API
         const response = await fetch(`/api/event-reports/${reportId}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch report: ${response.statusText}`);
         }
         const report = await response.json();
 
-        // parse and render GeoJSON on the map
+        // parse and render geojson on the map
         const geojsonLayer = L.geoJSON(report.geojson, {
             style: {
                 color: report.type === 'flood' ? 'blue' : 
@@ -384,7 +384,7 @@ async function fetchAndRenderGeoJSON(reportId) {
         });
         geojsonLayer.addTo(map);
 
-        // adjust map view to fit the GeoJSON bounds
+        // adjust map view to fit the geojson look
         map.fitBounds(geojsonLayer.getBounds());
     } catch (error) {
         console.error('Error fetching or rendering GeoJSON:', error);
@@ -476,20 +476,16 @@ function calculateArea(layer) {
         // calculate area using Turf.js (area in square meters)
         const area = turf.area(geoJsonLayer);
         return area; // return area in square meters
-    } else if (layer instanceof L.Circle) {
-        // for circles, the area is π * radius^2
-        const radius = layer.getRadius();
-        return Math.PI * Math.pow(radius, 2); // return area in square meters
     }
     return 0; // return 0 if not a supported shape
 }
 
-// function to display affected area info in the console
+// function to display affected area info in the console log
 function displayAffectedAreaInfo(areaInSquareKilometers) {
     console.log(`Last Added Area: ${areaInSquareKilometers.toFixed(2)} square kilometers`);
 }
 
-// function to calculate and display the total area of all shapes in the console
+// function to calculate and display the total area of all shapes in the console log
 function displayTotalAreaInfo() {
     const totalArea = calculateTotalArea();
     console.log(`Total Affected Area: ${totalArea.toFixed(2)} square kilometers`);
@@ -497,7 +493,7 @@ function displayTotalAreaInfo() {
 
 // function to calculate the total area of all drawn shapes
 function calculateTotalArea() {
-    return shapeAreas.length > 0 ? shapeAreas[0] : 0; // Return the area of the current shape
+    return shapeAreas.length > 0 ? shapeAreas[0] : 0; // return the area of the current shape
 }
 // function to display affected students info in the console
 function displayAffectedStudentsInfo() {
@@ -605,17 +601,16 @@ function generateFilterCheckboxes(containerId, items, filterType, isGrouped = fa
 }
 
 function addMarkers(data) {
-    markers.clearLayers(); // Reset the marker cluster group
+    markers.clearLayers(); // reset the marker cluster group
 
     allMarkers = data.reduce((markerArray, item) => {
-        const { latitude, longitude, cluster_address, cluster_proximity } = item;
+        const { latitude, longitude, cluster_proximity } = item;
 
-        // Exclude students outside Cebu when cluster_proximity is active
+        // exclude students outside Cebu when cluster_proximity is active
         if (
-            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1) || 
-            (activeCluster.includes("cluster_address") && cluster_address === -1)
+            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1)
         ) {
-            return markerArray;  // Skip non-Cebu or invalid address students
+            return markerArray;  // skip non-Cebu or invalid address students
         }
 
         if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
@@ -624,17 +619,17 @@ function addMarkers(data) {
             }).bindPopup(() => generatePopupContent(item));
 
             marker.on('click', () => {
-                console.log('Marker clicked:', item); // Log the data being fetched
+                console.log('Marker clicked:', item); // log the data being fetched
                 handleStudentRoute(item);
             });
 
             markerArray.push(marker);
-            markers.addLayer(marker); // Add marker to the cluster group
+            markers.addLayer(marker); // add marker to the cluster group
         }
         return markerArray;
     }, []);
 
-    map.addLayer(markers); // Add the cluster group to the map
+    map.addLayer(markers); // add the cluster group to the map
 
     const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
     const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
@@ -694,7 +689,7 @@ async function toggleClustering(apiUrl, clusterType, buttonId) {
     map.addLayer(markers);
     createPopulationDistribution(data);
 
-    // Update button text to hide
+    // update button text to hide
     button.textContent = `Hide ${button.dataset.defaultText}`;
 }
 

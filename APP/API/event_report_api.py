@@ -50,7 +50,7 @@ def get_event_reports_paginated(
     page: int = Query(1, alias="page", description="Page number"),
     per_page: int = Query(10, alias="per_page", description="Reports per page")
 ):
-    # Filter by current user
+    # filter by current user
     query = db.query(models.EventReports).filter(models.EventReports.user_id == current_user.user_id)
 
     total = query.count()
@@ -172,7 +172,6 @@ def delete_event_report(report_id: int, db: Session = Depends(get_db), current_u
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    # Ensure only the owner of the report can delete it
     if report.user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this report")
 

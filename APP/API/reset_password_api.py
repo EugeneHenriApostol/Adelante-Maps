@@ -32,16 +32,13 @@ def send_reset_password_email(email: str, token: str):
         reset_link = f"http://localhost:8000/reset-password-link?token={token}"
         subject = "Reset Your Password"
 
-        # Create a multipart email (HTML + plain text fallback)
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = SMTP_USERNAME
         msg["To"] = email
 
-        # Plain text version (for email clients that don’t support HTML)
         text_body = f"Click the link to reset your password: {reset_link}"
 
-        # HTML version (with styling)
         html_body = f"""
         <html>
         <head>
@@ -84,11 +81,10 @@ def send_reset_password_email(email: str, token: str):
         </html>
         """
 
-        # Attach both plain text and HTML versions
         msg.attach(MIMEText(text_body, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
-        # Send email
+        # send email
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
@@ -124,7 +120,7 @@ async def reset_password(data: schemas.ResetPassword, db: Session = Depends(get_
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Hash and update the new password
+    # hash and update the new password
     hashed_password = security.get_password_hash(data.new_password)
     user.hashed_password = hashed_password
     db.flush() 

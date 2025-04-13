@@ -33,12 +33,12 @@ window.addEventListener('resize', () => {
 
 document.addEventListener("DOMContentLoaded", async function () {
     try {
-        // Fetch Senior High Students Count
+        // fetch Senior High Students Count
         const seniorHighResponse = await fetch("/api/senior-high-students/count");
         const seniorHighData = await seniorHighResponse.json();
         document.getElementById("seniorHighCount").textContent = seniorHighData.count || 0;
 
-        // Fetch College Students Count
+        // fetch College Students Count
         const collegeResponse = await fetch("/api/college-students/count");
         const collegeData = await collegeResponse.json();
         document.getElementById("collegeCount").textContent = collegeData.count || 0;
@@ -149,7 +149,6 @@ async function openEditModal(userId, users) {
     const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
     const currentUser = await currentUserResponse.json();
 
-    // restrict editing if logged-in user is an admin (role_id = 2) and target user is an admin or superadmin (role_id >= 2)
     if (currentUser.role_id === 2 && user.role_id >= 2) {
         alert("You are not allowed to edit this user.");
         return;
@@ -172,7 +171,6 @@ async function openDeleteModal(userId, users) {
     const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
     const currentUser = await currentUserResponse.json();
 
-    // restrict editing if logged-in user is an admin (role_id = 2) and target user is an admin or superadmin (role_id >= 2)
     if (currentUser.role_id === 2 && user.role_id >= 2) {
         alert("You are not allowed to delete this user.");
         return;
@@ -215,12 +213,12 @@ document.getElementById("saveEditUser").addEventListener("click", async () => {
     }
 });
 
-// Close Modal
+// close Modal
 document.getElementById("closeDeleteModal").addEventListener("click", () => {
     document.getElementById("deleteModal").classList.add("hidden");
 });
 
-// Confirm Delete User
+// confirm Delete User
 document.getElementById("confirmDeleteUser").addEventListener("click", async () => {
     const userId = document.getElementById("deleteUserId").value;
 

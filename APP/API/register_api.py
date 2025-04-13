@@ -49,7 +49,6 @@ def send_verification_email(background_tasks: BackgroundTasks, email: str, token
     # plain text version (for email clients that don’t support HTML)
     text_body = f"Click the link to verify your email: {verification_link}"
 
-    # HTML version (for better styling)
     html_body = f"""
     <html>
     <head>

@@ -9,9 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
-    <!-- Page Content -->
+    <!-- content -->
     <div class="container mx-auto px-4 py-6">
-        <!-- Back Button -->
+        <!-- back button -->
         <div class="mb-4">
             <a href="/maps" class="text-green-600 hover:text-green-700">
                 <i class="fas fa-arrow-left mr-2"></i>
@@ -19,15 +19,15 @@
             </a>
         </div>
 
-        <!-- Page Header -->
+        <!-- header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">College Analytics</h1>
             <p class="text-gray-600 text-sm">Visualizing student demographics and distribution</p>
         </div>
 
-        <!-- Charts Grid -->
+        <!-- charts grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <!-- Age Distribution Card -->
+            <!-- age distribution card -->
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="border-b border-gray-200 pb-3 mb-3">
                     <div class="flex items-center">
@@ -46,7 +46,7 @@
                 </div>
             </div>
 
-            <!-- Course Distribution Card -->
+            <!-- course distribution card -->
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="border-b border-gray-200 pb-3 mb-3">
                     <div class="flex items-center">
@@ -66,7 +66,7 @@
             </div>
         </div>
 
-        <!-- Data Summary -->
+        <!-- data summary -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
             <h3 class="text-lg font-medium text-gray-800 mb-3">Key Insights</h3>
             <div id="dataSummary" class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -87,7 +87,7 @@
     </div>
 
     <script>
-        // Chart colors
+        // chart colors
         const chartColors = {
             age: {
                 background: 'rgba(59, 130, 246, 0.2)',
@@ -107,7 +107,7 @@
 
         async function fetchData() {
             try {
-                // Show loaders
+                // show loaders
                 document.getElementById('ageChartLoader').style.display = 'flex';
                 document.getElementById('courseChartLoader').style.display = 'flex';
                 
@@ -118,7 +118,7 @@
                 
                 const data = await response.json();
                 
-                // Hide loaders
+                // hide loaders
                 document.getElementById('ageChartLoader').style.display = 'none';
                 document.getElementById('courseChartLoader').style.display = 'none';
                 
@@ -156,7 +156,7 @@
             const courseLabels = Object.keys(courseData);
             const courseValues = Object.values(courseData);
 
-            // Age Chart
+            // age chart
             const ageCtx = document.getElementById('ageChart').getContext('2d');
             new Chart(ageCtx, {
                 type: 'bar',
@@ -196,7 +196,7 @@
                 }
             });
 
-            // Course Chart
+            // course Chart
             const courseCtx = document.getElementById('courseChart').getContext('2d');
             new Chart(courseCtx, {
                 type: 'pie',
@@ -240,11 +240,11 @@
         }
 
         function updateSummary(data) {
-            // Calculate total students
+            // calculate total students
             const totalStudents = data.length;
             document.getElementById('totalStudents').textContent = totalStudents;
             
-            // Calculate most common age
+            // calculate most common age
             const ageCount = {};
             data.forEach(student => {
                 if (student.age) {
@@ -264,7 +264,7 @@
             
             document.getElementById('commonAge').textContent = mostCommonAge ? `${mostCommonAge} years` : 'N/A';
             
-            // Calculate most popular course
+            // calculate most popular course
             const courseCount = {};
             data.forEach(student => {
                 if (student.course) {
@@ -285,7 +285,7 @@
             document.getElementById('popularCourse').textContent = mostPopularCourse || 'N/A';
         }
 
-        // Initial data fetch
+        // initial data fetch
         fetchData();
     </script>
 </body>

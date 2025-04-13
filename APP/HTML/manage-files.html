@@ -4,113 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Files | Adelante Maps</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Card styles */
+        .card-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            transition: box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 48%;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .card-icon.green {
+            color: #2ecc71;
+        }
+        
+        .card-icon.purple {
+            color: #9b59b6;
+        }
+        
+        .card-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        
+        .card-button {
+            background-color: #2ecc71;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .card-button:hover {
+            background-color: #27ae60;
+        }
+        
+        .card-button i {
+            margin-left: 5px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-6">
-        <!-- back button -->
-        <div class="mb-4">
-            <a href="/admin-dashboard" class="text-green-600 hover:text-green-700">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Back to Dashboard
-            </a>
+<body>
+    <div class="container">
+        <!-- Back button -->
+        <a href="/admin-dashboard" class="back-button">← Back to Admin Dashboard</a>
+
+        <div class="page-header">
+            <h1>Manage Student Data</h1>
+            <p>Select an option to process or upload student information</p>
         </div>
 
-        <!-- page header -->
-        <div class="mb-6 text-center">
-            <h1 class="text-2xl font-bold text-gray-800">Manage Student Data</h1>
-            <p class="text-gray-600 text-sm">Select an option to process or upload student information</p>
-        </div>
-
-        <!-- cards grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-            <!-- senior high card -->
-            <div class="bg-white rounded-lg shadow p-4 hover:shadow-md">
-                <div class="flex flex-col h-full">
-                    <div class="mb-3">
-                        <i class="fas fa-user-graduate text-xl text-green-600"></i>
+            <!-- Preprocess Files card -->
+            <div class="card-container">
+                <div class="card">
+                    <div class="card-icon green">
+                        <i class="fas fa-user-graduate"></i>
                     </div>
-                    <h2 class="text-lg font-medium text-gray-800 mb-2">Senior High School</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Process and validate Senior High School student data files before uploading.</p>
-                    <div class="mt-auto">
-                        <div class="flex items-center justify-between">
-                            <a href="/seniorhigh/file/processor" class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                                Process Files
-                                <i class="fas fa-arrow-right ml-1"></i>
-                            </a>
-                            <span class="text-xs text-gray-500">CSV format</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- college card -->
-            <div class="bg-white rounded-lg shadow p-4 hover:shadow-md">
-                <div class="flex flex-col h-full">
-                    <div class="mb-3">
-                        <i class="fas fa-university text-xl text-blue-600"></i>
-                    </div>
-                    <h2 class="text-lg font-medium text-gray-800 mb-2">College Students</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Process and validate College student data files before uploading.</p>
-                    <div class="mt-auto">
-                        <div class="flex items-center justify-between">
-                            <a href="/college/file/processor" class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                                Process Files
-                                <i class="fas fa-arrow-right ml-1"></i>
-                            </a>
-                            <span class="text-xs text-gray-500">CSV format</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- upload card -->
-            <div class="bg-white rounded-lg shadow p-4 hover:shadow-md">
-                <div class="flex flex-col h-full">
-                    <div class="mb-3">
-                        <i class="fas fa-database text-xl text-purple-600"></i>
-                    </div>
-                    <h2 class="text-lg font-medium text-gray-800 mb-2">Upload to Database</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Upload processed student data files directly to the database.</p>
-                    <div class="mt-auto">
-                        <div class="flex items-center justify-between">
-                            <a href="/upload/student-data" class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                                Upload Data
-                                <i class="fas fa-cloud-upload-alt ml-1"></i>
-                            </a>
-                            <span class="text-xs text-gray-500">Processed files</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- help section -->
-        <!-- <div class="mt-8 max-w-2xl mx-auto bg-white rounded-lg shadow p-4">
-            <div class="flex">
-                <div>
-                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium text-gray-800 mb-2">Need Help?</h3>
-                    <p class="text-gray-600 text-sm mb-2">
-                        Make sure to follow these steps:
-                    </p>
-                    <ol class="list-decimal list-inside text-gray-600 text-sm space-y-1">
-                        <li>Prepare your CSV file according to the template</li>
-                        <li>Process the file using the appropriate preprocessor</li>
-                        <li>Review any errors or warnings</li>
-                        <li>Upload the processed file to the database</li>
-                    </ol>
-                    <div class="mt-3">
-                        <a href="#" class="text-green-600 hover:text-green-700 text-sm">
-                            View Documentation <i class="fas fa-external-link-alt"></i>
+                    <h2 class="card-title">Preprocess Files</h2>
+                    <p class="card-description">Upload and preprocess files to be uploaded and used.</p>
+                    <div class="card-footer">
+                        <a href="/file-process" class="card-button">
+                            Process Files
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
-            </div>
-        </div> -->
+
+                <div class="card">
+                    <div class="card-icon purple">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h2 class="card-title">Upload to Database</h2>
+                    <p class="card-description">Upload processed student data files directly to the database.</p>
+                    <div class="card-footer">
+                        <a href="/upload/student-data" class="card-button">
+                            Upload Data
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </a>
+                    </div>
+                </div>
+             </div>
     </div>
 </body>
 </html>

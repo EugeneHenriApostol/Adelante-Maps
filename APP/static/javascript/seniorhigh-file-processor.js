@@ -8,10 +8,10 @@ const preprocessFileLabel = document.getElementById('preprocess-file-label');
 
 preprocessFileInput.addEventListener('change', function () {
     if (this.files.length > 0) {
-        preprocessFileLabel.textContent = this.files[0].name; // Show file name inside the dashed box
-        preprocessFileLabel.classList.add('text-green-600', 'font-semibold'); // Style update
+        preprocessFileLabel.textContent = this.files[0].name; // show file name inside the dashed box
+        preprocessFileLabel.classList.add('text-green-600', 'font-semibold'); // update the style
     } else {
-        preprocessFileLabel.textContent = "Choose file"; // Reset if no file selected
+        preprocessFileLabel.textContent = "Choose file"; // reset if no file selected
         preprocessFileLabel.classList.remove('text-green-600', 'font-semibold');
     }
 });
@@ -67,10 +67,10 @@ const removeColumnFileLabel = document.getElementById('removeColumn-file-label')
 
 removeColumnfileInput.addEventListener('change', function () {
     if (this.files.length > 0) {
-        removeColumnFileLabel.textContent = this.files[0].name; // Show file name inside the dashed box
-        removeColumnFileLabel.classList.add('text-green-600', 'font-semibold'); // Style update
+        removeColumnFileLabel.textContent = this.files[0].name; 
+        removeColumnFileLabel.classList.add('text-green-600', 'font-semibold'); 
     } else {
-        removeColumnFileLabel.textContent = "Choose file"; // Reset if no file selected
+        removeColumnFileLabel.textContent = "Choose file"; 
         removeColumnFileLabel.classList.remove('text-green-600', 'font-semibold');
     }
 });
@@ -130,10 +130,10 @@ const geocodeFileLabel = document.getElementById('geocode-file-label');
 
 geocodeFileInput.addEventListener('change', function () {
     if (this.files.length > 0) {
-        geocodeFileLabel.textContent = this.files[0].name; // Show file name inside the dashed box
-        geocodeFileLabel.classList.add('text-green-600', 'font-semibold'); // Style update
+        geocodeFileLabel.textContent = this.files[0].name; 
+        geocodeFileLabel.classList.add('text-green-600', 'font-semibold'); 
     } else {
-        geocodeFileLabel.textContent = "Choose file"; // Reset if no file selected
+        geocodeFileLabel.textContent = "Choose file"; 
         geocodeFileLabel.classList.remove('text-green-600', 'font-semibold');
     }
 });
@@ -240,7 +240,7 @@ clusterForm.addEventListener('submit', async (event) => {
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'ready_to_upload_clustered_seniorhigh_file.csv';
+        downloadLink.download = '[ready_to_upload]_clustered_seniorhigh_file.csv';
         downloadLink.click();
 
         clusterStatus.textContent = "Clustering completed and file downloaded successfully!";

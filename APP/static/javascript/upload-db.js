@@ -7,7 +7,7 @@ seniorhighFileInput.addEventListener('change', function () {
         const file = this.files[0];
         if (file.type !== "text/csv") {
             alert("Please upload a valid CSV file.");
-            this.value = ""; // Reset file input
+            this.value = ""; // reset file input
             seniorhighFileLabel.textContent = "Choose processed SHS file";
             seniorhighFileLabel.classList.remove('text-green-600', 'font-semibold');
             return;
@@ -29,7 +29,7 @@ collegeFileInput.addEventListener('change', function () {
         const file = this.files[0];
         if (file.type !== "text/csv") {
             alert("Please upload a valid CSV file.");
-            this.value = ""; // Reset file input
+            this.value = ""; // reset file input
             collegeFileLabel.textContent = "Choose processed college file";
             collegeFileLabel.classList.remove('text-green-600', 'font-semibold');
             return;
@@ -99,7 +99,7 @@ collegeUploadForm.addEventListener('submit', async (event) => {
     }
 });
 
-// Show modals on button click
+// show modals on button click
 removeSeniorHigh.addEventListener('click', () => {
     confirmSeniorHighModal.classList.remove('hidden');
     confirmSeniorHighModal.classList.add('flex');
@@ -110,7 +110,7 @@ removeCollege.addEventListener('click', () => {
     confirmCollegeModal.classList.add('flex');
 });
 
-// Close modals
+// close modals
 document.getElementById('cancelSeniorHigh').addEventListener('click', () => {
     confirmSeniorHighModal.classList.add('hidden');
 });
@@ -119,7 +119,7 @@ document.getElementById('cancelCollege').addEventListener('click', () => {
     confirmCollegeModal.classList.add('hidden');
 });
 
-// Confirm removal
+// confirm removal
 document.getElementById('confirmSeniorHigh').addEventListener('click', async () => {
     try {
         const response = await fetch('/api/remove-senior-high-data', {
