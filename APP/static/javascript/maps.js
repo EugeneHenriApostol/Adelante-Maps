@@ -188,6 +188,76 @@ async function fetchData(url) {
     }
 }
 
+function enhanceGeocoder() {
+    // prioritize location search in the Philippines
+    const customGeocoder = L.Control.Geocoder.nominatim({
+        geocodingQueryParams: {
+            countrycodes: 'ph',
+            addressdetails: 1,
+            format: 'json',
+            // improve Cebu-specific results
+            viewbox: '122.5,9.0,126.0,11.5',
+            bounded: 1
+        }
+    });
+    
+    // custom name formatting for philippine locations
+    const enhancedGeocoder = {
+        geocode: function(query, cb, context) {
+            customGeocoder.geocode(query, function(results) {
+                // filter results to prioritize boundaries
+                const enhancedResults = results.map(result => {
+                    // display name for barangay level searches
+                    if (result.properties && result.properties.address) {
+                        const address = result.properties.address;
+                        // format specifically for barangays
+                        if (address.hamlet || address.suburb || address.village) {
+                            const barangay = address.hamlet || address.suburb || address.village;
+                            const city = address.city || address.town || address.municipality || '';
+                            const province = address.province || address.state || '';
+                            result.properties.displayName = `Barangay ${barangay}, ${city}, ${province}`;
+                        }
+                    }
+                    return result;
+                });
+                
+                cb.call(context, enhancedResults);
+            }, context);
+        },
+        suggest: function(query, cb, context) {
+            customGeocoder.suggest(query, cb, context);
+        },
+        abort: function() {
+            customGeocoder.abort();
+        }
+    };
+    
+    return enhancedGeocoder;
+}
+
+// function addSearchButton() {
+//     searchBtn.addEventListener('click', function() {
+//         // Toggle the geocoder visibility
+//         const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
+//         if (geocoderContainer) {
+//             if (geocoderContainer.classList.contains('leaflet-control-geocoder-expanded')) {
+//                 geocoderContainer.classList.remove('leaflet-control-geocoder-expanded');
+//             } else {
+//                 geocoderContainer.classList.add('leaflet-control-geocoder-expanded');
+//                 const input = document.querySelector('.leaflet-control-geocoder-form input');
+//                 if (input) {
+//                     input.focus();
+//                 }
+//             }
+//         }
+//     });
+    
+//     // Add it to your existing control container
+//     const controlContainer = document.querySelector('.filter-controls');
+//     if (controlContainer) {
+//         controlContainer.appendChild(searchBtn);
+//     }
+// }
 
 // initialize leaflet map
 async function initializeMap() {
@@ -197,6 +267,41 @@ async function initializeMap() {
         maxZoom: 20,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
+
+    // add geocoder control to the map
+    const geocoder = L.Control.geocoder({
+        defaultMarkGeocode: false,
+        position: 'topleft',
+        placeholder: 'Search for location...',
+        errorMessage: 'Nothing found.',
+        geocoder: L.Control.Geocoder.nominatim({
+            // add country context to prioritize ph results
+            countrycodes: 'ph',
+            // improve results for administrative boundaries
+            addressdetails: 1,
+            viewbox: [[122.5, 9.0], [126.0, 11.5]], // approximate bounding box for Cebu region
+            bounded: 1
+        })
+    }).addTo(map);
+    
+    // handle geocodie results
+    geocoder.on('markgeocode', function(e) {
+        const bbox = e.geocode.bbox;
+        const poly = L.polygon([
+            bbox.getSouthEast(),
+            bbox.getNorthEast(),
+            bbox.getNorthWest(),
+            bbox.getSouthWest()
+        ]).addTo(map);
+        
+        map.fitBounds(poly.getBounds());
+        
+        // remove the polygon after 30 seconds
+        setTimeout(function() {
+            map.removeLayer(poly);
+        }, 30000);
+    });
+
     // layers for markers, routes and population data
     markersLayer = L.layerGroup().addTo(map); // layer for school markers
     markers = L.markerClusterGroup(); // layer for cluster student markers

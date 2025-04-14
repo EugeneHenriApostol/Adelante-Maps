@@ -9,13 +9,27 @@ class User(Base):
     email = Column(String(50), unique=True, index=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
-    hashed_password = Column(String(255)) # store a hashed version of the password instead of plain text so if our db gets compromised the attackers cant get or do anything
+    hashed_password = Column(String(255))
     is_verified = Column(Boolean, default=False)
     role_id = Column(Integer, ForeignKey("roles.role_id"), default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     role = relationship("Role")
+    activities = relationship("UserActivityLog", back_populates="user")
+    
+class UserActivityLog(Base):
+    __tablename__ = "user_activity_logs"
+    log_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    activity_type = Column(String(50), nullable=False)
+    target_table = Column(String(100), nullable=False)
+    file_name = Column(String(255))
+    record_count = Column(Integer)
+    file_size = Column(Float)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    user = relationship("User", back_populates="activities")
 
 class Role(Base):
     __tablename__ = "roles"
