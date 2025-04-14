@@ -16,6 +16,20 @@ class User(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     role = relationship("Role")
+    activities = relationship("UserActivityLog", back_populates="user")
+    
+class UserActivityLog(Base):
+    __tablename__ = "user_activity_logs"
+    log_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    activity_type = Column(String(50), nullable=False)
+    target_table = Column(String(100), nullable=False)
+    file_name = Column(String(255))
+    record_count = Column(Integer)
+    file_size = Column(Float)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    user = relationship("User", back_populates="activities")
 
 class Role(Base):
     __tablename__ = "roles"
@@ -31,7 +45,7 @@ class PreviousSchool(Base):
 
     shs_students = relationship('SeniorHighStudents', back_populates='previous_school')
     college_students = relationship('CollegeStudents', back_populates='previous_school')
-
+    
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
     stud_id = Column(Integer, primary_key=True, index=True)
@@ -51,12 +65,12 @@ class SeniorHighStudents(Base):
     previous_school = relationship('PreviousSchool', back_populates='shs_students')
     
     # tracks user who created and updated the record
-    created_by = Column(Integer, ForeignKey("users.user_id"))
+    uploaded_by = Column(Integer, ForeignKey("users.user_id"))
     updated_by = Column(Integer, ForeignKey("users.user_id"))
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_shs_students")
+    created_by_user = relationship("User", foreign_keys=[uploaded_by], backref="created_shs_students")
     updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_shs_students")
 
 class CollegeStudents(Base):
@@ -80,12 +94,12 @@ class CollegeStudents(Base):
     previous_school = relationship('PreviousSchool', back_populates='college_students')
     
     # tracks user who created and updated the record
-    created_by = Column(Integer, ForeignKey("users.user_id"))
+    uploaded_by = Column(Integer, ForeignKey("users.user_id"))
     updated_by = Column(Integer, ForeignKey("users.user_id"))
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_college_students")
+    created_by_user = relationship("User", foreign_keys=[uploaded_by], backref="created_college_students")
     updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_college_students")
 
 class EventReports(Base):
