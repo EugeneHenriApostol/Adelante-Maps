@@ -1,12 +1,12 @@
 # upload senior high students data api endpoint
 import csv
 from io import StringIO
-from fastapi import File, HTTPException, UploadFile
+from fastapi import File, HTTPException, UploadFile, APIRouter, Depends
 
-from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import auth, models, schemas
 from database import get_db
+from datetime import datetime, timezone
 
 upload_db_api_router = APIRouter()
 
@@ -20,6 +20,13 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
     # read and decode csv content
     try:
         content = await file.read()
+        file_size = len(content) / 1024
+        csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
+        
+        # convert to list to get row count
+        rows = list(csv_data)
+        row_count = len(rows)
+        
         csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Failed to read CSV file {str(e)}')
@@ -55,9 +62,6 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 cluster_proximity = int(row['cluster_proximity'])
                 if row['cluster_proximity'] else None,
                 previous_school_id=prev_school.id,
-                
-                uploaded_by = current_user.user_id,
-                updated_by = current_user.user_id
             )
             
             if prev_school.id:  # if it already exists in db
@@ -72,6 +76,18 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
         
     # insert to database
     db.add_all(students)
+    
+    # create activity log
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="csv_upload",
+        target_table="senior_high_students",
+        file_name=file.filename,
+        record_count=len(students),
+        file_size=file_size
+    )
+    
+    db.add(log_entry)
     db.commit()
 
     return {'message': f'Successfully uploaded Senior High School Student Data. Rows inserted: {len(students)}'}
@@ -87,6 +103,12 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     # read and decode csv content
     try:
         content = await file.read()
+        file_size = len(content) / 1024
+        csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
+        
+        rows = list(csv_data)
+        row_count = len(rows)
+        
         csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Failed to read CSV file {str(e)}')
@@ -125,12 +147,9 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
                 longitude=float(row["longitude"]),
                 cluster_address=int(row["cluster_address"]),  
                 cluster_proximity=int(float(row["cluster_proximity"])) if row["cluster_proximity"] else None,
-                
-                uploaded_by = current_user.user_id,
-                updated_by = current_user.user_id
             )
             
-            if prev_school.id:  # if it already exists in db
+            if prev_school and prev_school.id:  # if it already exists in db
                 student.previous_school_id = prev_school.id
             else:
                 # handle db relationship first before committing to db
@@ -142,6 +161,16 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
 
     # insert to database
     db.add_all(students)
+    # log activity
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="csv_upload",
+        target_table="college_students",
+        file_name=file.filename,
+        record_count=len(students),
+        file_size=file_size
+    )
+    db.add(log_entry)
     db.commit()
 
     return {'message': f'Successfully uploaded College Student Data. Rows inserted: {len(students)}'}
@@ -152,9 +181,24 @@ async def remove_senior_high_data(
     db: Session = Depends(get_db),
     current_user: schemas.UserInDBBase = Depends(auth.get_current_admin) 
 ):
+    # Get count before deletion
+    count = db.query(models.SeniorHighStudents).count()
+    
+    # Delete records
     db.query(models.SeniorHighStudents).delete()
+    
+    # Create activity log
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="data_delete",
+        target_table="senior_high_students",
+        record_count=count,
+    )
+    db.add(log_entry)
+    
     db.commit()
-    return {"message": "All senior high student data has been removed."}
+    
+    return {"message": f"All senior high student data has been removed ({count} records)."}
 
 # remove college data endpoint
 @upload_db_api_router.post("/api/remove-college-data")
@@ -162,6 +206,21 @@ async def remove_college_data(
     db: Session = Depends(get_db),
     current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)  
 ):
+    # Get count before deletion
+    count = db.query(models.CollegeStudents).count()
+    
+    # Delete records
     db.query(models.CollegeStudents).delete()
+    
+    # Create activity log
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="data_delete",
+        target_table="college_students",
+        record_count=count,
+    )
+    db.add(log_entry)
+    
     db.commit()
-    return {"message": "All college student data has been removed."}
+    
+    return {"message": f"All college student data has been removed ({count} records)."}
