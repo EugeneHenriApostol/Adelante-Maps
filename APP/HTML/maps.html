@@ -16,6 +16,9 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/maps.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/chatbot.css') }}">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
     <title>Adelante Maps</title>
 </head>
 
@@ -25,15 +28,19 @@
         <!-- navbar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#"><strong>Adelante Maps</strong></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <!-- Admin Tools dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminToolsDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Admin Tools
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="adminToolsDropdown">
+                                <li><a class="dropdown-item" href="#" id="addCampusBtn"><i class="bi bi-geo-alt-fill"></i> Add Campus</a></li>
+                            </ul>
+                        </li>
                         <!-- dropdown for clusters -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="clusterDropdown" role="button"
@@ -90,6 +97,12 @@
                                     step="100" value="1000">
                                 <span id="radius-value">1000</span> meters
                             </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link cursor-pointer text-dark" id="previousSchool" href="#">
+                                <i class="bi bi-clipboard-data"></i> Previous school
+                            </a>
                         </li>
 
                     </ul>

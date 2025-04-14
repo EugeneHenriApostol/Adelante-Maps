@@ -1,8 +1,5 @@
 # senior_high_processor_api.py
-import io
-import math
-import os
-import re
+import re, html, os, math, io
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
 from fastapi import File, HTTPException, UploadFile, requests
@@ -15,10 +12,14 @@ import requests
 from sklearn.metrics import silhouette_score
 import auth, models
 
+from rapidfuzz import process, fuzz
+from collections import defaultdict
+
 senior_high_file_api_router = APIRouter()
 
 load_dotenv()
 
+# clean text function
 def clean_text(text):
     return re.sub(r'[^\w\s]', '', str(text))
 
@@ -41,7 +42,8 @@ def remove_column(file_path: str, column_name: str):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Error processing file: {e}')
-    
+
+# geocode address function    
 def geocode_address(address, api_key):
     url = "https://geocode.search.hereapi.com/v1/geocode"
     params = {"q": address, "apiKey": api_key}
@@ -54,15 +56,67 @@ def geocode_address(address, api_key):
             return latitude, longitude
         else:
             print(f"Geocoding failed for {address}, returning 'Unknown'")
-            return "Unknown", "Unknown"
+            return 0, 0
     else:
         print(f"Error geocoding {address}: {response.status_code}")
-        return "Unknown", "Unknown"
+        return 0, 0
+
+# clean previous school name function
+def clean_previous_school_name(name: str):
+    name = html.unescape(name)
+
+    # Remove anything inside parentheses
+    name = re.sub(r'\(.*?\)', '', name)
+
+    # Remove all numbers
+    name = re.sub(r'\d+', '', name)
+
+    # Remove all special characters including dots, dashes, apostrophes, etc.
+    name = re.sub(r"[^A-Za-z\s]", '', name)
+
+    # Remove extra spaces
+    name = ' '.join(name.split()).strip()
+
+    # Capitalize the entire name (optional but makes things consistent)
+    name = name.upper()
+    
+    return name
 
 
+# fuzzy matching for previous school
+def group_similar_schools(school_series, threshold=85):
+    cleaned_schools = school_series.unique().tolist()
+    grouped = {}
+    assigned = set()
+
+    for i, name in enumerate(cleaned_schools):
+        if name in assigned:
+            continue
+        grouped[name] = [name]
+        assigned.add(name)
+
+        for j in range(i + 1, len(cleaned_schools)):
+            candidate = cleaned_schools[j]
+            if candidate in assigned:
+                continue
+            score = fuzz.ratio(name, candidate)
+            if score >= threshold:
+                grouped[name].append(candidate)
+                assigned.add(candidate)
+
+    # Create mapping dict
+    mapping = {}
+    for canonical, variants in grouped.items():
+        for variant in variants:
+            mapping[variant] = canonical
+
+    # Map values in original series
+    return school_series.map(lambda x: mapping.get(x, x))
+
+# geocode previous school function
 def geocode_previous_school(school: str):
     if not school or school.strip().lower() == "na":
-        return "Unknown", "Unknown"
+        return 0, 0
 
     clean_school = clean_text(school)
     
@@ -82,7 +136,7 @@ def geocode_previous_school(school: str):
             lat = data['items'][0]['position']['lat']
             lng = data['items'][0]['position']['lng']
             return lat, lng
-    return "Unknown", "Unknown"
+    return 0, 0
     
 # preprocess senior high file function
 def preprocess_file_seniorhigh(file_path: str):
@@ -109,14 +163,17 @@ def preprocess_file_seniorhigh(file_path: str):
     df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
     df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
     df["strand"] = df["strand"].fillna("N/A").astype(str).str.strip()
-    df["previous_school"] = df["previous_school"].fillna("Unknown").str.strip()
-    df["city"] = df["city"].fillna("Unknown").str.strip()
-    df["province"] = df["province"].fillna("Unknown").str.strip()
-    df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
+    df["previous_school"] = df["previous_school"].fillna(0).str.strip()
+    df["city"] = df["city"].fillna(0).str.strip()
+    df["province"] = df["province"].fillna(0).str.strip()
+    df["barangay"] = df["barangay"].fillna(0).str.strip()
 
     df["barangay"] = df["barangay"].str.strip().str.title()
     df["city"] = df["city"].str.strip().str.title()
     df["province"] = df["province"].str.strip().str.title()
+
+    df["previous_school"] = df["previous_school"].apply(clean_previous_school_name)
+    df["previous_school"] = group_similar_schools(df["previous_school"])
 
     df["full_address"] = (
         df["barangay"] + ", " + df["city"] + ", " + df["province"]
@@ -136,41 +193,17 @@ def preprocess_file_seniorhigh(file_path: str):
     df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce').fillna(0)
     df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce').fillna(0)
 
-    valid_coordinates = df[(df['latitude'] != 0) & (df['longitude'] != 0)].copy()  
+    valid_coordinates = df[(df['latitude'] != 0) & (df['longitude'] != 0)].copy()
 
-    unique_lat_long = valid_coordinates[['latitude', 'longitude']].drop_duplicates()
-    n_clusters = unique_lat_long.shape[0]
-
-    if n_clusters > 0:
-        kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto', init='k-means++')
-        valid_coordinates['cluster_address'] = kmeans_address.fit_predict(valid_coordinates[['latitude', 'longitude']].values)
-
-        # merge back to main data frame
-        df = df.merge(
-            valid_coordinates[['stud_id', 'cluster_address']],
-            on='stud_id',
-            how='left'
-        )
-    else: 
-        df['cluster_address'] = -1
-    
-    df['cluster_address'] = df['cluster_address'].fillna(-1).astype(int)
-    
-    df_cebu = df[
-        ((df['province'].str.contains('Cebu', na=False, case=False)) |
-        (df['full_address'].str.contains('Cebu', na=False, case=False))) &
-        (df['latitude'] != 0) & (df['longitude'] != 0)
-    ].copy()
-
-    if not df_cebu.empty:
-        n = len(df_cebu)
+    if not valid_coordinates.empty:
+        n = len(valid_coordinates)
         upper_k = round(math.sqrt(n / 2))
-        print(f"Sample size (Cebu-based students): {n}")
+        print(f"Sample size (ALL valid students): {n}")
         print(f"Upper limit for k (√(n/2)): {upper_k}")
 
         best_k = 2
         best_score = -1
-        coords = df_cebu[['latitude', 'longitude']].values
+        coords = valid_coordinates[['latitude', 'longitude']].values
 
         for k in range(2, max(3, upper_k + 1)):
             kmeans = KMeans(n_clusters=k, random_state=42, init='k-means++')
@@ -179,28 +212,32 @@ def preprocess_file_seniorhigh(file_path: str):
             if score > best_score:
                 best_score = score
                 best_k = k
+
         print(f"Optimal k based on Silhouette Score: {best_k}")
         print(f"Best Silhouette Score: {best_score:.4f}")
+
+        # Apply clustering to all valid students
+        kmeans_all = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
+        valid_coordinates['cluster'] = kmeans_all.fit_predict(coords)
+
+        # merge back to the main dataframe
+        df = df.merge(
+            valid_coordinates[['stud_id', 'cluster']],
+            on='stud_id',
+            how='left'
+        )
     else:
-        best_k = 1
+        df['cluster'] = -1
 
-    kmeans_proximity = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
-    df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(coords)
-
-    df = df.merge(
-        df_cebu[['stud_id', 'cluster_proximity']],
-        on='stud_id',
-        how='left'
-    )
-    df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
+    df['cluster'] = df['cluster'].fillna(-1).astype(int)
 
 
     # geocode previous school part
     geocoded_prev_school = df['previous_school'].apply(geocode_previous_school)
     df['prev_latitude'], df['prev_longitude'] = zip(*geocoded_prev_school)
 
-    df['prev_latitude'] = df['prev_latitude'].fillna("Unknown")
-    df['prev_longitude'] = df['prev_longitude'].fillna("Unknown")
+    df['prev_latitude'] = df['prev_latitude'].fillna(0)
+    df['prev_longitude'] = df['prev_longitude'].fillna(0)
     
     # save the cleaned file
     output_path = file_path.replace(".csv", "_processed.csv")
@@ -214,6 +251,7 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
     if not file.filename.endswith('csv'):
         raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
 
+    tmp_path = None
     try:
         with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
@@ -222,7 +260,9 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
         processed_path = preprocess_file_seniorhigh(tmp_path)
 
     finally:
-        os.remove(tmp_path)  # clean up uploaded file
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 
     # return file as a response without saving to the server
     return FileResponse(

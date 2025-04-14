@@ -43,6 +43,7 @@ let drawControlVisible = false;
 // api and ic0n url
 const SENIOR_HIGH_API_URL = '/api/senior-high-student-data';
 const COLLEGE_API_URL = '/api/college-student-data';
+const PREVIOUS_SCHOOL_API_URL = '/api/previous-schools';
 const SCHOOL_ICON_URL = 'static/img/usjr.png';
 const STUDENT_ICON_URL = 'static/img/student-icons.png';    
 
@@ -63,10 +64,115 @@ const COLLEGE_DEPARTMENTS = {
 };
 
 // school coordinates 
-const schools = [
-    {name: "USJ-R Main Campus", lat: 10.29442, lng: 123.89785},
-    {name: "USJ-R Basak Campus", lat: 10.287451009936149, lng: 123.86271681110225}
-];
+let schools = [];
+async function loadCampuses() {
+    try {
+        const response = await fetch('/api/retrieve/campuses');
+        if (!response.ok) {
+            throw new Error('Failed to fetch campuses');
+        }
+
+        const campuses = await response.json();
+
+        schools = campuses.map(campus => ({
+            name: campus.name,
+            lat: campus.latitude,
+            lng: campus.longitude
+        }));
+
+        schools.forEach(campus => {
+            const schoolIcon = L.icon({
+                iconUrl: 'static/img/usjr.png',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            });
+
+            const marker = L.marker([campus.lat, campus.lng], { icon: schoolIcon }).addTo(map);
+            marker.bindPopup(`<b>${campus.name}</b>`);
+        });
+
+    } catch (error) {
+        console.error('Error loading campuses:', error);
+    }
+}
+
+let campusMarker = null;
+let isAddingCampus = false;
+
+document.getElementById('addCampusBtn').addEventListener('click', () => {
+    isAddingCampus = true;
+    alert('Click on the map to place the campus location.');
+
+    map.once('click', function (e) {
+        if (campusMarker) {
+            map.removeLayer(campusMarker);
+        }
+
+        const { lat, lng } = e.latlng;
+
+        const schoolIcon = L.icon({
+            iconUrl: 'static/img/usjr.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        });
+
+        campusMarker = L.marker([lat, lng], { icon: schoolIcon, draggable: true }).addTo(map)
+            .bindPopup(`
+                <form id="campusForm" style="min-width: 250px; max-width: 300px;">
+                    <div style="margin-bottom: 10px;">
+                        <label for="campusName">Campus Name:</label><br>
+                        <input type="text" id="campusName" class="form-control" style="width: 100%;" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Save Campus</button>
+                </form>
+            `).openPopup();
+
+        // Submit logic
+        setTimeout(() => {
+            document.getElementById('campusForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const name = document.getElementById('campusName').value;
+                const latitude = campusMarker.getLatLng().lat;
+                const longitude = campusMarker.getLatLng().lng;
+
+                const payload = {
+                    name,
+                    latitude,
+                    longitude
+                };
+
+                try {
+                    const response = await fetch('/api/campuses', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+                    }
+
+                    const result = await response.json();
+                    alert('Campus saved successfully!');
+
+                    // ✅ Reset the state
+                    map.removeLayer(campusMarker); // remove marker from map
+                    campusMarker = null;           // reset marker variable
+                    isAddingCampus = false;        // reset adding state
+
+                } catch (error) {
+                    alert(`Error saving campus: ${error.message}`);
+                }
+            });
+        }, 100);
+    });
+});
 
 // asynchronous function to fetch data
 async function fetchData(url) {
@@ -531,6 +637,52 @@ function addSchoolMarkers() {
         markersLayer.addLayer(marker);
     });
 }
+
+const schoolIcon = L.icon({
+    iconUrl: '/static/img/university.png', // update with your actual path
+    iconSize: [30, 40], // width, height in pixels
+    iconAnchor: [15, 40], // point of the icon which will correspond to marker's location
+    popupAnchor: [0, -40] // point from which the popup should open relative to the iconAnchor
+});
+
+
+// add previous school
+async function plotPreviousSchools() {
+    clearRoute();  // clear any previous polylines/routes if applicable
+    markers.clearLayers();  // clear other markers
+    activeCluster = null;  // reset cluster state
+    currentClusterType = null;
+    currentEducationLevel = null;
+
+    const schools = await fetchData(PREVIOUS_SCHOOL_API_URL);
+    console.log("Previous schools:", schools);
+
+    schools.forEach((school) => {
+        const { latitude, longitude, name, senior_high_count, college_count } = school;
+
+        if (
+            latitude && longitude &&
+            !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))
+        ) {
+            const popupContent = `
+                <strong>${name}</strong><br/>
+                📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}<br/>
+                👨‍🎓 Senior High: ${senior_high_count}<br/>
+                🎓 College: ${college_count}
+            `;
+
+            const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
+                icon: schoolIcon
+            }).bindPopup(popupContent);
+            
+
+            markers.addLayer(marker);
+        }
+    });
+
+    map.addLayer(markers); // show the school markers
+}
+
 
 // function to add filter controls
 function addFilterControls() {
@@ -1303,10 +1455,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
     addFilterControls();
     initializePopulationDistribution();
-
-    markers = L.markerClusterGroup();
-    map.addLayer(markers);
+    loadCampuses();
 });
+
+document.getElementById('previousSchool').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await plotPreviousSchools();
+});
+
 
 document.getElementById('seniorHighData').addEventListener('click', function() {
     window.location.href = '/seniorhigh/data-analytics';

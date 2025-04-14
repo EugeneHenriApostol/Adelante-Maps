@@ -36,6 +36,15 @@ class Role(Base):
     role_id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(50), unique=True, nullable=False)
 
+class Campus(Base):
+    __tablename__ = "campuses"
+    campus_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class PreviousSchool(Base):
     __tablename__ = 'previous_schools'
     id = Column(Integer, primary_key=True, index=True)
@@ -43,9 +52,9 @@ class PreviousSchool(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
-    shs_students = relationship('SeniorHighStudents', back_populates='previous_school')
-    college_students = relationship('CollegeStudents', back_populates='previous_school')
-    
+    students_senior_high = relationship('SeniorHighStudents', back_populates='previous_school')
+    students_college = relationship('CollegeStudents', back_populates='previous_school')
+
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
     stud_id = Column(Integer, primary_key=True, index=True)
@@ -58,20 +67,10 @@ class SeniorHighStudents(Base):
     full_address = Column(String(255))
     latitude = Column(Float)
     longitude = Column(Float)
-    cluster_address = Column(Integer)
-    cluster_proximity = Column(Integer)
+    cluster = Column(Integer)
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
-    previous_school = relationship('PreviousSchool', back_populates='shs_students')
-    
-    # tracks user who created and updated the record
-    uploaded_by = Column(Integer, ForeignKey("users.user_id"))
-    updated_by = Column(Integer, ForeignKey("users.user_id"))
-    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    created_by_user = relationship("User", foreign_keys=[uploaded_by], backref="created_shs_students")
-    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_shs_students")
+    previous_school = relationship('PreviousSchool', back_populates='students_senior_high')
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
@@ -80,27 +79,17 @@ class CollegeStudents(Base):
     course = Column(String(50))
     age = Column(Integer)
     strand = Column(String(50))
-    previous_school = Column(String(255))
     city = Column(String(100))
     province = Column(String(255))
     barangay = Column(String(255))
     full_address = Column(String(255))
     latitude = Column(Float)
     longitude = Column(Float)
-    cluster_address = Column(Integer)
-    cluster_proximity = Column(Integer)
-    
+    cluster = Column(Integer)
+
     previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
-    previous_school = relationship('PreviousSchool', back_populates='college_students')
-    
-    # tracks user who created and updated the record
-    uploaded_by = Column(Integer, ForeignKey("users.user_id"))
-    updated_by = Column(Integer, ForeignKey("users.user_id"))
-    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    created_by_user = relationship("User", foreign_keys=[uploaded_by], backref="created_college_students")
-    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_college_students")
+    previous_school = relationship('PreviousSchool', back_populates='students_college')
+
 
 class EventReports(Base):
     __tablename__ = "event_reports"

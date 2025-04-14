@@ -1,0 +1,116 @@
+stud_id,year,course,age,strand,previous_school,city,province,barangay,full_address,latitude,longitude,cluster_address,cluster_proximity,prev_latitude,prev_longitude
+1,5,B.S.A.,23,ABM,Compostela Science & Technology HS,Compostela,Cebu,Poblacion,"Poblacion, Compostela, Cebu",10.45237,124.01243,28,0,10.46062,124.00649
+2,5,B.S.A.,23,ABM,University of the Visayas,Lapu-Lapu City,Cebu,Buyog Maribago,"Buyog Maribago, Lapu-Lapu City, Cebu",10.28955,124.00187,49,0,51.28108,3.76107
+3,5,B.S.A.,22,ABM,Colegio de San Antonia de Padua,Catmon,Cebu,"Bachao, Catmondaan,","Bachao, Catmondaan,, Catmon, Cebu",10.68116,124.01569,32,0,14.68777,121.02281
+4,5,B.S.A.,22,ABM,"Santa Ana Academy of Barili, Inc.",Barili,Cebu,"Unggal, Bolocboloc","Unggal, Bolocboloc, Barili, Cebu",10.11283,123.53046,25,0,10.11743,123.51172
+5,5,B.S.A.,22,ABM,Tabunok National High School,Talisay City,Cebu,"Campo 3 Jaclupan,","Campo 3 Jaclupan,, Talisay City, Cebu",10.30036,123.8179,48,0,10.26779,123.84143
+6,5,B.S.A.,4,ABM,University of the Visayas Main Campus,Cordova,Cebu,Purok 2 Gabi,"Purok 2 Gabi, Cordova, Cebu",10.26123,123.94543,58,0,14.64843,121.07112
+7,5,B.S.A.,22,A.B.M.,BULACAO COMMUNITY SCHOOL,Cebu City,Cebu,"Villabulsita, Bulacao,","Villabulsita, Bulacao,, Cebu City, Cebu",10.27565,123.85143,91,0,14.80459,121.06591
+8,5,B.S.A.,23,ABM,Cebu Institute of Technology University,Ginatilan,Cebu,"San Roque,","San Roque,, Ginatilan, Cebu",9.56799,123.31274,17,0,28.06413,-80.62403
+9,5,B.S.A.,22,ABM,"Santa Ana Academy of Barili, Inc.",Barili,Cebu,"Unggal, Bolocboloc","Unggal, Bolocboloc, Barili, Cebu",10.11283,123.53046,25,0,10.11743,123.51172
+10,5,B.S.A.,23,ABM,UNIVERSITY OF CEBU-BANILAD,Mandaue City,Cebu,"090 Pilit Cabancalan,","090 Pilit Cabancalan,, Mandaue City, Cebu",10.35727,123.92482,52,0,10.34658,123.91484
+11,5,B.S.A.,22,ABM,Consolacion National High School,Consolacion,Cebu,"Ibabao, Tugbongan","Ibabao, Tugbongan, Consolacion, Cebu",10.3639,123.96192,11,0,10.36244,123.98215
+12,5,B.S.A.,22,ABM,San Pablo Colleges,Dolores,Quezon Province,11St. Brgy. Bulakin Ii,"11St. Brgy. Bulakin Ii, Dolores, Quezon Province",14.01232,121.38976,6,-1,11.04603,124.60553
+13,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Badian,Cebu,"Sitio Toril, Taytay,","Sitio Toril, Taytay,, Badian, Cebu",9.85357,123.40191,7,0,10.74969,121.94135
+14,5,B.S.A.,23,ABM,University Of Cebu,Cebu City,Cebu,848-A M.J. Cuenco Avenue Street,"848-A M.J. Cuenco Avenue Street, Cebu City, Cebu",10.3053,123.90617,83,0,10.29383,123.97493
+15,5,B.S.A.,22,ABM,University of Cebu Lapu-Lapu and Mandaue,Lapu-Lapu City,Cebu,Pusok,"Pusok, Lapu-Lapu City, Cebu",10.31763,123.97809,73,0,10.32518,123.95389
+16,5,B.S.A.,23,ABM,Cebu Technological University,Cebu City,Cebu,"Sitio Lariha, Kalunasan","Sitio Lariha, Kalunasan, Cebu City, Cebu",10.33449,123.88281,35,0,10.29678,123.90704
+17,5,B.S.A.,24,N/A,St. Scholastica's Academy,Talisay City,Cebu,"F.C. Perez Drive, Biasong,","F.C. Perez Drive, Biasong,, Talisay City, Cebu",10.24284,123.83114,39,0,14.41423,120.97093
+18,5,B.S.A.,21,ABM,"NOTRE DAME ACADEMY OF SAN FERNANDO CEBU,",San Fernando,Bukidnon,"Balud,","Balud,, San Fernando, Bukidnon",10.14412,123.69413,24,-1,10.16305,123.70691
+19,5,B.S.A.,22,ABM,Consolacion National High School,Consolacion,Cebu,"Ibabao, Tugbongan","Ibabao, Tugbongan, Consolacion, Cebu",10.3639,123.96192,11,0,10.36244,123.98215
+20,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Badian,Cebu,"Sitio Toril, Taytay,","Sitio Toril, Taytay,, Badian, Cebu",9.85357,123.40191,7,0,10.74969,121.94135
+21,5,B.S.A.,23,STEM,HILONGOS NATIONAL VOCATIONAL SCHOOL,Hilongos,Leyte,"Brgy. Concepcion,","Brgy. Concepcion,, Hilongos, Leyte",10.38849,124.78788,10,-1,10.37058,124.754
+22,5,B.S.A.,22,ABM,Cordova Catholic Cooperative School,Cebu City,Cebu,"Gabi, Cordova, Cebu","Gabi, Cordova, Cebu, Cebu City, Cebu",10.26274,123.96085,38,0,10.25167,123.94965
+23,5,B.S.A.,23,ABM,Southwestern University-PHINMA,Cebu City,Cebu,"Upper Laguerta, Lahug,","Upper Laguerta, Lahug,, Cebu City, Cebu",10.3303,123.89856,56,0,30.63622,-97.66248
+24,5,B.S.A.,23,ABM,St. Vincent's College Incorporated,Salug,Zamboanga Del Norte,"Bacong,","Bacong,, Salug, Zamboanga Del Norte",8.11275,122.83167,14,-1,Unknown,Unknown
+25,5,B.S.A.,23,ABM,Aclc College of Ormoc,Ormoc City,Leyte,312 D. Veloso St. Brgy. Punta,"312 D. Veloso St. Brgy. Punta, Ormoc City, Leyte",11.01061,124.60255,15,-1,11.02295,124.60493
+26,5,B.S.A.,22,ABM,Academia de San Pedro Calungsod,San Fernando,Cebu,Upper North Poblacion,"Upper North Poblacion, San Fernando, Cebu",12.30398,122.60115,3,0,14.34258,121.05311
+27,5,B.S.A.,22,ABM,Saint Paul University-Surigao,Dinagat,Dinagat Islands,"Plaridel, Libjo","Plaridel, Libjo, Dinagat, Dinagat Islands",10.1231,125.50753,4,-1,9.78958,125.49357
+28,5,B.S.A.,22,ABM,Talisay City Science High School,Talisay City,Cebu,"1427 Crosan, Bulacao","1427 Crosan, Bulacao, Talisay City, Cebu",10.26937,123.8448,89,0,10.30036,123.8179
+29,5,B.S.A.,22,ABM,University of Cebu- Banilad,Mandaue City,Cebu,"038 Sto. Nino, Jagobiao","038 Sto. Nino, Jagobiao, Mandaue City, Cebu",10.34459,123.91487,31,0,10.34658,123.91484
+30,5,B.S.A.,22,ABM,University of Cebu-Pri,Cebu City,Cebu,Sitio Iipil-Ipil Alaska Mambaling,"Sitio Iipil-Ipil Alaska Mambaling, Cebu City, Cebu",10.28907,123.88172,53,0,10.29383,123.97493
+31,5,B.S.A.,23,ABM,Asian College of Technology,Cebu City,Cebu,"3-27 St. Jude Acres, Bulacao","3-27 St. Jude Acres, Bulacao, Cebu City, Cebu",10.2729,123.84986,68,0,Unknown,Unknown
+32,5,B.S.A.,23,ABM,Indiana Aerospace University,Lapu-Lapu City,Cebu,"Kinalumsan, Canjulao","Kinalumsan, Canjulao, Lapu-Lapu City, Cebu",10.29562,123.94058,77,0,10.29272,123.97533
+33,5,B.S.A.,23,ABM,PROFESSIONAL ACADEMY OF THE PHILIPPINES,San Fernando,Bukidnon,"Tinubdan,","Tinubdan,, San Fernando, Bukidnon",10.1755,123.68395,43,-1,Unknown,Unknown
+34,5,B.S.A.,22,ABM,University of Cebu Main Campus,San Remigio,Cebu,"Purok Talisay, Maño","Purok Talisay, Maño, San Remigio, Cebu",11.05045,123.93679,21,0,10.29918,123.89484
+35,5,B.S.A.,22,ABM,Isabel National Comprehensive School,Cebu City,Cebu,"Urban Homes, Tipolo,","Urban Homes, Tipolo,, Cebu City, Cebu",10.29649,123.89795,65,0,6.69073,122.02324
+36,5,B.S.A.,22,ABM,Mandaue City School for the Arts,Cebu City,Cebu,"Kauswagan Road, Talamban","Kauswagan Road, Talamban, Cebu City, Cebu",10.37192,123.91543,41,0,14.18723,121.2873
+37,5,B.S.A.,22,ABM,Southwestern University PHINMA,Cebu City,Cebu,"Purok Tambis, Brgy. Apalan","Purok Tambis, Brgy. Apalan, Cebu City, Cebu",10.31082,123.87815,78,0,30.63622,-97.66248
+38,5,B.S.A.,22,ABM,UNIVERSITY OF CEBU-BANILAD,Mandaue City,Cebu,"Sitio Pilapil, Casuntingan,","Sitio Pilapil, Casuntingan,, Mandaue City, Cebu",10.34458,123.93129,62,0,10.34658,123.91484
+39,5,B.S.A.,23,ABM,CEBU TRINITY CHRISTIAN SCHOOL,Cebu City,Cebu,1038 - I Basak Bontores St.,"1038 - I Basak Bontores St., Cebu City, Cebu",10.28736,123.86712,93,0,10.28614,123.86145
+40,5,B.S.A.,24,ABM,St. Scholastica's Academy,Talisay City,Cebu,"F.C. Perez Drive, Biasong,","F.C. Perez Drive, Biasong,, Talisay City, Cebu",10.24284,123.83114,39,0,14.41423,120.97093
+41,5,B.S.A.,22,ABM,Academia de San Pedro Calungsod,San Fernando,Cebu,Upper North Poblacion,"Upper North Poblacion, San Fernando, Cebu",12.30398,122.60115,3,0,14.34258,121.05311
+42,5,B.S.A.,22,ABM,Talisay City Science High School,Talisay City,Cebu,"1427 Crosan, Bulacao","1427 Crosan, Bulacao, Talisay City, Cebu",10.26937,123.8448,89,0,10.30036,123.8179
+43,5,B.S.A.,22,ABM,St. Louise de Marillac College of Bogo,Borbon,Cebu,Don Gregorio Antigua,"Don Gregorio Antigua, Borbon, Cebu",10.87788,123.97719,0,0,11.05256,124.00428
+44,5,B.S.A.,23,ABM,Asian College of Technology,Cebu City,Cebu,"3-27 St. Jude Acres, Bulacao","3-27 St. Jude Acres, Bulacao, Cebu City, Cebu",10.2729,123.84986,68,0,Unknown,Unknown
+45,5,B.S.A.,22,ABM,Mandaue City School for the Arts,Cebu City,Cebu,"Kauswagan Road, Talamban","Kauswagan Road, Talamban, Cebu City, Cebu",10.37192,123.91543,41,0,14.18723,121.2873
+46,5,B.S.A.,22,ABM,SOUTHERN BETHANY CHRISTIAN SCHOOL,City Of Naga,Cebu,"Sitio Bayong, Inayagan","Sitio Bayong, Inayagan, City Of Naga, Cebu",10.23474,123.77295,30,0,10.13269,124.84737
+47,5,B.S.A.,22,ABM,University of Cebu Lapu-Lapu and Mandaue,Liloan,Cebu,"Sambag, San Vicente","Sambag, San Vicente, Liloan, Cebu",10.40948,123.9784,55,0,10.32518,123.95389
+48,5,B.S.A.,23,ABM,University of San Jose- Recoletos,Talisay City,Cebu,"Deca Phase 3, Dumlog","Deca Phase 3, Dumlog, Talisay City, Cebu",10.24472,123.83939,70,0,10.74969,121.94135
+49,5,B.S.A.,23,ABM,SCIENCE AND TECHNOLOGY EDUCATION CENTER,Lapu-Lapu City,Cebu,"Kagudoy,Basak,","Kagudoy,Basak,, Lapu-Lapu City, Cebu",10.29031,123.96732,23,0,Unknown,Unknown
+50,5,B.S.A.,23,ABM,Southwestern University-PHINMA,Cebu City,Cebu,"1782 Yakal St., Capitol Site","1782 Yakal St., Capitol Site, Cebu City, Cebu",10.3245,123.89091,72,0,30.63622,-97.66248
+51,5,B.S.A.,23,ABM,"St. Matthew's High School of Aloran, Inc",Aloran,Misamis Occidental,Palayan,"Palayan, Aloran, Misamis Occidental",8.41023,123.82403,13,-1,Unknown,Unknown
+52,5,B.S.A.,22,ABM,Basak Community SChool,Cebu City,Cebu,"137 N. Cabreros St., Basak, Ubos Poso","137 N. Cabreros St., Basak, Ubos Poso, Cebu City, Cebu",10.28683,123.86856,61,0,7.68706,126.01731
+53,5,B.S.A.,22,ABM,Southwestern University - PHINMA,Cebu City,Cebu,"Corner F. Paca�A St., Tisa,","Corner F. Paca�A St., Tisa,, Cebu City, Cebu",10.30103,123.87361,84,0,30.63622,-97.66248
+54,5,B.S.A.,23,ABM,San Roque College de Cebu,Liloan,Cebu,"085 Camino Road, Sitio Lourdes, Yati,","085 Camino Road, Sitio Lourdes, Yati,, Liloan, Cebu",10.39074,123.98217,34,0,10.29711,123.88192
+55,5,B.S.A.,23,ABM,University of Cebu-Banilad,Cebu City,Cebu,1052 Kalubihan Talamban Cebu City,"1052 Kalubihan Talamban Cebu City, Cebu City, Cebu",10.36483,123.91443,81,0,10.34658,123.91484
+56,5,B.S.A.,23,ACCOUNTANC,SAN REMIGIO NATIONAL HIGH SCHOOL,San Remigio,Cebu,Purok Manga Looc,"Purok Manga Looc, San Remigio, Cebu",11.06833,123.9372,57,0,10.91607,123.89942
+57,5,B.S.A.,22,ABM,Christ the King College,Cebu City,Cebu,"P4, Maharlika Highway, Brgy. Capoocan","P4, Maharlika Highway, Brgy. Capoocan, Cebu City, Cebu",12.06686,124.58479,46,0,14.61048,121.08715
+58,5,B.S.A.,22,ABM,KABANKALAN CATHOLIC COLLEGE,Kabangkalan,Negros Occidental,Coloso Subdivision,"Coloso Subdivision, Kabangkalan, Negros Occidental",9.99118,122.81811,12,-1,9.99776,122.81526
+59,5,B.S.A.,22,ABM,Saint Louis College-Cebu,Mandaue City,Cebu,"Bayso Homeowners, Orel, Banilad","Bayso Homeowners, Orel, Banilad, Mandaue City, Cebu",10.33842,123.92189,76,0,10.40041,123.8547
+60,5,B.S.A.,23,ABM,"St. Matthew's High School of Aloran, Inc",Aloran,Misamis Occidental,Palayan,"Palayan, Aloran, Misamis Occidental",8.41023,123.82403,13,-1,Unknown,Unknown
+61,5,B.S.A.,23,ABM,"ST. MARY'S ACADEMY OF DALAGUETE,CEBU INC",Dalaguete,Cebu,"Panocdocan, Cawayan`","Panocdocan, Cawayan`, Dalaguete, Cebu",9.80948,123.53616,22,0,9.76747,123.52522
+62,5,B.S.A.,24,ABM,Tisa National High School,Cebu City,Cebu,"Blk 10 Lt 18, Dosdos Village, Tisa,","Blk 10 Lt 18, Dosdos Village, Tisa,, Cebu City, Cebu",10.30827,123.86742,71,0,10.30616,123.86108
+63,5,B.S.A.,22,ABM,Saint Dominic Savio International School,Lapu-Lapu City,Cebu,"Carajay, Gun-Ob,","Carajay, Gun-Ob,, Lapu-Lapu City, Cebu",10.29505,123.94952,59,0,14.21182,121.13338
+64,5,B.S.A.,23,ABM,San Roque College de Cebu,Liloan,Cebu,"085 Camino Road, Sitio Lourdes, Yati,","085 Camino Road, Sitio Lourdes, Yati,, Liloan, Cebu",10.39074,123.98217,34,0,10.29711,123.88192
+65,5,B.S.A.,24,HUMSS,UNIVERSITY OF CEBU - BANILAD,Sogod,Cebu,"San Isidro, Poblacion, Sogod Cebu","San Isidro, Poblacion, Sogod Cebu, Sogod, Cebu",10.74801,124.00442,27,0,10.34658,123.91484
+66,5,B.S.A.,22,ABM,KABANKALAN CATHOLIC COLLEGE,Kabangkalan,Negros Occidental,Coloso Subdivision,"Coloso Subdivision, Kabangkalan, Negros Occidental",9.99118,122.81811,12,-1,9.99776,122.81526
+67,5,B.S.A.,23,ABM,Cebu Institute of Technology-University,Cebu City,Cebu,"48 F. Jaca Street, Pardo","48 F. Jaca Street, Pardo, Cebu City, Cebu",10.28037,123.858,29,0,10.40041,123.8547
+68,5,B.S.A.,21,ABM,Consolatrix College of Toledo City Inc.,Cebu City,Cebu,"Angilan, Aloguinsan, Cebu","Angilan, Aloguinsan, Cebu, Cebu City, Cebu",10.21609,123.57809,16,0,10.37406,123.63685
+69,5,B.S.A.,23,HUMSS,"ST. MARY'S ACADEMY OF DALAGUETE,CEBU INC",Dalaguete,Cebu,"Panocdocan, Cawayan`","Panocdocan, Cawayan`, Dalaguete, Cebu",9.80948,123.53616,22,0,9.76747,123.52522
+70,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Malabuyoc,Cebu,"Sitio Tunga-Mainit, Montaneza","Sitio Tunga-Mainit, Montaneza, Malabuyoc, Cebu",9.68302,123.34311,26,0,10.74969,121.94135
+71,5,B.S.A.,24,ABM,Southwestern University-PHINMA,Cebu City,Cebu,"2289 A. Gabuya St., Cogon, Pardo,","2289 A. Gabuya St., Cogon, Pardo,, Cebu City, Cebu",10.27667,123.85772,88,0,30.63622,-97.66248
+72,5,B.S.A.,22,ABM,Southwestern Universsity - PHINMA,Cebu City,Cebu,"202-E Tres De Abril St., Labangon","202-E Tres De Abril St., Labangon, Cebu City, Cebu",10.29594,123.88002,79,0,30.63622,-97.66248
+73,5,B.S.A.,23,ABM,University of San Jose-Recoletos,Talisay City,Cebu,"Casilda Homes, Cruzan, Bulacao,","Casilda Homes, Cruzan, Bulacao,, Talisay City, Cebu",10.26937,123.8448,89,0,15.79053,120.98748
+74,5,B.S.A.,22,N/A,ST. SCHOLASTICA&#039;S ACADEMY,Talisay City,Cebu,"Hawod Compound, Talisay City, Cebu","Hawod Compound, Talisay City, Cebu, Talisay City, Cebu",10.26807,123.8434,37,0,14.41437,120.971
+75,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Malabuyoc,Cebu,"Sitio Tunga-Mainit, Montaneza","Sitio Tunga-Mainit, Montaneza, Malabuyoc, Cebu",9.68302,123.34311,26,0,10.74969,121.94135
+76,5,B.S.A.,22,ABM,PUNTA PRINCESSA ELEMENTARY SCHOOL,Cebu City,Cebu,"6.E. Sabellano St., Punta Princesa","6.E. Sabellano St., Punta Princesa, Cebu City, Cebu",10.2934,123.86848,87,0,11.00923,124.59965
+77,5,B.S.A.,22,ABM,University of Cebu,Cebu City,Cebu,"191-Ie Sun Valley, V. Rama Avenue, Brgy. Calamba,","191-Ie Sun Valley, V. Rama Avenue, Brgy. Calamba,, Cebu City, Cebu",10.30765,123.88685,36,0,10.29383,123.97493
+78,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Cebu City,Cebu,"Sikatuna Street, Baranggay Day-As","Sikatuna Street, Baranggay Day-As, Cebu City, Cebu",10.29942,123.90328,19,0,10.74969,121.94135
+79,5,B.S.A.,23,ABM,RMDSF- Science and Technology Education,Danao City,Cebu,"Upper 2A Poblacion, Sabang,","Upper 2A Poblacion, Sabang,, Danao City, Cebu",10.519,124.02855,33,0,Unknown,Unknown
+80,5,B.S.A.,23,ABM,"St. Mary's Academy of San Nicolas, Inc.",Cebu City,Cebu,"4 M. F Esca�O Street, Ermita","4 M. F Esca�O Street, Ermita, Cebu City, Cebu",10.29221,123.89747,82,0,18.169,120.6072
+81,5,B.S.A.,22,ABM,CALBAYOG CITY NATIONAL HIGH SCHOOL,Calbayog City,Western Samar,P6 Brgy. East Awang,"P6 Brgy. East Awang, Calbayog City, Western Samar",12.05926,124.61186,5,-1,12.23635,124.37586
+82,5,B.S.A.,22,ABM,Rosemont Hills Montessori College,Danao City,Cebu,"Rizal St., Suba Danao City, Cebu","Rizal St., Suba Danao City, Cebu, Danao City, Cebu",10.49523,124.0308,47,0,14.57901,121.05033
+83,5,B.S.A.,23,ABM,CEBU INSTITUE OF TECHNOLOGY-UNIVERSITY,Talisay City,Cebu,"Sitio Kabanayan, Bulacao,","Sitio Kabanayan, Bulacao,, Talisay City, Cebu",10.26937,123.8448,89,0,10.29427,123.8814
+84,5,B.S.A.,23,ABM,SOUTHWESTERN UNIVERSITY- PHINMA,Cebu City,Cebu,"111 Canyon Road, Beverly Hills, Lahug","111 Canyon Road, Beverly Hills, Lahug, Cebu City, Cebu",10.33389,123.88971,80,0,30.63622,-97.66248
+85,5,B.S.A.,21,ABM,UNIVERSITY OF CEBU LAPU-LAPU AND MANDAUE,Lapu-Lapu City,Cebu,"Sunrise Village, Gunob","Sunrise Village, Gunob, Lapu-Lapu City, Cebu",10.3041,123.95415,45,0,10.32518,123.95389
+86,5,B.S.A.,22,ABM,University of Cebu - Main Campus,Consolacion,Cebu,"Mary Claire Village, Brgy. Tayud,","Mary Claire Village, Brgy. Tayud,, Consolacion, Cebu",10.36603,123.98567,50,0,10.29918,123.89484
+87,5,B.S.A.,22,ABM,University of San Jose - Recoletos,Cebu City,Cebu,"Sikatuna Street, Baranggay Day-As","Sikatuna Street, Baranggay Day-As, Cebu City, Cebu",10.29942,123.90328,19,0,10.74969,121.94135
+88,5,B.S.A.,23,ABM,"St. Mary's Academy of San Nicolas, Inc.",Cebu City,Cebu,"4 M. F Esca�O Street, Ermita","4 M. F Esca�O Street, Ermita, Cebu City, Cebu",10.29221,123.89747,82,0,18.169,120.6072
+89,5,B.S.A.,22,Abm,ASIAN COLLEGE OF TECHNOLOGY INTEGRATED S,City Of Naga,Cebu,Purok 5 - Waterlily Colon,"Purok 5 - Waterlily Colon, City Of Naga, Cebu",10.2202,123.7618,54,0,Unknown,Unknown
+90,5,B.S.A.,23,ABM,Abellana National School,Talisay City,Cebu,"Block 2 Lot 17, Azienda Genova, Brgy. Linao","Block 2 Lot 17, Azienda Genova, Brgy. Linao, Talisay City, Cebu",10.26708,123.82121,1,0,18.49139,73.8083
+91,5,B.S.A.,23,ABM,COLEGIO DE SAN ANTONIO DE PADUA,Carmen,Cebu,"J.Rallos Street/ Poblacion, Carmen, Cebu","J.Rallos Street/ Poblacion, Carmen, Cebu, Carmen, Cebu",10.58415,124.0175,20,0,14.68777,121.02281
+92,5,B.S.A.,23,ABM,"Mary Help of Christians School(Cebu),Inc",Minglanilla,Cebu,"La Bienvinida Subd., Tungkop","La Bienvinida Subd., Tungkop, Minglanilla, Cebu",10.2364,123.78326,60,0,14.48346,121.02964
+93,5,B.S.A.,23,ABM,Holy Rosary School of Pardo,Cebu City,Cebu,"1335-E N. Bacalso, Proper Kinasang-An, Pardo","1335-E N. Bacalso, Proper Kinasang-An, Pardo, Cebu City, Cebu",10.2837,123.85898,90,0,7.20622,124.24341
+94,5,B.S.A.,23,STEM-ACAD,University of Cebu - Lapulapu and Mandau,Lapu-Lapu City,Cebu,"Blk 4, Sewage Pusok,","Blk 4, Sewage Pusok,, Lapu-Lapu City, Cebu",10.31648,123.96896,51,0,10.32518,123.95389
+95,5,B.S.A.,23,ABM,Abellana National School,Talisay City,Cebu,"Block 2 Lot 17, Azienda Genova, Brgy. Linao","Block 2 Lot 17, Azienda Genova, Brgy. Linao, Talisay City, Cebu",10.26708,123.82121,1,0,18.49139,73.8083
+96,5,B.S.A.,23,ABM,"Mary Help of Christians School(Cebu),Inc",Minglanilla,Cebu,"La Bienvinida Subd., Tungkop","La Bienvinida Subd., Tungkop, Minglanilla, Cebu",10.2364,123.78326,60,0,14.48346,121.02964
+97,5,B.S.A.,23,ABM,SAN REMIGIO NATIONAL HIGH SCHOOL,Bogo City,Cebu,"Purok 2 San Roque, Don Pedro Rodriguez","Purok 2 San Roque, Don Pedro Rodriguez, Bogo City, Cebu",11.06451,123.96857,42,0,10.91607,123.89942
+98,5,B.S.A.,23,ABM,St. Scholastica&#039;s Academy,Talisay City,Cebu,"Z2-284 Hollow Block St., Brgy. Tabunok","Z2-284 Hollow Block St., Brgy. Tabunok, Talisay City, Cebu",10.26389,123.83589,64,0,14.41437,120.971
+99,5,B.S.A.,23,STEM,Saint Columban College,Pagadian City,Zamboanga Del Sur,"New Tudela St., San Pedro Dist.","New Tudela St., San Pedro Dist., Pagadian City, Zamboanga Del Sur",7.8231,123.44435,9,-1,14.8263,120.281
+100,5,B.S.A.,22,ABM,Cebu Institute of Technology - Universit,Cebu City,Cebu,"308 F. Llamas St., Punta Princesa,","308 F. Llamas St., Punta Princesa,, Cebu City, Cebu",10.29739,123.86968,44,0,40.74244,-74.17708
+101,5,B.S.A.,22,ABM,Cordova Catholic Cooperative School,Cordova,Cebu,"Purok Maalagaron, Bangkal, Ibabao, Cebu","Purok Maalagaron, Bangkal, Ibabao, Cebu, Cordova, Cebu",10.27012,123.953,67,0,10.25167,123.94965
+102,5,B.S.A.,23,ABM,CEBU INSTITUTE OF TECHNOLOGY-UNIVERSITY,Cebu City,Cebu,"17-D. B. Aranas Street Extension,","17-D. B. Aranas Street Extension,, Cebu City, Cebu",10.2948,123.88885,74,0,10.40041,123.8547
+103,5,B.S.A.,23,ABM,St. Paul University Surigao,Surigao City,Surigao Del Norte,Blk 12 Lot 17 Canlanipa Homes,"Blk 12 Lot 17 Canlanipa Homes, Surigao City, Surigao Del Norte",9.77636,125.49216,18,-1,9.78958,125.49357
+104,5,B.S.A.,22,ABM,Science and Technology Education Center,Cebu City,Cebu,"Fuentes Street, Pajac Lapu-Lapu City","Fuentes Street, Pajac Lapu-Lapu City, Cebu City, Cebu",10.29304,123.98343,63,0,Unknown,Unknown
+105,5,B.S.A.,24,ABM,"Consolatrix College of Toledo City, Inc.",Cebu City,Cebu,Smallville Unit 3-A Upper Kalunasan,"Smallville Unit 3-A Upper Kalunasan, Cebu City, Cebu",10.33449,123.88281,35,0,10.37406,123.63685
+106,5,B.S.A.,24,ABM,St. Scholastica&#039;s Academy- Tabunok,Talisay City,Cebu,Z3-478 Ilang-Ilang Street Lagtang,"Z3-478 Ilang-Ilang Street Lagtang, Talisay City, Cebu",10.26881,123.83625,85,0,10.7823,124.01963
+107,5,B.S.A.,23,ABM,Cebu Institute of Technology - Universit,Cebu City,Cebu,556- A V. Rama Avenue Sun Valley Compd.,"556- A V. Rama Avenue Sun Valley Compd., Cebu City, Cebu",10.30913,123.88671,92,0,40.74244,-74.17708
+108,5,B.S.A.,24,ABM,Cebu Institute of Technology-University,Cebu City,Cebu,"P-7 Brgy. Union, Madrid, Surigao Del Sur","P-7 Brgy. Union, Madrid, Surigao Del Sur, Cebu City, Cebu",9.27555,126.00727,8,1,10.40041,123.8547
+109,5,B.S.A.,22,ABM,JOSE RIZAL MEMORIAL STATE UNIVERSITY,Dapitan City,Zamboanga Del Norte,"545 Noli Me Tangere St. Dawo,","545 Noli Me Tangere St. Dawo,, Dapitan City, Zamboanga Del Norte",8.64912,123.4231,2,-1,35.84341,-90.67714
+110,5,B.S.A.,22,ABM,Science and Technology Education Center,Lapu-Lapu City,Cebu,0689 Proper Bankal Lapu-Lapu City Cebu,"0689 Proper Bankal Lapu-Lapu City Cebu, Lapu-Lapu City, Cebu",10.30804,123.98981,40,0,Unknown,Unknown
+111,5,B.S.A.,23,N/A,St. Scholastica&#039;s Academy - Tabunok,Cebu City,Cebu,"Z5-134 Artville, San Isidro, Talisay City, Cebu","Z5-134 Artville, San Isidro, Talisay City, Cebu, Cebu City, Cebu",10.25543,123.83894,75,0,10.7823,124.01963
+112,5,B.S.A.,21,ABM,Christ the King College,Calbayog City,Western Samar,"Road 36, Narcisa Hills Subd., Phase 3, Brgy. Rawis","Road 36, Narcisa Hills Subd., Phase 3, Brgy. Rawis, Calbayog City, Western Samar",12.06451,124.59955,66,-1,14.61048,121.08715
+113,5,B.S.A.,22,ABM,St. Scholastica&#039;s Academy- Tabunok,Talisay City,Cebu,"Z-1 242, Purok Determinado, Brgy. Tabunok, Talisa","Z-1 242, Purok Determinado, Brgy. Tabunok, Talisa, Talisay City, Cebu",10.2647,123.84049,86,0,10.7823,124.01963
+114,5,B.S.A.,22,GAS-ABM,University of the Philippines High Schoo,Cebu City,Cebu,"354-F F. Manalo St. General Maxilom Avenue, Betty&","354-F F. Manalo St. General Maxilom Avenue, Betty&, Cebu City, Cebu",10.31126,123.90098,69,0,14.65681,121.06593
+115,5,B.S.A.,22,ABM,SOUTHWESTERN UNIVERSITY PHINMA,Calbayog City,Western Samar,Lot 4 Blk 41 Narcisa Subdivision Brgy. Rawis Calba,"Lot 4 Blk 41 Narcisa Subdivision Brgy. Rawis Calba, Calbayog City, Western Samar",0.0,0.0,-1,-1,30.63622,-97.66248
