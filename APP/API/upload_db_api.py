@@ -38,8 +38,6 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 )
 
                 db.add(prev_school)
-                db.commit()
-                db.refresh(prev_school)
 
             student = models.SeniorHighStudents(
                 stud_id = int(row['stud_id']),
@@ -56,8 +54,18 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 cluster_address = int(row['cluster_address']),
                 cluster_proximity = int(row['cluster_proximity'])
                 if row['cluster_proximity'] else None,
-                previous_school_id=prev_school.id
+                previous_school_id=prev_school.id,
+                
+                uploaded_by = current_user.user_id,
+                updated_by = current_user.user_id
             )
+            
+            if prev_school.id:  # if it already exists in db
+                student.previous_school_id = prev_school.id
+            else:
+                # handle db relationship first before committing to db
+                student.previous_school = prev_school
+                
             students.append(student)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f'Invalid data in row: {row}. Error: {str(e)}')
@@ -87,13 +95,28 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     students = []
     for row in csv_data:
         try:
+            
+            if 'previous_school' in row:
+                # find previous school column
+                prev_school = db.query(models.PreviousSchool).filter(models.PreviousSchool.name == row['previous_school']).first()
+                
+                if not prev_school:
+                    prev_school = models.PreviousSchool(
+                        name = row['previous_school'],
+                        latitude = float(row['latitude']),
+                        longitude = float(row['longitude'])
+                    )
+                    db.add(prev_school)
+            else:
+                prev_school = None
+            
             student = models.CollegeStudents(
                 stud_id=int(row["stud_id"]),
                 year=int(row["year"]),
                 course=row["course"],
                 strand=row["strand"],
                 age=int(row["age"]),
-                # previous_school=row["previous_school"],
+                previous_school = prev_school,
                 city=row["city"],
                 province=row["province"],
                 barangay=row["barangay"],
@@ -102,7 +125,17 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
                 longitude=float(row["longitude"]),
                 cluster_address=int(row["cluster_address"]),  
                 cluster_proximity=int(float(row["cluster_proximity"])) if row["cluster_proximity"] else None,
+                
+                uploaded_by = current_user.user_id,
+                updated_by = current_user.user_id
             )
+            
+            if prev_school.id:  # if it already exists in db
+                student.previous_school_id = prev_school.id
+            else:
+                # handle db relationship first before committing to db
+                student.previous_school = prev_school
+             
             students.append(student)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid data in row: {row}. Error: {str(e)}")
