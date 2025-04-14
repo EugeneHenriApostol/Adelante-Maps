@@ -201,3 +201,26 @@ body {
     background: #45a049;
 
   }
+
+  .custom-marker {
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cluster-0 {
+    background-color: blue;
+    border: 2px solid white;
+}
+
+.cluster-1 {
+    background-color: red;
+    border: 2px solid white;
+}

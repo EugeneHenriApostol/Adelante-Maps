@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import models, auth
 from database import get_db
 
@@ -120,3 +120,12 @@ def get_college_student_data(
         }
         for student in students
     ]
+
+# retrieve top 10 schools with most students
+@get_students_api_router.get('/api/students/all-schools')
+def get_top_schools_with_students(db: Session = Depends(get_db)):
+    schools = db.query(models.PreviousSchool).options(
+        joinedload(models.PreviousSchool.students_senior_high),
+        joinedload(models.PreviousSchool.students_college)
+        ).all()
+    return schools

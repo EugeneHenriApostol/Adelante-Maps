@@ -22,6 +22,15 @@ class Role(Base):
     role_id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(50), unique=True, nullable=False)
 
+class Campus(Base):
+    __tablename__ = "campuses"
+    campus_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class PreviousSchool(Base):
     __tablename__ = 'previous_schools'
     id = Column(Integer, primary_key=True, index=True)
@@ -29,7 +38,8 @@ class PreviousSchool(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
-    students = relationship('SeniorHighStudents', back_populates='previous_school')
+    students_senior_high = relationship('SeniorHighStudents', back_populates='previous_school')
+    students_college = relationship('CollegeStudents', back_populates='previous_school')
 
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
@@ -43,11 +53,10 @@ class SeniorHighStudents(Base):
     full_address = Column(String(255))
     latitude = Column(Float)
     longitude = Column(Float)
-    cluster_address = Column(Integer)
-    cluster_proximity = Column(Integer)
+    cluster = Column(Integer)
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
-    previous_school = relationship('PreviousSchool', back_populates='students')
+    previous_school = relationship('PreviousSchool', back_populates='students_senior_high')
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
@@ -56,15 +65,17 @@ class CollegeStudents(Base):
     course = Column(String(50))
     age = Column(Integer)
     strand = Column(String(50))
-    previous_school = Column(String(255))
     city = Column(String(100))
     province = Column(String(255))
     barangay = Column(String(255))
     full_address = Column(String(255))
     latitude = Column(Float)
     longitude = Column(Float)
-    cluster_address = Column(Integer)
-    cluster_proximity = Column(Integer)
+    cluster = Column(Integer)
+
+    previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
+    previous_school = relationship('PreviousSchool', back_populates='students_college')
+
 
 class EventReports(Base):
     __tablename__ = "event_reports"

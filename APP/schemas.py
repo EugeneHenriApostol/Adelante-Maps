@@ -70,3 +70,14 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: List[Union[str, ChatMessage, dict]] = Field(default_factory=list)
+
+class CampusBase(BaseModel):
+    name: str
+    latitude: float
+    longitude: float
+
+class Campus(CampusBase):
+    campus_id: int
+
+    class Config:
+        from_attributes = True

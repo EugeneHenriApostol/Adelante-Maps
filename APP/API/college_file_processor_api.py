@@ -1,11 +1,10 @@
-import io
-import os
-import re
+import math, io, os ,re, html
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
 from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 import pandas as pd
+from sklearn.metrics import silhouette_score
 
 import models, auth
 
@@ -24,6 +23,20 @@ def clean_strand(strand):
 def clean_text(text):
     return re.sub(r'[^\w\s]', '', str(text))
 
+def clean_previous_school_name(name: str):
+    name = html.unescape(name)
+
+    name = re.sub(r'\(.*?\)', '', name)
+
+    name = re.sub(r'\d+', '', name)
+
+    name = re.sub(r"[^A-Za-z\s\.\-']", '', name)
+
+    name = ' '.join(name.split()).strip()
+
+    name = name.title()
+    return name
+
 # function to geocode address using HERE API
 def geocode_address(address, api_key):
     url = "https://geocode.search.hereapi.com/v1/geocode"
@@ -37,8 +50,32 @@ def geocode_address(address, api_key):
             return latitude, longitude
     return None, None
 
+def geocode_previous_school(school: str):
+    if not school or school.strip().lower() == "na":
+        return "Unknown", "Unknown"
+
+    clean_school = clean_text(school)
+    
+    query_address = f"{clean_school}, Philippines"
+    
+    api_key_prev = os.getenv("GEOCODE_API_KEY") 
+    if not api_key_prev:
+        raise HTTPException(status_code=500, detail="Geocode API key for previous schools is missing.")
+    
+    url = "https://geocode.search.hereapi.com/v1/geocode"
+    params = {"q": query_address, "apiKey": api_key_prev}
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data['items']:
+            lat = data['items'][0]['position']['lat']
+            lng = data['items'][0]['position']['lng']
+            return lat, lng
+    return "Unknown", "Unknown"
+
 # preprocess college file function
-def preprocess_file_college(file_path: str) -> str:
+def preprocess_file_college(file_path: str):
     try:
         # read the raw CSV file
         df = pd.read_csv(file_path, header=None)  
@@ -77,6 +114,8 @@ def preprocess_file_college(file_path: str) -> str:
 
     df["strand"] = df["strand"].apply(clean_strand)
 
+    df["previous_school"] = df["previous_school"].apply(clean_previous_school_name)
+
     # create the full address column by concatenating city, province, and barangay columns
     df["full_address"] = (
         df["barangay"] + ", " + df["city"] + ", " + df["province"]
@@ -84,45 +123,59 @@ def preprocess_file_college(file_path: str) -> str:
 
     # geocode 
     def get_coordinates(address):
-        return geocode_address(address, api_key)
-    
+            return geocode_address(address, api_key)
+        
     geocoded_data = df['full_address'].apply(get_coordinates)
     df['latitude'], df['longitude'] = zip(*geocoded_data)
 
-    # cluster
-    df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-    df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
+    # cluster part
+    df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce').fillna(0)
+    df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce').fillna(0)
 
-    unique_lat_long = df[['latitude', 'longitude']].drop_duplicates()
-    n_clusters = unique_lat_long.shape[0]
+    valid_coordinates = df[(df['latitude'] != 0) & (df['longitude'] != 0)].copy()
 
-    df = df.dropna(subset=['latitude', 'longitude'])
+    if not valid_coordinates.empty:
+        n = len(valid_coordinates)
+        upper_k = round(math.sqrt(n / 2))
+        print(f"Sample size (all valid students): {n}")
+        print(f"Upper limit for k (√(n/2)): {upper_k}")
 
-    X = df[['latitude', 'longitude']].values
-    kmeans_address = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
-    df['cluster_address'] = kmeans_address.fit_predict(X)
+        best_k = 2
+        best_score = -1
+        coords = valid_coordinates[['latitude', 'longitude']].values
 
-    # cluster proximity, keep students who are only in cebu
-    df_cebu = df[
-        df['province'].str.contains('Cebu', na=False, case=False) |
-        df['full_address'].str.contains('Cebu', na=False, case=False)
-    ].copy()
+        for k in range(2, max(3, upper_k + 1)):
+            kmeans = KMeans(n_clusters=k, random_state=42, init='k-means++')
+            labels = kmeans.fit_predict(coords)
+            score = silhouette_score(coords, labels)
+            if score > best_score:
+                best_score = score
+                best_k = k
 
-    if not df_cebu.empty:
-        k = 10  
-        kmeans_proximity = KMeans(n_clusters=k, random_state=42, n_init='auto', init='k-means++')
-        df_cebu['cluster_proximity'] = kmeans_proximity.fit_predict(df_cebu[['latitude', 'longitude']].values)
+        print(f"Optimal k based on Silhouette Score: {best_k}")
+        print(f"Best Silhouette Score: {best_score:.4f}")
 
-        # merge with all latitude-longitude pairs
-        df = df.merge(df_cebu[['latitude', 'longitude', 'cluster_proximity']], on=['latitude', 'longitude'], how='left')
+        kmeans_final = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
+        valid_coordinates['cluster'] = kmeans_final.fit_predict(coords)
 
-        # ensure unique student IDs by keeping the first occurrence
-        df = df.groupby('stud_id', as_index=False).first()
+        # merge back to main dataframe
+        df = df.merge(
+            valid_coordinates[['stud_id', 'cluster']],
+            on='stud_id',
+            how='left'
+        )
     else:
-        df['cluster_proximity'] = -1  # assign -1 for students who are not from Cebu
+        df['cluster'] = -1
 
-    # ensure no NAN values
-    df['cluster_proximity'] = df['cluster_proximity'].fillna(-1).astype(int)
+    df['cluster'] = df['cluster'].fillna(-1).astype(int)
+
+
+    # geocode previous school part
+    geocoded_prev_school = df['previous_school'].apply(geocode_previous_school)
+    df['prev_latitude'], df['prev_longitude'] = zip(*geocoded_prev_school)
+
+    df['prev_latitude'] = df['prev_latitude'].fillna("Unknown")
+    df['prev_longitude'] = df['prev_longitude'].fillna("Unknown")
 
     # save the cleaned file
     output_path = file_path.replace(".csv", "_processed.csv")

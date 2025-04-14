@@ -48,75 +48,90 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 
+let currentPage = 1;
 
-// fetch users and update users registered table dynamically
 document.addEventListener("DOMContentLoaded", function () {
-    let currentPage = 1;
-    const usersPerPage = 5;
-    const usersTableBody = document.querySelector("#usersTableBody");
+    const campusesPerPage = 5;
+    const campusesTableBody = document.querySelector("#campusesTableBody");
     const paginationContainer = document.querySelector("#pagination");
 
-    async function fetchUsers(page = 1) {
-        const offset = (page - 1) * usersPerPage;
+    document.getElementById("addCampusBtn").addEventListener("click", () => {
+        window.location.href = "/maps";
+    });
 
+    async function fetchCampuses(page = 1) {
         try {
-            const response = await fetch(`/users?limit=${usersPerPage}&offset=${offset}&t=${Date.now()}`, { 
+            const response = await fetch(`/api/retrieve/campuses`, { 
                 method: 'GET',
                 credentials: 'include',
             });                               
 
             if (!response.ok) {
-                throw new Error("Failed to fetch users");
+                throw new Error("Failed to fetch campuses");
             }
 
-            const data = await response.json();
-            renderUsers(data.users);
-            renderPagination(data.total_users, page);
+            const campuses = await response.json();
+            
+            // Simple client-side pagination
+            const startIndex = (page - 1) * campusesPerPage;
+            const endIndex = startIndex + campusesPerPage;
+            const paginatedCampuses = campuses.slice(startIndex, endIndex);
+            
+            renderCampuses(paginatedCampuses, campuses);
+            renderPagination(campuses.length, page);
         } catch (error) {
-            console.error("Error loading users:", error);
+            console.error("Error loading campuses:", error);
         }
     }
-    // render users
-    function renderUsers(users) {
-        usersTableBody.innerHTML = ""; // Clear table before adding new rows
     
-        users.forEach(user => {
+    // render campuses
+    function renderCampuses(campuses) {
+        campusesTableBody.innerHTML = ""; // clear table before adding new rows
+    
+        campuses.forEach(campus => {
             const row = document.createElement("tr");
             row.classList.add("border-t");
             row.innerHTML = `
-                <td class="py-2 md:py-3">${user.email}</td>
-                <td>${user.first_name} ${user.last_name}</td>
+                <td class="py-2 md:py-3">${campus.name}</td>
+                <td>${campus.latitude}</td>
+                <td>${campus.longitude}</td>
                 <td>
-                    <a href="#" class="edit-user text-purple-600 hover:text-purple-800 mr-2 md:mr-3" data-id="${user.user_id}">Edit</a>
-                    <a href="#" class="delete-user text-red-600 hover:text-red-800" data-id="${user.user_id}">Delete</a>
+                    <a href="#" class="edit-campus text-purple-600 hover:text-purple-800 mr-2 md:mr-3" 
+                        data-id="${campus.campus_id}" 
+                        data-name="${campus.name}"
+                        data-lat="${campus.latitude}"
+                        data-lng="${campus.longitude}">Edit</a>
+                    <a href="#" class="delete-campus text-red-600 hover:text-red-800" data-id="${campus.campus_id}">Delete</a>
                 </td>
             `;
     
-            usersTableBody.append(row);
+            campusesTableBody.append(row);
         });
 
         // add event listener to edit button
-        document.querySelectorAll(".edit-user").forEach(button => {
+        document.querySelectorAll(".edit-campus").forEach(button => {
             button.addEventListener("click", (e) => {
                 e.preventDefault();
-                const userId = e.target.getAttribute("data-id");
-                openEditModal(userId, users);
+                const campusId = e.target.getAttribute("data-id");
+                
+                openEditModal(campusId, campuses); 
             });
         });
         
+        
         // add event listener to delete button
-        document.querySelectorAll(".delete-user").forEach(button => {
+        document.querySelectorAll(".delete-campus").forEach(button => {
             button.addEventListener("click", (e) => {
                 e.preventDefault();
-                const userId = e.target.getAttribute("data-id");
-                openDeleteModal(userId, users);
+                const campusId = e.target.getAttribute("data-id");
+                openDeleteModal(campusId);
             });
         });
     }
 
     // render pagination
-    function renderPagination(totalUsers, currentPage) {
-        const totalPages = Math.ceil(totalUsers / usersPerPage);
+    function renderPagination(totalCampuses, currentPage) {
+        const totalPages = Math.ceil(totalCampuses / campusesPerPage);
         paginationContainer.innerHTML = "";
     
         for (let i = 1; i <= totalPages; i++) {
@@ -131,112 +146,133 @@ document.addEventListener("DOMContentLoaded", function () {
             }
     
             button.addEventListener("click", () => {
-                fetchUsers(i);
+                currentPage = i;
+                fetchCampuses(currentPage);
             });
     
             paginationContainer.appendChild(button);
         }
     }
     
-    fetchUsers(1); // fetch users
+    fetchCampuses(currentPage); 
 });
 
-// function to open edit modal
-async function openEditModal(userId, users) {
-    const user = users.find(u => u.user_id == userId);
-    if (!user) return;
 
-    const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
-    const currentUser = await currentUserResponse.json();
+let map;
 
-    if (currentUser.role_id === 2 && user.role_id >= 2) {
-        alert("You are not allowed to edit this user.");
-        return;
+// Function to open edit modal
+function openEditModal(campusId, campuses) {
+    const campus = campuses.find(c => c.campus_id == campusId);
+    if (!campus) return;
+
+    // Set the values in the modal form
+    document.getElementById("editCampusId").value = campusId;
+    document.getElementById("editCampusName").value = campus.name;
+    document.getElementById("editLatitude").value = campus.latitude;
+    document.getElementById("editLongitude").value = campus.longitude;
+
+    // Show the modal
+    document.getElementById("editModal").classList.remove("hidden");
+
+    // If map already exists, remove it to avoid stacking multiple maps
+    if (map) {
+        map.remove();  // Remove the old map instance
     }
 
-    document.getElementById("editUserId").value = userId;
-    document.getElementById("editFirstName").value = user.first_name;
-    document.getElementById("editLastName").value = user.last_name;
-    document.getElementById("editEmail").value = user.email;  
-    document.getElementById("editRoleId").value = user.role_id;
+    // Initialize the Leaflet map inside the modal
+    map = L.map('mapContainer').setView([campus.latitude, campus.longitude], 14);
 
-    document.getElementById("editModal").classList.remove("hidden");
+    // Add a tile layer (OpenStreetMap in this case)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Add a draggable marker
+    const schoolIcon = L.icon({
+        iconUrl: 'static/img/usjr.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+
+    const campusMarker = L.marker([campus.latitude, campus.longitude], {
+        icon: schoolIcon,
+        draggable: true
+    }).addTo(map);
+
+    // Update the latitude and longitude inputs when the marker is dragged
+    campusMarker.on('dragend', function () {
+        const latLng = campusMarker.getLatLng();
+        document.getElementById("editLatitude").value = latLng.lat;
+        document.getElementById("editLongitude").value = latLng.lng;
+    });
+
+    // Handle Cancel button click to close the modal
+    document.getElementById('closeEditModal').addEventListener('click', () => {
+        document.getElementById("editModal").classList.add("hidden");
+        map.removeLayer(campusMarker); // Clean up the map when closing
+    });
 }
 
 // function to open delete modal
-async function openDeleteModal(userId, users) {
-    const user = users.find(u => u.user_id == userId);
-    if (!user) return;
-
-    const currentUserResponse = await fetch('/current-user', { credentials: 'include' });
-    const currentUser = await currentUserResponse.json();
-
-    if (currentUser.role_id === 2 && user.role_id >= 2) {
-        alert("You are not allowed to delete this user.");
-        return;
-    }
-
-    document.getElementById("deleteUserId").value = userId;
+function openDeleteModal(campusId) {
+    document.getElementById("deleteCampusId").value = campusId;
     document.getElementById("deleteModal").classList.remove("hidden");
 }
 
-
-// close Modal
+// close Edit Modal
 document.getElementById("closeEditModal").addEventListener("click", () => {
     document.getElementById("editModal").classList.add("hidden");
 });
 
-// save edited user
-document.getElementById("saveEditUser").addEventListener("click", async () => {
-    const userId = document.getElementById("editUserId").value;
-    const updatedUser = {
-        email: document.getElementById("editEmail").value,
-        first_name: document.getElementById("editFirstName").value,
-        last_name: document.getElementById("editLastName").value,
-        role_id: parseInt(document.getElementById("editRoleId").value)
+// save edited campus
+document.getElementById("saveEditCampus").addEventListener("click", async () => {
+    const campusId = document.getElementById("editCampusId").value;
+    const updatedCampus = {
+        name: document.getElementById("editCampusName").value,
+        latitude: parseFloat(document.getElementById("editLatitude").value),
+        longitude: parseFloat(document.getElementById("editLongitude").value)
     };
 
     try {
-        const response = await fetch(`/users/${userId}`, {
+        const response = await fetch(`/api/campuses/${campusId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify(updatedUser)
+            body: JSON.stringify(updatedCampus)
         });
 
-        if (!response.ok) throw new Error("Failed to update user");
+        if (!response.ok) throw new Error("Failed to update campus");
 
         document.getElementById("editModal").classList.add("hidden");
-        fetchUsers(1);
+        fetchCampuses(currentPage);
     } catch (error) {
-        console.error("Error updating user:", error);
+        console.error("Error updating campus:", error);
     }
 });
 
-// close Modal
+// close Delete Modal
 document.getElementById("closeDeleteModal").addEventListener("click", () => {
     document.getElementById("deleteModal").classList.add("hidden");
 });
 
-// confirm Delete User
-document.getElementById("confirmDeleteUser").addEventListener("click", async () => {
-    const userId = document.getElementById("deleteUserId").value;
+// confirm Delete Campus
+document.getElementById("confirmDeleteCampus").addEventListener("click", async () => {
+    const campusId = document.getElementById("deleteCampusId").value;
 
     try {
-        const response = await fetch(`/users/${userId}`, {
+        const response = await fetch(`/api/campuses/${campusId}`, {
             method: "DELETE",
             credentials: "include"
         });
 
-        if (!response.ok) throw new Error("Failed to delete user");
+        if (!response.ok) throw new Error("Failed to delete campus");
 
         document.getElementById("deleteModal").classList.add("hidden");
-        // remove user from table without reloading the entire page
-        document.querySelector(`.delete-user[data-id="${userId}"]`).closest("tr").remove();
-        // refresh the users list dynamically
-        fetchUsers(1);
+        // refresh the campuses list
+        fetchCampuses(1);
 
     } catch (error) {
-        console.error("Error deleting user:", error);
+        console.error("Error deleting campus:", error);
     }
 });
