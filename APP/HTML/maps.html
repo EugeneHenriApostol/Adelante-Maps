@@ -48,28 +48,16 @@
                                 Clusters
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="clusterDropdown">
-                                <li><a class="dropdown-item" href="#" id="seniorhighclusterbyaddress">Senior High
-                                        Cluster by Address</a></li>
-                                <li><a class="dropdown-item" href="#" id="seniorhighclusterbyproximity">Senior High
-                                        Cluster by Proximity</a></li>
-                                <li><a class="dropdown-item" href="#" id="collegeclusterbyaddress">College Cluster by
-                                        Address</a></li>
-                                <li><a class="dropdown-item" href="#" id="collegeclusterbyproximity">College Cluster by
-                                        Proximity</a></li>
+                                <li><a class="dropdown-item" href="#" id="seniorhighcluster">Senior High Cluster</a></li>
+                                <li><a class="dropdown-item" href="#" id="collegecluster">College Cluster</a></li>
                             </ul>
                         </li>
 
-                        <!-- dropdown for data visualization -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="dataVizDropdown" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                Data Analytics
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="dataVizDropdown">
-                                <li><a class="dropdown-item" href="#" id="seniorHighData">Senior High Data</a></li>
-                                <li><a class="dropdown-item" href="#" id="collegeData">College Data</a></li>
-                            </ul>
-                        </li>
+                        <!-- dropdown for data analytics -->
+                        <a class="nav-link text-dark" href="#" id="dataAnalytics" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bar-chart"></i> Data Analytics
+                        </a>
                         <!-- filter controls button -->
                         <a class="nav-link text-dark" href="#" id="openNav" data-bs-toggle="offcanvas"
                             data-bs-target="#filterSidebar" aria-controls="filterSidebar">
@@ -81,6 +69,12 @@
                                 <i class="bi bi-map"></i> Geospatial Event Tool
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link cursor-pointer text-dark" id="toggleCircleDrawControl" href="#">
+                                <i class="bi bi-geo-alt"></i> Incident Location (Circle)
+                            </a>
+                        </li>                        
 
                         <!-- link to event reports -->
                         <li class="nav-item">
@@ -99,11 +93,9 @@
                             </div>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link cursor-pointer text-dark" id="previousSchool" href="#">
-                                <i class="bi bi-clipboard-data"></i> Previous school
-                            </a>
-                        </li>
+                        <a class="nav-link cursor-pointer text-dark" id="previousSchool" href="#">
+                            <i class="bi bi-mortarboard"></i>  Previous school
+                        </a>
 
                     </ul>
                 </div>
@@ -114,6 +106,13 @@
                             id="user-icon" style="width: 40px; height: 40px;">
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li id="adminDashboardItem" style="display: none;">
+                            <a href="/admin-dashboard" class="dropdown-item">
+                                <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Admin Icon"
+                                    style="width: 20px; height: 20px; margin-right: 8px;">
+                                Admin Dashboard
+                            </a>
+                        </li>
                         <li>
                             <a href="#" id="logoutButton" class="dropdown-item">
                                 <img src="https://cdn-icons-png.flaticon.com/512/339/339737.png" alt="Logout Icon"
@@ -246,11 +245,32 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/current-user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user.role_id === 2 || user.role_id === 3) { 
+                        const adminItem = document.getElementById('adminDashboardItem');
+                        if (adminItem) {
+                            adminItem.style.display = 'block';
+                        }
+                    }
+                } else {
+                    console.warn('Not logged in or failed to fetch user');
+                }
+            } catch (error) {
+                console.error('Error fetching user:', error);
+            }
+
             const logoutButton = document.getElementById('logoutButton');
 
-    logoutButton.addEventListener('click', async (event) => {
-        event.preventDefault(); // prevent default link behavior
+            logoutButton.addEventListener('click', async (event) => {
+                event.preventDefault(); // prevent default link behavior
 
                 try {
                     const response = await fetch('/api/logout', {

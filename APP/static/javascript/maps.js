@@ -259,6 +259,14 @@ function enhanceGeocoder() {
 //     }
 // }
 
+let circleDrawControlVisible = false;
+let incidentCircle = null;
+
+let startPoint = null;
+let endPoint = null;
+
+let floodPolygon = null;
+
 // initialize leaflet map
 async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
@@ -304,7 +312,7 @@ async function initializeMap() {
 
     // layers for markers, routes and population data
     markersLayer = L.layerGroup().addTo(map); // layer for school markers
-    markers = L.markerClusterGroup(); // layer for cluster student markers
+    markers = L.layerGroup(); // layer for cluster student markers
     routesLayer = L.layerGroup().addTo(map); // layer for student routes
     populationLayer = L.layerGroup().addTo(map); // layer for campus proximity
 
@@ -380,6 +388,23 @@ async function initializeMap() {
             circlemarker: false
         }
     });
+
+    circleDrawControl = new L.Control.Draw({
+        draw: {
+            polygon: false,
+            polyline: false,
+            rectangle: false,
+            marker: false,
+            circlemarker: false,
+            circle: {
+                shapeOptions: {
+                    color: '#ff0000',
+                    fillOpacity: 0.4
+                }
+            }
+        },
+        edit: false
+    });
     
     function toggleDrawControl() {
         if (drawControlVisible) {
@@ -407,18 +432,131 @@ async function initializeMap() {
     // function for when a shape is created on the map
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
-        drawnItems.addLayer(layer);
     
-        shapeAreas = []; // reset shape areas
-        const areaInSquareMeters = calculateArea(layer);
-        const areaInSquareKilometers = areaInSquareMeters / 1e6; // convert to km²
-        shapeAreas.push(areaInSquareKilometers);
+        if (e.layerType === 'circle') {
+            if (incidentCircle) {
+                drawnItems.removeLayer(incidentCircle);
+            }
+            incidentCircle = e.layer;
+            drawnItems.addLayer(incidentCircle);
     
-        // store the current layer reference for later use
-        window.currentLayer = layer;
+            // Get the coordinates of the shape
+            window.incidentLocation = incidentCircle.getLatLng();
+            console.log(window.incidentLocation = incidentCircle.getLatLng());
     
-        // open the modal
-        openAreaTypeModal();
+            // Convert the circle to a GeoJSON polygon using Turf.js
+            const radiusInKm = incidentCircle.getRadius() / 1000; // Convert radius from meters to kilometers
+            const floodGeoJSON = turf.circle([incidentCircle.getLatLng().lng, incidentCircle.getLatLng().lat], radiusInKm, {
+                steps: 64, // Number of points around the circle
+                units: 'kilometers'
+            });
+    
+            // Store the flood polygon globally
+            floodPolygon = floodGeoJSON.geometry;
+            console.log(floodPolygon); // Check the GeoJSON
+    
+            incidentCircle.bindTooltip("Incident Location", {
+                permanent: true,
+                direction: "center",
+                className: "incident-tooltip"
+            }).openTooltip();
+    
+            incidentCircle.on('click', function () {
+                const confirmDelete = confirm('Do you want to remove this incident circle?');
+                if (confirmDelete) {
+                    drawnItems.removeLayer(incidentCircle);
+                    incidentCircle = null;
+                    window.incidentLocation = null;
+                }
+            });
+        } else {
+            drawnItems.addLayer(layer);
+    
+            shapeAreas = []; // Reset shape areas
+            const areaInSquareMeters = calculateArea(layer);
+            const areaInSquareKilometers = areaInSquareMeters / 1e6;
+            shapeAreas.push(areaInSquareKilometers);
+    
+            window.currentLayer = layer;
+    
+            openAreaTypeModal();
+        }
+    });
+    
+    function toggleCircleDrawControl() {
+        if (circleDrawControlVisible) {
+            map.removeControl(circleDrawControl);
+        } else {
+            map.addControl(circleDrawControl);
+        }
+        circleDrawControlVisible = !circleDrawControlVisible;
+    }
+    
+    document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
+    
+    // Calculate route function (using the floodPolygon globally)
+    function calculateRoute(startPoint, endPoint) {
+        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+    
+        console.log("OSRM Request URL:", url); // Log the request URL
+    
+        if (floodPolygon) {
+            console.log("Flood Polygon:", floodPolygon); // Log the flood polygon
+    
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log("OSRM Response Data:", data);
+                
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    console.log("Route found:", route);
+                    
+                    // Pass the entire data object to displayRoute
+                    displayRoute(data);
+                } else {
+                    console.error("No routes found in response");
+                }
+            })
+            .catch(error => console.error('Error fetching route data:', error));
+        } else {
+            console.error("Flood polygon not defined!");
+        }
+    }
+    
+    
+    
+    // Function to display the route on the map
+    function displayRoute(routeData) {
+        if (routeData && routeData.routes && routeData.routes.length > 0) {
+            const route = routeData.routes[0];
+            if (route.geometry) {
+                console.log("Adding route to map:", route.geometry);
+                L.geoJSON(route.geometry).addTo(map);
+            } else {
+                console.error("No geometry found in route");
+            }
+        } else {
+            console.error("No valid route data found");
+        }
+    }
+    
+    // Handle setting the start and end points on the map
+    map.on('click', function (e) {
+        if (!startPoint) {
+            // Set start point
+            startPoint = e.latlng;
+            console.log("Start Point Set:", startPoint); // Debugging log
+            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+        } else if (!endPoint) {
+            // Set end point
+            endPoint = e.latlng;
+            console.log("End Point Set:", endPoint); // Debugging log
+            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+    
+            // Call OSRM for the route calculation
+            calculateRoute(startPoint, endPoint);
+        }
     });
 
     // handle area type selection
@@ -657,7 +795,30 @@ async function plotPreviousSchools() {
     const schools = await fetchData(PREVIOUS_SCHOOL_API_URL);
     console.log("Previous schools:", schools);
 
+    // Group schools by latitude and longitude to avoid duplicating markers
+    const groupedSchools = {};
+
     schools.forEach((school) => {
+        const { latitude, longitude, name, senior_high_count, college_count } = school;
+        const key = `${latitude.toFixed(4)}-${longitude.toFixed(4)}`;  // Unique key for each coordinate
+
+        if (!groupedSchools[key]) {
+            groupedSchools[key] = {
+                name: name,
+                latitude: latitude,
+                longitude: longitude,
+                senior_high_count: 0,
+                college_count: 0,
+            };
+        }
+
+        // Increment the counts for schools with the same coordinates
+        groupedSchools[key].senior_high_count += senior_high_count;
+        groupedSchools[key].college_count += college_count;
+    });
+
+    // Plot the markers for each unique school location
+    Object.values(groupedSchools).forEach((school) => {
         const { latitude, longitude, name, senior_high_count, college_count } = school;
 
         if (
@@ -674,7 +835,6 @@ async function plotPreviousSchools() {
             const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
                 icon: schoolIcon
             }).bindPopup(popupContent);
-            
 
             markers.addLayer(marker);
         }
@@ -682,6 +842,7 @@ async function plotPreviousSchools() {
 
     map.addLayer(markers); // show the school markers
 }
+
 
 
 // function to add filter controls
@@ -756,14 +917,7 @@ function addMarkers(data) {
     markers.clearLayers(); // reset the marker cluster group
 
     allMarkers = data.reduce((markerArray, item) => {
-        const { latitude, longitude, cluster_proximity } = item;
-
-        // exclude students outside Cebu when cluster_proximity is active
-        if (
-            (activeCluster.includes("cluster_proximity") && cluster_proximity === -1)
-        ) {
-            return markerArray;  // skip non-Cebu or invalid address students
-        }
+        const { latitude, longitude } = item;
 
         if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
             const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
@@ -863,10 +1017,8 @@ function handleCollegeCluster(clusterType, buttonId) {
 
 function setupEventListeners() {
     const clusterButtons = [
-        { id: 'seniorhighclusterbyaddress', clusterType: 'cluster_address', handler: handleSeniorHighCluster },
-        { id: 'seniorhighclusterbyproximity', clusterType: 'cluster_proximity', handler: handleSeniorHighCluster },
-        { id: 'collegeclusterbyaddress', clusterType: 'cluster_address', handler: handleCollegeCluster },
-        { id: 'collegeclusterbyproximity', clusterType: 'cluster_proximity', handler: handleCollegeCluster }
+        { id: 'seniorhighcluster', clusterType: 'cluster', handler: handleSeniorHighCluster },
+        { id: 'collegecluster', clusterType: 'cluster', handler: handleCollegeCluster }
     ];
 
     clusterButtons.forEach(({ id, clusterType, handler }) => {
@@ -1464,12 +1616,8 @@ document.getElementById('previousSchool').addEventListener('click', async (e) =>
 });
 
 
-document.getElementById('seniorHighData').addEventListener('click', function() {
-    window.location.href = '/seniorhigh/data-analytics';
-});
-
-document.getElementById('collegeData').addEventListener('click', function() {
-    window.location.href = '/college/data-analytics';
+document.getElementById('dataAnalytics').addEventListener('click', function() {
+    window.location.href = '/students/data-analytics';
 });
 
 document.getElementById('eventReportsLink').addEventListener('click', function () {

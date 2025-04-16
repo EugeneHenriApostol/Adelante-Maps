@@ -66,7 +66,7 @@
     .section-header {
       border-bottom: 1px solid #eee;
       padding-bottom: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
 
     .section-header h2 {
@@ -82,12 +82,12 @@
 
     .section-header p {
       color: #666;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       margin: 0;
     }
 
     .upload-form {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
 
     .upload-form h3 {
@@ -101,7 +101,7 @@
     .file-input-label {
       display: block;
       border: 1px solid #ddd;
-      padding: 0.75rem;
+      padding: 0.5rem;
       border-radius: 4px;
       cursor: pointer;
       margin-bottom: 1rem;
@@ -121,7 +121,7 @@
     }
 
     .button {
-      padding: 0.6rem 1.2rem;
+      padding: 0.4rem 1rem;
       background-color: #2563eb;
       color: white;
       border: none;
@@ -142,29 +142,44 @@
       background-color: #b91c1c;
     }
 
+    /* Updated grid styles */
     .grid {
       display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
+      justify-content: space-between;
+      gap: 0.75rem;
     }
 
     .grid-item {
       flex: 1;
-      min-width: 250px;
+      min-width: 0; /* Remove min-width constraint */
       background-color: #f9fafb;
-      padding: 1rem;
+      padding: 0.75rem;
       border-radius: 4px;
+      text-align: center;
     }
 
-    .grid-item h3 {
+    .grid-item h4 {
       margin-top: 0;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
     }
 
     .grid-item p {
       color: #666;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
     }
+
+    .grid-item .button {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+
+    .grid-item .button i {
+      margin-right: 0.25rem;
+    }
+    /* End of updated grid styles */
 
     .modal {
       display: none;
@@ -265,20 +280,30 @@
         <!-- Senior High Remove -->
         <div class="grid-item">
           <h4>Senior High School</h4>
-          <p>Remove all Senior High School student records</p>
+          <p>Remove all SHS records</p>
           <button id="removeSeniorHigh" class="button button-red">
             <i class="fas fa-trash-alt"></i>
-            Remove SHS Data
+            Remove
           </button>
         </div>
 
         <!-- College Remove -->
         <div class="grid-item">
           <h4>College</h4>
-          <p>Remove all College student records</p>
+          <p>Remove all college records</p>
           <button id="removeCollege" class="button button-red">
             <i class="fas fa-trash-alt"></i>
-            Remove College Data
+            Remove
+          </button>
+        </div>
+        
+        <!-- Previous Schools Remove -->
+        <div class="grid-item">
+          <h4>Previous Schools</h4>
+          <p>Remove all schools data</p>
+          <button id="removePreviousSchools" class="button button-red">
+            <i class="fas fa-trash-alt"></i>
+            Remove
           </button>
         </div>
       </div>
@@ -304,6 +329,18 @@
         <div class="modal-buttons">
           <button id="cancelCollege" class="button" style="background-color: #9ca3af;">Cancel</button>
           <button id="confirmCollege" class="button button-red">Remove</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Previous Schools Confirmation Modal -->
+    <div id="previousSchoolsModal" class="modal">
+      <div class="modal-content">
+        <h2>Confirm Removal</h2>
+        <p>Are you sure you want to remove all previous schools data?</p>
+        <div class="modal-buttons">
+          <button id="cancelPreviousSchools" class="button" style="background-color: #9ca3af;">Cancel</button>
+          <button id="confirmPreviousSchools" class="button button-red">Remove</button>
         </div>
       </div>
     </div>
@@ -413,8 +450,10 @@
     // Modal handling
     const removeSeniorHigh = document.getElementById('removeSeniorHigh');
     const removeCollege = document.getElementById('removeCollege');
+    const removePreviousSchools = document.getElementById('removePreviousSchools');
     const seniorHighModal = document.getElementById('seniorHighModal');
     const collegeModal = document.getElementById('collegeModal');
+    const previousSchoolsModal = document.getElementById('previousSchoolsModal');
 
     removeSeniorHigh.addEventListener('click', () => {
       seniorHighModal.style.display = 'flex';
@@ -423,6 +462,10 @@
     removeCollege.addEventListener('click', () => {
       collegeModal.style.display = 'flex';
     });
+    
+    removePreviousSchools.addEventListener('click', () => {
+      previousSchoolsModal.style.display = 'flex';
+    });
 
     document.getElementById('cancelSeniorHigh').addEventListener('click', () => {
       seniorHighModal.style.display = 'none';
@@ -430,6 +473,10 @@
 
     document.getElementById('cancelCollege').addEventListener('click', () => {
       collegeModal.style.display = 'none';
+    });
+    
+    document.getElementById('cancelPreviousSchools').addEventListener('click', () => {
+      previousSchoolsModal.style.display = 'none';
     });
 
     // Confirm removal handlers
@@ -460,6 +507,21 @@
         collegeModal.style.display = 'none';
       }
     });
+    
+    document.getElementById('confirmPreviousSchools').addEventListener('click', async () => {
+      console.log("Delete previous schools clicked");
+      try {
+        const response = await fetch('/api/remove-previous-schools-data', {
+          method: 'POST',
+        });
+        const result = await response.json();
+        alert(result.message || 'Previous schools data removed');
+      } catch (error) {
+        alert('Failed to remove previous schools data');
+      } finally {
+        previousSchoolsModal.style.display = 'none';
+      }
+    });
 
     // Close modals when clicking outside
     window.addEventListener('click', (e) => {
@@ -469,6 +531,10 @@
       
       if (e.target === collegeModal) {
         collegeModal.style.display = 'none';
+      }
+      
+      if (e.target === previousSchoolsModal) {
+        previousSchoolsModal.style.display = 'none';
       }
     });
   </script>

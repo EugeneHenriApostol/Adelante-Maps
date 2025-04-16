@@ -12,6 +12,9 @@ from fastapi import APIRouter, Depends
 from sklearn.cluster import KMeans
 import requests
 
+from rapidfuzz import process, fuzz
+from collections import defaultdict
+
 college_file_api_router = APIRouter()
 
 load_dotenv()
@@ -23,21 +26,7 @@ def clean_strand(strand):
 def clean_text(text):
     return re.sub(r'[^\w\s]', '', str(text))
 
-def clean_previous_school_name(name: str):
-    name = html.unescape(name)
-
-    name = re.sub(r'\(.*?\)', '', name)
-
-    name = re.sub(r'\d+', '', name)
-
-    name = re.sub(r"[^A-Za-z\s\.\-']", '', name)
-
-    name = ' '.join(name.split()).strip()
-
-    name = name.title()
-    return name
-
-# function to geocode address using HERE API
+# geocode address function    
 def geocode_address(address, api_key):
     url = "https://geocode.search.hereapi.com/v1/geocode"
     params = {"q": address, "apiKey": api_key}
@@ -48,15 +37,83 @@ def geocode_address(address, api_key):
             latitude = data['items'][0]['position']['lat']
             longitude = data['items'][0]['position']['lng']
             return latitude, longitude
-    return None, None
+        else:
+            print(f"Geocoding failed for {address}, returning 'Unknown'")
+            return 0, 0
+    else:
+        print(f"Error geocoding {address}: {response.status_code}")
+        return 0, 0
 
-def geocode_previous_school(school: str):
+# clean previous school name function
+def clean_previous_school_name(name: str):
+    name = html.unescape(name)
+
+    # Remove anything inside parentheses
+    name = re.sub(r'\(.*?\)', '', name)
+
+    # Remove all numbers
+    name = re.sub(r'\d+', '', name)
+
+    # Remove all special characters including dots, dashes, apostrophes, etc.
+    name = re.sub(r"[^A-Za-z\s]", '', name)
+
+    # Remove extra spaces
+    name = ' '.join(name.split()).strip()
+
+    # Capitalize the entire name (optional but makes things consistent)
+    name = name.upper()
+    
+    return name
+
+
+# fuzzy matching for previous school
+def group_similar_schools(school_series, threshold=85):
+    cleaned_schools = school_series.unique().tolist()
+    grouped = {}
+    assigned = set()
+
+    for i, name in enumerate(cleaned_schools):
+        if name in assigned:
+            continue
+        grouped[name] = [name]
+        assigned.add(name)
+
+        for j in range(i + 1, len(cleaned_schools)):
+            candidate = cleaned_schools[j]
+            if candidate in assigned:
+                continue
+            score = fuzz.ratio(name, candidate)
+            if score >= threshold:
+                grouped[name].append(candidate)
+                assigned.add(candidate)
+
+    # Create mapping dict
+    mapping = {}
+    for canonical, variants in grouped.items():
+        for variant in variants:
+            mapping[variant] = canonical
+
+    # Map values in original series
+    return school_series.map(lambda x: mapping.get(x, x))
+
+# geocode previous school function
+def geocode_previous_school(school: str, barangay: str = "", city: str = "", province: str =""):
     if not school or school.strip().lower() == "na":
-        return "Unknown", "Unknown"
+        return 0, 0
 
     clean_school = clean_text(school)
     
-    query_address = f"{clean_school}, Philippines"
+    query_parts = [clean_school]
+
+    if barangay:
+        query_parts.append(barangay.title())
+    if city:
+        query_parts.append(city.title())
+    if province:
+        query_parts.append(province.title())
+    query_parts.append("Philippines")
+
+    query_address = ", ".join(query_parts)
     
     api_key_prev = os.getenv("GEOCODE_API_KEY") 
     if not api_key_prev:
@@ -66,13 +123,20 @@ def geocode_previous_school(school: str):
     params = {"q": query_address, "apiKey": api_key_prev}
     response = requests.get(url, params=params)
     
-    if response.status_code == 200:
+    try:
+        url = "https://geocode.search.hereapi.com/v1/geocode"
+        params = {"q": query_address, "apiKey": api_key_prev}
+        response = requests.get(url, params=params, timeout=5)
+        response.raise_for_status()
         data = response.json()
-        if data['items']:
+        if data.get('items'):
             lat = data['items'][0]['position']['lat']
             lng = data['items'][0]['position']['lng']
             return lat, lng
-    return "Unknown", "Unknown"
+    except Exception as e:
+        print(f"Geocoding failed for: {query_address} - Error: {e}")
+    
+    return 0, 0
 
 # preprocess college file function
 def preprocess_file_college(file_path: str):
@@ -115,6 +179,7 @@ def preprocess_file_college(file_path: str):
     df["strand"] = df["strand"].apply(clean_strand)
 
     df["previous_school"] = df["previous_school"].apply(clean_previous_school_name)
+    df["previous_school"] = group_similar_schools(df["previous_school"])
 
     # create the full address column by concatenating city, province, and barangay columns
     df["full_address"] = (
@@ -156,7 +221,7 @@ def preprocess_file_college(file_path: str):
         print(f"Best Silhouette Score: {best_score:.4f}")
 
         kmeans_final = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
-        valid_coordinates['cluster'] = kmeans_final.fit_predict(coords)
+        valid_coordinates['cluster'] = kmeans_final.fit_predict(coords) + 1
 
         # merge back to main dataframe
         df = df.merge(
@@ -171,11 +236,19 @@ def preprocess_file_college(file_path: str):
 
 
     # geocode previous school part
-    geocoded_prev_school = df['previous_school'].apply(geocode_previous_school)
+    def geocode_prev_school_from_row(row):
+        return geocode_previous_school(
+            row['previous_school'],
+            row['barangay'],
+            row['city'],
+            row['province']
+        )
+
+    geocoded_prev_school = df.apply(geocode_prev_school_from_row, axis=1)
     df['prev_latitude'], df['prev_longitude'] = zip(*geocoded_prev_school)
 
-    df['prev_latitude'] = df['prev_latitude'].fillna("Unknown")
-    df['prev_longitude'] = df['prev_longitude'].fillna("Unknown")
+    df['prev_latitude'] = df['prev_latitude'].fillna(0)
+    df['prev_longitude'] = df['prev_longitude'].fillna(0)
 
     # save the cleaned file
     output_path = file_path.replace(".csv", "_processed.csv")
@@ -189,7 +262,8 @@ async def upload_file(file: UploadFile = File(...)):
     # validate file type
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
-
+    
+    tmp_path = None
     try:
         with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
@@ -198,7 +272,8 @@ async def upload_file(file: UploadFile = File(...)):
         processed_path = preprocess_file_college(tmp_path)
 
     finally:
-        os.remove(tmp_path)  
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)  
 
 
     return FileResponse(
