@@ -23,7 +23,6 @@ def create_affected_area(affected_area_data: schemas.AffectedAreaBase, db: Sessi
         total_area=affected_area_data.total_area,
         number_of_students_affected=affected_area_data.number_of_students_affected,
         geojson_data=affected_area_data.geojson_data,
-        clustering_type=affected_area_data.clustering_type,  
         education_level=affected_area_data.education_level   
     )
 
@@ -38,7 +37,6 @@ def create_affected_area(affected_area_data: schemas.AffectedAreaBase, db: Sessi
         total_area=affected_area.total_area,
         number_of_students_affected=affected_area.number_of_students_affected,
         geojson_data=affected_area.geojson_data,
-        clustering_type=affected_area_data.clustering_type,  
         education_level=affected_area_data.education_level   
     )
 
@@ -71,7 +69,6 @@ def get_event_reports_paginated(
                 total_area=report.total_area,
                 number_of_students_affected=report.number_of_students_affected,
                 geojson_data=report.geojson_data,
-                clustering_type=report.clustering_type,
                 education_level=report.education_level,
                 created_at=report.created_at
             )
@@ -96,7 +93,6 @@ def get_all_event_reports(db: Session = Depends(get_db), current_user: models.Us
             total_area=report.total_area,
             number_of_students_affected=report.number_of_students_affected,
             geojson_data=report.geojson_data,
-            clustering_type=report.clustering_type,
             education_level=report.education_level,
             created_at=report.created_at
         )
@@ -195,7 +191,6 @@ def get_event_report(report_id: int, db: Session = Depends(get_db), current_user
         "geojson": report.geojson_data,   
         "number_of_students_affected": report.number_of_students_affected,
         "total_area": report.total_area,
-        "clustering_type": report.clustering_type,
         "education_level": report.education_level,
         "created_at": report.created_at
     }

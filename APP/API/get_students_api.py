@@ -32,8 +32,7 @@ def get_all_senior_high_students(
             "age": student.age,
             "latitude": student.latitude,
             "longitude": student.longitude,
-            "cluster_address": student.cluster_address,
-            "cluster_proximity": student.cluster_proximity,
+            "cluster": student.cluster,
         }
         for student in students
     ]
@@ -54,8 +53,7 @@ def get_all_college_students(
             "age": student.age,
             "latitude": student.latitude,
             "longitude": student.longitude,
-            "cluster_address": student.cluster_address,
-            "cluster_proximity": student.cluster_proximity,
+            "cluster": student.cluster,
         }
         for student in students
     ]
@@ -84,8 +82,7 @@ def get_senior_high_student_data(
             "age": student.age,
             "latitude": student.latitude,
             "longitude": student.longitude,
-            "cluster_address": student.cluster_address,
-            "cluster_proximity": student.cluster_proximity,
+            "cluster": student.cluster,
         }
         for student in students
     ]
@@ -115,8 +112,7 @@ def get_college_student_data(
             "age": student.age,
             "latitude": student.latitude,
             "longitude": student.longitude,
-            "cluster_address": student.cluster_address,
-            "cluster_proximity": student.cluster_proximity,
+            "cluster": student.cluster,
         }
         for student in students
     ]
@@ -127,5 +123,25 @@ def get_top_schools_with_students(db: Session = Depends(get_db)):
     schools = db.query(models.PreviousSchool).options(
         joinedload(models.PreviousSchool.students_senior_high),
         joinedload(models.PreviousSchool.students_college)
-        ).all()
-    return schools
+    ).all()
+
+    school_map = {}
+
+    for school in schools:
+        key = (school.name.strip().lower(), round(school.latitude, 4), round(school.longitude, 4))
+
+        if key not in school_map:
+            school_map[key] = {
+                "id": school.id,
+                "name": school.name,
+                "latitude": school.latitude,
+                "longitude": school.longitude,
+                "students_senior_high": [],
+                "students_college": []
+            }
+
+        # Combine student lists
+        school_map[key]["students_senior_high"].extend(school.students_senior_high)
+        school_map[key]["students_college"].extend(school.students_college)
+
+    return list(school_map.values())
