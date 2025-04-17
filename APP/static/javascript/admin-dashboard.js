@@ -31,14 +31,13 @@ window.addEventListener('resize', () => {
     }
 });
 
+// fetch student counts
 document.addEventListener("DOMContentLoaded", async function () {
     try {
-        // fetch Senior High Students Count
         const seniorHighResponse = await fetch("/api/senior-high-students/count");
         const seniorHighData = await seniorHighResponse.json();
         document.getElementById("seniorHighCount").textContent = seniorHighData.count || 0;
 
-        // fetch College Students Count
         const collegeResponse = await fetch("/api/college-students/count");
         const collegeData = await collegeResponse.json();
         document.getElementById("collegeCount").textContent = collegeData.count || 0;
@@ -47,147 +46,124 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 });
 
-
 let currentPage = 1;
+const campusesPerPage = 5;
+const campusesTableBody = document.querySelector("#campusesTableBody");
+const paginationContainer = document.querySelector("#pagination");
+
+async function fetchCampuses(page = 1) {
+    try {
+        const response = await fetch(`/api/retrieve/campuses`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch campuses");
+
+        const campuses = await response.json();
+        const startIndex = (page - 1) * campusesPerPage;
+        const endIndex = startIndex + campusesPerPage;
+        const paginatedCampuses = campuses.slice(startIndex, endIndex);
+
+        renderCampuses(paginatedCampuses, campuses);
+        renderPagination(campuses.length, page);
+    } catch (error) {
+        console.error("Error loading campuses:", error);
+    }
+}
+
+function renderCampuses(campuses, allCampuses) {
+    campusesTableBody.innerHTML = "";
+
+    campuses.forEach(campus => {
+        const row = document.createElement("tr");
+        row.classList.add("border-t");
+        row.innerHTML = `
+            <td class="py-2 md:py-3">${campus.name}</td>
+            <td>${campus.latitude}</td>
+            <td>${campus.longitude}</td>
+            <td>
+                <a href="#" class="edit-campus text-purple-600 hover:text-purple-800 mr-2 md:mr-3"
+                    data-id="${campus.campus_id}" 
+                    data-name="${campus.name}"
+                    data-lat="${campus.latitude}"
+                    data-lng="${campus.longitude}">Edit</a>
+                <a href="#" class="delete-campus text-red-600 hover:text-red-800" data-id="${campus.campus_id}">Delete</a>
+            </td>
+        `;
+        campusesTableBody.append(row);
+    });
+
+    document.querySelectorAll(".edit-campus").forEach(button => {
+        button.addEventListener("click", (e) => {
+            e.preventDefault();
+            const campusId = e.target.getAttribute("data-id");
+            openEditModal(campusId, allCampuses);
+        });
+    });
+
+    document.querySelectorAll(".delete-campus").forEach(button => {
+        button.addEventListener("click", (e) => {
+            e.preventDefault();
+            const campusId = e.target.getAttribute("data-id");
+            openDeleteModal(campusId);
+        });
+    });
+}
+
+function renderPagination(totalCampuses, currentPage) {
+    const totalPages = Math.ceil(totalCampuses / campusesPerPage);
+    paginationContainer.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        button.classList.add("px-3", "py-1", "rounded", "ml-2");
+
+        if (i === currentPage) {
+            button.classList.add("bg-black", "text-white");
+        } else {
+            button.classList.add("bg-blue-500", "text-white");
+        }
+
+        button.addEventListener("click", () => {
+            currentPage = i;
+            fetchCampuses(currentPage);
+        });
+
+        paginationContainer.appendChild(button);
+    }
+}
 
 document.addEventListener("DOMContentLoaded", function () {
-    const campusesPerPage = 5;
-    const campusesTableBody = document.querySelector("#campusesTableBody");
-    const paginationContainer = document.querySelector("#pagination");
+    fetchCampuses(currentPage);
 
     document.getElementById("addCampusBtn").addEventListener("click", () => {
         window.location.href = "/maps";
     });
-
-    async function fetchCampuses(page = 1) {
-        try {
-            const response = await fetch(`/api/retrieve/campuses`, { 
-                method: 'GET',
-                credentials: 'include',
-            });                               
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch campuses");
-            }
-
-            const campuses = await response.json();
-            
-            // Simple client-side pagination
-            const startIndex = (page - 1) * campusesPerPage;
-            const endIndex = startIndex + campusesPerPage;
-            const paginatedCampuses = campuses.slice(startIndex, endIndex);
-            
-            renderCampuses(paginatedCampuses, campuses);
-            renderPagination(campuses.length, page);
-        } catch (error) {
-            console.error("Error loading campuses:", error);
-        }
-    }
-    
-    // render campuses
-    function renderCampuses(campuses) {
-        campusesTableBody.innerHTML = ""; // clear table before adding new rows
-    
-        campuses.forEach(campus => {
-            const row = document.createElement("tr");
-            row.classList.add("border-t");
-            row.innerHTML = `
-                <td class="py-2 md:py-3">${campus.name}</td>
-                <td>${campus.latitude}</td>
-                <td>${campus.longitude}</td>
-                <td>
-                    <a href="#" class="edit-campus text-purple-600 hover:text-purple-800 mr-2 md:mr-3" 
-                        data-id="${campus.campus_id}" 
-                        data-name="${campus.name}"
-                        data-lat="${campus.latitude}"
-                        data-lng="${campus.longitude}">Edit</a>
-                    <a href="#" class="delete-campus text-red-600 hover:text-red-800" data-id="${campus.campus_id}">Delete</a>
-                </td>
-            `;
-    
-            campusesTableBody.append(row);
-        });
-
-        // add event listener to edit button
-        document.querySelectorAll(".edit-campus").forEach(button => {
-            button.addEventListener("click", (e) => {
-                e.preventDefault();
-                const campusId = e.target.getAttribute("data-id");
-                
-                openEditModal(campusId, campuses); 
-            });
-        });
-        
-        
-        // add event listener to delete button
-        document.querySelectorAll(".delete-campus").forEach(button => {
-            button.addEventListener("click", (e) => {
-                e.preventDefault();
-                const campusId = e.target.getAttribute("data-id");
-                openDeleteModal(campusId);
-            });
-        });
-    }
-
-    // render pagination
-    function renderPagination(totalCampuses, currentPage) {
-        const totalPages = Math.ceil(totalCampuses / campusesPerPage);
-        paginationContainer.innerHTML = "";
-    
-        for (let i = 1; i <= totalPages; i++) {
-            const button = document.createElement("button");
-            button.textContent = i;
-            button.classList.add("px-3", "py-1", "rounded", "ml-2");
-    
-            if (i === currentPage) {
-                button.classList.add("bg-black", "text-white");
-            } else {
-                button.classList.add("bg-blue-500", "text-white");
-            }
-    
-            button.addEventListener("click", () => {
-                currentPage = i;
-                fetchCampuses(currentPage);
-            });
-    
-            paginationContainer.appendChild(button);
-        }
-    }
-    
-    fetchCampuses(currentPage); 
 });
-
 
 let map;
 
-// Function to open edit modal
 function openEditModal(campusId, campuses) {
     const campus = campuses.find(c => c.campus_id == campusId);
     if (!campus) return;
 
-    // Set the values in the modal form
     document.getElementById("editCampusId").value = campusId;
     document.getElementById("editCampusName").value = campus.name;
     document.getElementById("editLatitude").value = campus.latitude;
     document.getElementById("editLongitude").value = campus.longitude;
 
-    // Show the modal
     document.getElementById("editModal").classList.remove("hidden");
 
-    // If map already exists, remove it to avoid stacking multiple maps
-    if (map) {
-        map.remove();  // Remove the old map instance
-    }
+    if (map) map.remove();
 
-    // Initialize the Leaflet map inside the modal
     map = L.map('mapContainer').setView([campus.latitude, campus.longitude], 14);
 
-    // Add a tile layer (OpenStreetMap in this case)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Add a draggable marker
     const schoolIcon = L.icon({
         iconUrl: 'static/img/usjr.png',
         iconSize: [40, 40],
@@ -200,32 +176,27 @@ function openEditModal(campusId, campuses) {
         draggable: true
     }).addTo(map);
 
-    // Update the latitude and longitude inputs when the marker is dragged
     campusMarker.on('dragend', function () {
         const latLng = campusMarker.getLatLng();
         document.getElementById("editLatitude").value = latLng.lat;
         document.getElementById("editLongitude").value = latLng.lng;
     });
 
-    // Handle Cancel button click to close the modal
     document.getElementById('closeEditModal').addEventListener('click', () => {
         document.getElementById("editModal").classList.add("hidden");
-        map.removeLayer(campusMarker); // Clean up the map when closing
+        map.removeLayer(campusMarker);
     });
 }
 
-// function to open delete modal
 function openDeleteModal(campusId) {
     document.getElementById("deleteCampusId").value = campusId;
     document.getElementById("deleteModal").classList.remove("hidden");
 }
 
-// close Edit Modal
 document.getElementById("closeEditModal").addEventListener("click", () => {
     document.getElementById("editModal").classList.add("hidden");
 });
 
-// save edited campus
 document.getElementById("saveEditCampus").addEventListener("click", async () => {
     const campusId = document.getElementById("editCampusId").value;
     const updatedCampus = {
@@ -251,12 +222,10 @@ document.getElementById("saveEditCampus").addEventListener("click", async () => 
     }
 });
 
-// close Delete Modal
 document.getElementById("closeDeleteModal").addEventListener("click", () => {
     document.getElementById("deleteModal").classList.add("hidden");
 });
 
-// confirm Delete Campus
 document.getElementById("confirmDeleteCampus").addEventListener("click", async () => {
     const campusId = document.getElementById("deleteCampusId").value;
 
@@ -269,9 +238,7 @@ document.getElementById("confirmDeleteCampus").addEventListener("click", async (
         if (!response.ok) throw new Error("Failed to delete campus");
 
         document.getElementById("deleteModal").classList.add("hidden");
-        // refresh the campuses list
         fetchCampuses(1);
-
     } catch (error) {
         console.error("Error deleting campus:", error);
     }

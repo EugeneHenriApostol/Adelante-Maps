@@ -18,9 +18,20 @@ def create_campus(campus_data: schemas.CampusBase, db: Session = Depends(get_db)
         name=campus_data.name,
         latitude=campus_data.latitude,
         longitude=campus_data.longitude,
+        user_id=current_user.user_id
     )
 
     db.add(campus)
+    
+    # create activity log entry
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="create",
+        target_table="campuses",
+        record_count=1
+    )
+    db.add(log_entry)
+    
     db.commit()
     db.refresh(campus)
 
@@ -54,6 +65,16 @@ def delete_campus(campus_id: int, db: Session = Depends(get_db), current_user: m
         raise HTTPException(status_code=404, detail='Campus not found.')
     
     db.delete(campus)
+    
+    # create activity log entry
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="delete",
+        target_table="campuses",
+        record_count=1
+    )
+    db.add(log_entry)
+    
     db.commit()
 
     return {"message": "Campus successfully deleted."}
