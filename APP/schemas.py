@@ -48,7 +48,6 @@ class AffectedAreaBase(BaseModel):
     number_of_students_affected: int
     total_area: float
     geojson_data: dict
-    clustering_type: Optional[str] = None 
     education_level: Optional[str] = None 
     created_at: Optional[datetime] = datetime.now()
     

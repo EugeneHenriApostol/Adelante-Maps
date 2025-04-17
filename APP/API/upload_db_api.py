@@ -20,12 +20,6 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
         content = await file.read()
         file_size = len(content) / 1024
         csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
-        
-        # convert to list to get row count
-        rows = list(csv_data)
-        row_count = len(rows)
-        
-        csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Failed to read CSV file {str(e)}')
 
@@ -41,6 +35,8 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                     longitude=float(row['prev_longitude'])
                 )
                 db.add(prev_school)
+                db.commit()
+                db.refresh(prev_school)
 
             student = models.SeniorHighStudents(
                 stud_id=int(row['stud_id']),
@@ -212,3 +208,26 @@ async def remove_college_data(
     db.commit()
     
     return {"message": f"All college student data has been removed ({count} records)."}
+
+# remove previous schools
+@upload_db_api_router.post('/api/remove-previous-schools-data')
+async def remove_previous_school_data(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)
+):
+    count = db.query(models.PreviousSchool).count()
+    
+    # Delete all previous school entries
+    db.query(models.PreviousSchool).delete()
+
+    # Create a log entry
+    log_entry = models.UserActivityLog(
+        user_id=current_user.user_id,
+        activity_type="data_delete",
+        target_table="previous_schools",
+        record_count=count
+    )
+    db.add(log_entry)
+    db.commit()
+
+    return {"message": f"All previous school data has been removed ({count} records)."}
