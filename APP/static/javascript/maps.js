@@ -519,10 +519,8 @@ async function initializeMap() {
             // Existing student to campus routing logic
             if (!startPoint) {
                 startPoint = e.latlng;
-                L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
             } else if (!endPoint) {
                 endPoint = e.latlng;
-                L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
                 calculateRoute(startPoint, endPoint);
             }
         } else {
