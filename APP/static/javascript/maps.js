@@ -40,6 +40,9 @@ let affectedStudents = {
     fire: []
 };
 let drawControlVisible = false;
+
+let currentRoutingMode = 'studentToCampus'; // 'studentToCampus' or 'campusToAffected'
+let hazardZone = null; // Store the hazard zone polygon
 // api and ic0n url
 const SENIOR_HIGH_API_URL = '/api/senior-high-student-data';
 const COLLEGE_API_URL = '/api/college-student-data';
@@ -235,30 +238,6 @@ function enhanceGeocoder() {
     return enhancedGeocoder;
 }
 
-// function addSearchButton() {
-//     searchBtn.addEventListener('click', function() {
-//         // Toggle the geocoder visibility
-//         const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
-//         if (geocoderContainer) {
-//             if (geocoderContainer.classList.contains('leaflet-control-geocoder-expanded')) {
-//                 geocoderContainer.classList.remove('leaflet-control-geocoder-expanded');
-//             } else {
-//                 geocoderContainer.classList.add('leaflet-control-geocoder-expanded');
-//                 const input = document.querySelector('.leaflet-control-geocoder-form input');
-//                 if (input) {
-//                     input.focus();
-//                 }
-//             }
-//         }
-//     });
-    
-//     // Add it to your existing control container
-//     const controlContainer = document.querySelector('.filter-controls');
-//     if (controlContainer) {
-//         controlContainer.appendChild(searchBtn);
-//     }
-// }
-
 let circleDrawControlVisible = false;
 let incidentCircle = null;
 
@@ -430,55 +409,48 @@ async function initializeMap() {
     }
 
     // function for when a shape is created on the map
+    // Modify your circle draw control handler to store the hazard zone
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
-    
+        
         if (e.layerType === 'circle') {
             if (incidentCircle) {
                 drawnItems.removeLayer(incidentCircle);
             }
             incidentCircle = e.layer;
             drawnItems.addLayer(incidentCircle);
-    
-            // Get the coordinates of the shape
-            window.incidentLocation = incidentCircle.getLatLng();
-            console.log(window.incidentLocation = incidentCircle.getLatLng());
-    
-            // Convert the circle to a GeoJSON polygon using Turf.js
-            const radiusInKm = incidentCircle.getRadius() / 1000; // Convert radius from meters to kilometers
-            const floodGeoJSON = turf.circle([incidentCircle.getLatLng().lng, incidentCircle.getLatLng().lat], radiusInKm, {
-                steps: 64, // Number of points around the circle
+            
+            const { lat, lng } = incidentCircle.getLatLng();
+            const radiusInKm = incidentCircle.getRadius() / 1000;
+            
+            // Store the hazard zone globally
+            hazardZone = turf.circle([lng, lat], radiusInKm, {
+                steps: 64,
                 units: 'kilometers'
             });
-    
-            // Store the flood polygon globally
-            floodPolygon = floodGeoJSON.geometry;
-            console.log(floodPolygon); // Check the GeoJSON
-    
-            incidentCircle.bindTooltip("Incident Location", {
+            
+            incidentCircle.bindTooltip("Hazard Zone", {
                 permanent: true,
                 direction: "center",
                 className: "incident-tooltip"
             }).openTooltip();
-    
+            
             incidentCircle.on('click', function () {
-                const confirmDelete = confirm('Do you want to remove this incident circle?');
+                const confirmDelete = confirm('Do you want to remove this hazard zone?');
                 if (confirmDelete) {
                     drawnItems.removeLayer(incidentCircle);
                     incidentCircle = null;
-                    window.incidentLocation = null;
+                    hazardZone = null;
                 }
             });
         } else {
+            // Existing polygon creation logic
             drawnItems.addLayer(layer);
-    
-            shapeAreas = []; // Reset shape areas
+            shapeAreas = [];
             const areaInSquareMeters = calculateArea(layer);
             const areaInSquareKilometers = areaInSquareMeters / 1e6;
             shapeAreas.push(areaInSquareKilometers);
-    
             window.currentLayer = layer;
-    
             openAreaTypeModal();
         }
     });
@@ -541,21 +513,31 @@ async function initializeMap() {
         }
     }
     
-    // Handle setting the start and end points on the map
-    map.on('click', function (e) {
-        if (!startPoint) {
-            // Set start point
-            startPoint = e.latlng;
-            console.log("Start Point Set:", startPoint); // Debugging log
-            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
-        } else if (!endPoint) {
-            // Set end point
-            endPoint = e.latlng;
-            console.log("End Point Set:", endPoint); // Debugging log
-            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
-    
-            // Call OSRM for the route calculation
-            calculateRoute(startPoint, endPoint);
+    // Modify your map click handler to handle both routing modes
+    map.on('click', function(e) {
+        if (currentRoutingMode === 'studentToCampus') {
+            // Existing student to campus routing logic
+            if (!startPoint) {
+                startPoint = e.latlng;
+                L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+            } else if (!endPoint) {
+                endPoint = e.latlng;
+                L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+                calculateRoute(startPoint, endPoint);
+            }
+        } else {
+            // New campus to affected area routing logic
+            if (!hazardZone) {
+                alert('Please draw a hazard zone first using the Incident Location tool');
+                return;
+            }
+            
+            const clickedPoint = e.latlng;
+            const nearestCampus = findNearestCampus(clickedPoint);
+            
+            if (nearestCampus) {
+                calculateCampusToAffectedRoute(nearestCampus, clickedPoint, hazardZone);
+            }
         }
     });
 
@@ -585,6 +567,14 @@ async function initializeMap() {
             drawnItems.removeLayer(window.currentLayer);  // remove the shape if cancelled
         }
         closeAreaTypeModal();
+    });
+
+    // Add this in your initializeMap function after other event listeners
+    document.getElementById('routingModeToggle').addEventListener('change', function(e) {
+        currentRoutingMode = e.target.checked ? 'campusToAffected' : 'studentToCampus';
+        document.getElementById('routingModeLabel').textContent = 
+            currentRoutingMode === 'studentToCampus' ? 'Student to Campus' : 'Campus to Affected Area';
+        clearRoute();
     });
 }
 
@@ -1356,6 +1346,127 @@ function determineCampus(student) {
         const distance = calculateDistance(student.latitude, student.longitude, school.lat, school.lng);
         return !nearest || distance < nearest.distance ? { school, distance } : nearest;
     }, null)?.school;
+}
+
+// Add this new function to find nearest campus
+function findNearestCampus(point) {
+    let nearest = null;
+    let minDistance = Infinity;
+    
+    schools.forEach(school => {
+        const distance = calculateDistance(
+            point.lat, point.lng,
+            school.lat, school.lng
+        );
+        
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearest = school;
+        }
+    });
+    
+    return nearest;
+}
+
+
+function calculateCampusToAffectedRoute(campus, affectedPoint, avoidPolygon) {
+    clearRoute();
+    
+    // Simplify the avoid polygon to reduce complexity
+    const simplifiedAvoidPolygon = turf.simplify(avoidPolygon, {tolerance: 0.01, highQuality: true});
+    
+    // Create waypoints
+    const waypoints = [
+        L.latLng(campus.lat, campus.lng),
+        L.latLng(affectedPoint.lat, affectedPoint.lng)
+    ];
+    
+    // Configure routing control
+    currentRouteControl = L.Routing.control({
+        waypoints: waypoints,
+        routeWhileDragging: false,
+        showAlternatives: true,
+        fitSelectedRoutes: true,
+        createMarker: function(i, wp, nWps) {
+            if (i === 0) {
+                return L.marker(wp.latLng, {
+                    icon: L.icon({
+                        iconUrl: SCHOOL_ICON_URL,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    })
+                }).bindPopup(`Campus: ${campus.name}`);
+            } else if (i === nWps - 1) {
+                return L.marker(wp.latLng, {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: "<div style='background-color:#ff0000;' class='marker-pin'></div>",
+                        iconSize: [30, 42],
+                        iconAnchor: [15, 42]
+                    })
+                }).bindPopup("Affected Area");
+            }
+            return null;
+        },
+        lineOptions: {
+            styles: [{color: 'purple', weight: 5, opacity: 0.8}]
+        },
+        router: L.Routing.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1',
+            profile: 'driving',
+            timeout: 30000,
+            options: {
+                alternatives: true,
+                steps: false,
+                geometries: 'geojson',
+                overview: 'full',
+                continue_straight: false
+            }
+        })
+    }).addTo(map);
+    
+    // Event handlers for routing
+    currentRouteControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        console.log('Found routes:', routes);
+        
+        // The rest of your routesfound handler...
+        if (!routes || routes.length === 0) {
+            console.warn('No routes found');
+            return;
+        }
+        
+        routesLayer.clearLayers();
+        routes.forEach((route, index) => {
+            const isMainRoute = index === 0;
+            const style = isMainRoute ? 
+                {color: 'purple', weight: 5, opacity: 0.8} : 
+                {color: '#800080', weight: 4, opacity: 0.6, dashArray: '5,10'};
+            
+            const routeLine = L.polyline(route.coordinates, style);
+            
+            routeLine.bindTooltip(
+                `${isMainRoute ? 'Main' : 'Alt'} route: ${(route.summary.totalDistance / 1000).toFixed(1)} km, ` +
+                `${Math.round(route.summary.totalTime / 60)} min`
+            );
+            
+            routeLine.on('click', function() {
+                routesLayer.removeLayer(routeLine);
+                routesLayer.addLayer(routeLine);
+                
+                if (currentRouteControl._plan) {
+                    currentRouteControl._plan.setWaypoints(route.waypoints);
+                }
+            });
+            
+            routesLayer.addLayer(routeLine);
+        });
+    });
+    
+    currentRouteControl.on('routingerror', function(e) {
+        console.error('Routing error:', e.error);
+        alert(`Could not calculate route: ${e.error.message}`);
+    });
 }
 
 function handleStudentRoute(student, focusRoute = true) {
