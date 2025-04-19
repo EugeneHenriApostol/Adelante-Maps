@@ -1,15 +1,163 @@
-<body>
-    <h2>Top 10 Schools Where Students Came From</h2>
-    <table id="schools-table" border="1">
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>School Name</th>
-                <th>Total Students</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students Data Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            margin-top: 0;
+            color: #444;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
 
-    <script src="{{ url_for('static', path='javascript/data-analytics.js') }}" defer></script>
+        p {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .rank {
+            width: 60px;
+            text-align: center;
+        }
+        
+        .count {
+            text-align: right;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+        .back:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/maps" class="back">← Back to Maps</a>
+        <h1>Students Data Analytics</h1>
+        <p>Analysis of schools where our students came from</p>
+        
+        <div class="card">
+            <h2>Top 10 Schools Where Students Came From</h2>
+            <table id="schools-table">
+                <thead>
+                    <tr>
+                        <th class="rank">Rank</th>
+                        <th>School Name</th>
+                        <th class="count">Students</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="3" class="loading">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchTopSchools() {
+            const tableBody = document.querySelector("#schools-table tbody");
+            
+            try {
+                const response = await fetch('/api/students/all-schools');
+                const schools = await response.json();
+                
+                const schoolsWithCounts = schools.map(school => ({
+                    name: school.name,
+                    totalStudents: (school.students_senior_high?.length || 0) + 
+                                  (school.students_college?.length || 0)
+                }));
+                
+                const top10Schools = schoolsWithCounts
+                    .sort((a, b) => b.totalStudents - a.totalStudents)
+                    .slice(0, 10);
+                
+                displaySchools(top10Schools);
+            } catch (error) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="loading">Failed to load data.</td></tr>';
+            }
+        }
+        
+        function displaySchools(schools) {
+            const tableBody = document.querySelector("#schools-table tbody");
+            tableBody.innerHTML = "";
+            
+            if (schools.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="loading">No school data available.</td></tr>';
+                return;
+            }
+            
+            schools.forEach((school, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td class="rank">${index + 1}</td>
+                    <td>${school.name}</td>
+                    <td class="count">${school.totalStudents}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', fetchTopSchools);
+    </script>
 </body>
+</html>

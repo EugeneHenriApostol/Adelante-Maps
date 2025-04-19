@@ -85,7 +85,11 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
 
 # upload college students data to database
 @upload_db_api_router.post('/api/upload/college-data')
-async def upload_college_data(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
+async def upload_college_data(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_admin)
+):
     if file.content_type != 'text/csv':
         raise HTTPException(status_code=400, detail='Invalid file type. Only CSV files are allowed.')
 
@@ -93,10 +97,8 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
         content = await file.read()
         file_size = len(content) / 1024
         csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
-        
         rows = list(csv_data)
         row_count = len(rows)
-        
         csv_data = csv.DictReader(StringIO(content.decode('utf-8')))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Failed to read CSV file {str(e)}')
@@ -104,46 +106,26 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     students = []
     for row in csv_data:
         try:
-            prev_school = db.query(models.PreviousSchool).filter(models.PreviousSchool.name == row['previous_school']).first()
-
-            if not prev_school:
-                prev_school = models.PreviousSchool(
-                    name=row['previous_school'],
-                    latitude=float(row['prev_latitude']),
-                    longitude=float(row['prev_longitude'])
-                )
-                db.add(prev_school)
-                db.commit()
-                db.refresh(prev_school)
-
             student = models.CollegeStudents(
                 stud_id=int(row['stud_id']),
                 year=int(row['year']),
                 course=row['course'],
                 age=int(row['age']),
                 strand=row['strand'],
-                previous_school=prev_school,
                 city=row['city'],
                 province=row['province'],
                 barangay=row['barangay'],
                 full_address=row['full_address'],
                 latitude=float(row['latitude']),
                 longitude=float(row['longitude']),
-                cluster=int(row['cluster']) if row['cluster'] else None,
-                previous_school_id=prev_school.id
+                cluster=int(row['cluster']) if row['cluster'] else None
             )
-            
-            if prev_school and prev_school.id:  # if it already exists in db
-                student.previous_school_id = prev_school.id
-            else:
-                # handle db relationship first before committing to db
-                student.previous_school = prev_school
-             
             students.append(student)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f'Invalid data in row: {row}. Error: {str(e)}')
 
     db.add_all(students)
+
     # log activity
     log_entry = models.UserActivityLog(
         user_id=current_user.user_id,
@@ -157,6 +139,7 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     db.commit()
 
     return {'message': f'Successfully uploaded College Student Data. Rows inserted: {len(students)}'}
+
 
 
 # remove senior high student data endpoint

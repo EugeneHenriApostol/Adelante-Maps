@@ -126,11 +126,12 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                         <input type="text" id="campusName" class="form-control" style="width: 100%;" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm">Save Campus</button>
+                    <button type="button" id="cancelCampusBtn" class="btn btn-secondary btn-sm" style="margin-left: 5px;">Cancel</button>
                 </form>
             `).openPopup();
 
-        // Submit logic
         setTimeout(() => {
+            // submit 
             document.getElementById('campusForm').addEventListener('submit', async function (event) {
                 event.preventDefault();
 
@@ -138,18 +139,12 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                 const latitude = campusMarker.getLatLng().lat;
                 const longitude = campusMarker.getLatLng().lng;
 
-                const payload = {
-                    name,
-                    latitude,
-                    longitude
-                };
+                const payload = { name, latitude, longitude };
 
                 try {
                     const response = await fetch('/api/campuses', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -161,18 +156,26 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                     const result = await response.json();
                     alert('Campus saved successfully!');
 
-                    // ✅ Reset the state
-                    map.removeLayer(campusMarker); // remove marker from map
-                    campusMarker = null;           // reset marker variable
-                    isAddingCampus = false;        // reset adding state
+                    // reset state
+                    map.removeLayer(campusMarker);
+                    campusMarker = null;
+                    isAddingCampus = false;
 
                 } catch (error) {
                     alert(`Error saving campus: ${error.message}`);
                 }
             });
+
+            // cancel
+            document.getElementById('cancelCampusBtn').addEventListener('click', function () {
+                map.removeLayer(campusMarker);
+                campusMarker = null;
+                isAddingCampus = false;
+            });
         }, 100);
     });
 });
+
 
 // asynchronous function to fetch data
 async function fetchData(url) {
@@ -262,11 +265,6 @@ function enhanceGeocoder() {
 let circleDrawControlVisible = false;
 let incidentCircle = null;
 
-let startPoint = null;
-let endPoint = null;
-
-let floodPolygon = null;
-
 // initialize leaflet map
 async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
@@ -312,7 +310,7 @@ async function initializeMap() {
 
     // layers for markers, routes and population data
     markersLayer = L.layerGroup().addTo(map); // layer for school markers
-    markers = L.layerGroup(); // layer for cluster student markers
+    markers = L.markerClusterGroup(); // layer for cluster student markers
     routesLayer = L.layerGroup().addTo(map); // layer for student routes
     populationLayer = L.layerGroup().addTo(map); // layer for campus proximity
 
@@ -439,28 +437,16 @@ async function initializeMap() {
             }
             incidentCircle = e.layer;
             drawnItems.addLayer(incidentCircle);
-    
-            // Get the coordinates of the shape
+            
+            // get the coordinates of the shape
             window.incidentLocation = incidentCircle.getLatLng();
-            console.log(window.incidentLocation = incidentCircle.getLatLng());
-    
-            // Convert the circle to a GeoJSON polygon using Turf.js
-            const radiusInKm = incidentCircle.getRadius() / 1000; // Convert radius from meters to kilometers
-            const floodGeoJSON = turf.circle([incidentCircle.getLatLng().lng, incidentCircle.getLatLng().lat], radiusInKm, {
-                steps: 64, // Number of points around the circle
-                units: 'kilometers'
-            });
-    
-            // Store the flood polygon globally
-            floodPolygon = floodGeoJSON.geometry;
-            console.log(floodPolygon); // Check the GeoJSON
     
             incidentCircle.bindTooltip("Incident Location", {
                 permanent: true,
                 direction: "center",
                 className: "incident-tooltip"
             }).openTooltip();
-    
+
             incidentCircle.on('click', function () {
                 const confirmDelete = confirm('Do you want to remove this incident circle?');
                 if (confirmDelete) {
@@ -472,7 +458,7 @@ async function initializeMap() {
         } else {
             drawnItems.addLayer(layer);
     
-            shapeAreas = []; // Reset shape areas
+            shapeAreas = []; // reset shape areas
             const areaInSquareMeters = calculateArea(layer);
             const areaInSquareKilometers = areaInSquareMeters / 1e6;
             shapeAreas.push(areaInSquareKilometers);
@@ -482,7 +468,7 @@ async function initializeMap() {
             openAreaTypeModal();
         }
     });
-    
+
     function toggleCircleDrawControl() {
         if (circleDrawControlVisible) {
             map.removeControl(circleDrawControl);
@@ -494,70 +480,8 @@ async function initializeMap() {
     
     document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
     
-    // Calculate route function (using the floodPolygon globally)
-    function calculateRoute(startPoint, endPoint) {
-        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
-    
-        console.log("OSRM Request URL:", url); // Log the request URL
-    
-        if (floodPolygon) {
-            console.log("Flood Polygon:", floodPolygon); // Log the flood polygon
-    
-            fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log("OSRM Response Data:", data);
-                
-                if (data.routes && data.routes.length > 0) {
-                    const route = data.routes[0];
-                    console.log("Route found:", route);
-                    
-                    // Pass the entire data object to displayRoute
-                    displayRoute(data);
-                } else {
-                    console.error("No routes found in response");
-                }
-            })
-            .catch(error => console.error('Error fetching route data:', error));
-        } else {
-            console.error("Flood polygon not defined!");
-        }
-    }
     
     
-    
-    // Function to display the route on the map
-    function displayRoute(routeData) {
-        if (routeData && routeData.routes && routeData.routes.length > 0) {
-            const route = routeData.routes[0];
-            if (route.geometry) {
-                console.log("Adding route to map:", route.geometry);
-                L.geoJSON(route.geometry).addTo(map);
-            } else {
-                console.error("No geometry found in route");
-            }
-        } else {
-            console.error("No valid route data found");
-        }
-    }
-    
-    // Handle setting the start and end points on the map
-    map.on('click', function (e) {
-        if (!startPoint) {
-            // Set start point
-            startPoint = e.latlng;
-            console.log("Start Point Set:", startPoint); // Debugging log
-            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
-        } else if (!endPoint) {
-            // Set end point
-            endPoint = e.latlng;
-            console.log("End Point Set:", endPoint); // Debugging log
-            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
-    
-            // Call OSRM for the route calculation
-            calculateRoute(startPoint, endPoint);
-        }
-    });
 
     // handle area type selection
     document.getElementById('confirmAreaType').addEventListener('click', () => {
@@ -913,6 +837,14 @@ function generateFilterCheckboxes(containerId, items, filterType, isGrouped = fa
     }
 }
 
+const clusterColors = [
+    'blue', 'red', 'green', 'purple', 'orange', 'cyan', 'yellow', 'pink', 'violet', 'brown',
+    'lime', 'indigo', 'teal', 'gold', 'maroon', 'navy', 'olive', 'gray', 'slateblue', 'turquoise',
+    'crimson', 'aquamarine', 'darkgreen', 'darkviolet', 'darkorange', 'coral', 'lightsalmon', 
+    'fuchsia', 'mediumslateblue', 'darkseagreen', 'mediumvioletred'
+];
+
+// function to add all markers to the map from the dataset
 function addMarkers(data) {
     markers.clearLayers(); // reset the marker cluster group
 
@@ -920,23 +852,23 @@ function addMarkers(data) {
         const { latitude, longitude } = item;
 
         if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-            const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
-                studentData: item
-            }).bindPopup(() => generatePopupContent(item));
+            const latlng = [parseFloat(latitude), parseFloat(longitude)];
+            const marker = createStudentMarker(item, latlng); // 👈 use helper
 
             marker.on('click', () => {
-                console.log('Marker clicked:', item); // log the data being fetched
+                console.log('Marker clicked:', item);
                 handleStudentRoute(item);
             });
 
             markerArray.push(marker);
-            markers.addLayer(marker); // add marker to the cluster group
+            markers.addLayer(marker);
         }
         return markerArray;
     }, []);
 
-    map.addLayer(markers); // add the cluster group to the map
+    map.addLayer(markers);
 
+    // Filter + Chart setup
     const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
     const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
 
@@ -949,6 +881,7 @@ function addMarkers(data) {
 
     applyFilters();
 }
+
 
 // function to toggle clustering
 let activeButton = null; // store the currently active button
@@ -1121,27 +1054,44 @@ function showMarker(student) {
     return true;
 }
 
+// helper function to create custom marker 
+function createStudentMarker(studentData, latlng, isAffected = false) {
+    const clusterColor = clusterColors[(studentData.cluster - 1) % clusterColors.length];
+
+    return L.marker(latlng, {
+        studentData: studentData,
+        icon: L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color:${clusterColor}; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [30, 30]
+        })
+    }).bindPopup(() => generatePopupContent(studentData, isAffected));
+}
+
+
+// function to update markers on the map.
 function updateMarkers() {
     markers.clearLayers();
+
     allMarkers.forEach(marker => {
         const studentData = marker.options.studentData;
         if (showMarker(studentData)) {
             const isAffected = isStudentAffected(studentData);
-
-            // Create a new marker with the default icon or a custom icon for affected students
-            const newMarker = L.marker(marker.getLatLng(), {
-                studentData: studentData
-            }).bindPopup(() => generatePopupContent(studentData, isAffected));
+            const newMarker = createStudentMarker(studentData, marker.getLatLng(), isAffected);
 
             newMarker.on('click', () => {
-                console.log('Marker clicked:', studentData); // Log the data being fetched
+                console.log('Marker clicked:', studentData);
                 handleStudentRoute(studentData);
             });
+
             markers.addLayer(newMarker);
         }
     });
+
     map.addLayer(markers);
 }
+
+
 
 function getAffectedIcon() {
     return L.divIcon({
