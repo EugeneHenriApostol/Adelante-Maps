@@ -1,6 +1,6 @@
 #main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,9 +40,13 @@ from Routes.college_data_analytics_route import college_analytics_router
 from Routes.event_reports_route import event_reports_router
 from Routes.file_process_route import file_process_router
 
+from Routes.exception_handler import custom_http_exception_handler  
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.add_exception_handler(HTTPException, custom_http_exception_handler)
 
 app.include_router(register_api_router)
 app.include_router(login_api_router)

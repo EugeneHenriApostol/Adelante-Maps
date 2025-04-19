@@ -32,7 +32,7 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <!-- Admin Tools dropdown -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown" id="adminTools" style="display: none;">
                             <a class="nav-link dropdown-toggle" href="#" id="adminToolsDropdown" role="button"
                                 data-bs-toggle="dropdown" aria-expanded="false">
                                 Admin Tools
@@ -54,8 +54,7 @@
                         </li>
 
                         <!-- dropdown for data analytics -->
-                        <a class="nav-link text-dark" href="#" id="dataAnalytics" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link text-dark" href="#" id="dataAnalytics">
                             <i class="bi bi-bar-chart"></i> Data Analytics
                         </a>
                         <!-- filter controls button -->
@@ -258,6 +257,10 @@
                         const adminItem = document.getElementById('adminDashboardItem');
                         if (adminItem) {
                             adminItem.style.display = 'block';
+                        }
+                        const adminTools = document.getElementById('adminTools');
+                        if (adminTools) {
+                            adminTools.style.display = 'block';
                         }
                     }
                 } else {

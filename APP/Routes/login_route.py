@@ -17,3 +17,7 @@ def login_page(request: Request, current_user: Optional[schemas.UserInDBBase] = 
     if current_user:
         return RedirectResponse(url="/maps", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
+
+@login_router.get("/unauthorized")
+def unauthorized_page(request: Request):
+    return templates.TemplateResponse("unauthorized.html", {"request": request})

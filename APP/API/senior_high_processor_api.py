@@ -9,7 +9,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends
 from sklearn.cluster import KMeans
 import requests
-from sklearn.metrics import silhouette_score
+from kneed import KneeLocator
 import auth, models
 
 from rapidfuzz import process, fuzz
@@ -64,20 +64,10 @@ def geocode_address(address, api_key):
 # clean previous school name function
 def clean_previous_school_name(name: str):
     name = html.unescape(name)
-
-    # Remove anything inside parentheses
     name = re.sub(r'\(.*?\)', '', name)
-
-    # Remove all numbers
     name = re.sub(r'\d+', '', name)
-
-    # Remove all special characters including dots, dashes, apostrophes, etc.
     name = re.sub(r"[^A-Za-z\s]", '', name)
-
-    # Remove extra spaces
     name = ' '.join(name.split()).strip()
-
-    # Capitalize the entire name (optional but makes things consistent)
     name = name.upper()
     
     return name
@@ -215,29 +205,26 @@ def preprocess_file_seniorhigh(file_path: str):
     if not valid_coordinates.empty:
         n = len(valid_coordinates)
         upper_k = round(math.sqrt(n / 2))
-        print(f"Sample size (ALL valid students): {n}")
+        print(f"Sample size (all valid students): {n}")
         print(f"Upper limit for k (√(n/2)): {upper_k}")
 
-        best_k = 2
-        best_score = -1
         coords = valid_coordinates[['latitude', 'longitude']].values
+        wcss = []
 
         for k in range(2, max(3, upper_k + 1)):
             kmeans = KMeans(n_clusters=k, random_state=42, init='k-means++')
-            labels = kmeans.fit_predict(coords)
-            score = silhouette_score(coords, labels)
-            if score > best_score:
-                best_score = score
-                best_k = k
+            kmeans.fit(coords)
+            wcss.append(kmeans.inertia_)
 
-        print(f"Optimal k based on Silhouette Score: {best_k}")
-        print(f"Best Silhouette Score: {best_score:.4f}")
+        kl = KneeLocator(range(2, max(3, upper_k + 1)), wcss, curve='convex', direction='decreasing')
+        best_k = kl.elbow if kl.elbow is not None else 2  # fallback if knee not found
 
-        # Apply clustering to all valid students
-        kmeans_all = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
-        valid_coordinates['cluster'] = kmeans_all.fit_predict(coords) + 1
+        print(f"✅ Optimal k based on Elbow Method: {best_k}")
 
-        # merge back to the main dataframe
+        kmeans_final = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
+        valid_coordinates['cluster'] = kmeans_final.fit_predict(coords) + 1
+
+        # merge back to main dataframe
         df = df.merge(
             valid_coordinates[['stud_id', 'cluster']],
             on='stud_id',

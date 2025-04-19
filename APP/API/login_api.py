@@ -40,7 +40,7 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
 
     # return role_id in JSON but not the token
     return {
-        "role_id": user.role_id  # send only role_id to frontend
+        "role_id": user.role_id  # send role_id to frontend
     }
 
     # return {"access_token": access_token, "token_type": "bearer"}
