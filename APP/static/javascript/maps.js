@@ -39,11 +39,7 @@ let affectedStudents = {
     restricted: [],
     fire: []
 };
-
 let drawControlVisible = false;
-
-let currentRoutingMode = 'studentToCampus'; // 'studentToCampus' or 'campusToAffected'
-let hazardZone = null; // Store the hazard zone polygon
 // api and ic0n url
 const SENIOR_HIGH_API_URL = '/api/senior-high-student-data';
 const COLLEGE_API_URL = '/api/college-student-data';
@@ -130,11 +126,12 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                         <input type="text" id="campusName" class="form-control" style="width: 100%;" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm">Save Campus</button>
+                    <button type="button" id="cancelCampusBtn" class="btn btn-secondary btn-sm" style="margin-left: 5px;">Cancel</button>
                 </form>
             `).openPopup();
 
-        // Submit logic
         setTimeout(() => {
+            // submit 
             document.getElementById('campusForm').addEventListener('submit', async function (event) {
                 event.preventDefault();
 
@@ -142,18 +139,12 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                 const latitude = campusMarker.getLatLng().lat;
                 const longitude = campusMarker.getLatLng().lng;
 
-                const payload = {
-                    name,
-                    latitude,
-                    longitude
-                };
+                const payload = { name, latitude, longitude };
 
                 try {
                     const response = await fetch('/api/campuses', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -165,18 +156,26 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                     const result = await response.json();
                     alert('Campus saved successfully!');
 
-                    // ✅ Reset the state
-                    map.removeLayer(campusMarker); // remove marker from map
-                    campusMarker = null;           // reset marker variable
-                    isAddingCampus = false;        // reset adding state
+                    // reset state
+                    map.removeLayer(campusMarker);
+                    campusMarker = null;
+                    isAddingCampus = false;
 
                 } catch (error) {
                     alert(`Error saving campus: ${error.message}`);
                 }
             });
+
+            // cancel
+            document.getElementById('cancelCampusBtn').addEventListener('click', function () {
+                map.removeLayer(campusMarker);
+                campusMarker = null;
+                isAddingCampus = false;
+            });
         }, 100);
     });
 });
+
 
 // asynchronous function to fetch data
 async function fetchData(url) {
@@ -239,16 +238,39 @@ function enhanceGeocoder() {
     return enhancedGeocoder;
 }
 
+// function addSearchButton() {
+//     searchBtn.addEventListener('click', function() {
+//         // Toggle the geocoder visibility
+//         const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
+//         if (geocoderContainer) {
+//             if (geocoderContainer.classList.contains('leaflet-control-geocoder-expanded')) {
+//                 geocoderContainer.classList.remove('leaflet-control-geocoder-expanded');
+//             } else {
+//                 geocoderContainer.classList.add('leaflet-control-geocoder-expanded');
+//                 const input = document.querySelector('.leaflet-control-geocoder-form input');
+//                 if (input) {
+//                     input.focus();
+//                 }
+//             }
+//         }
+//     });
+    
+//     // Add it to your existing control container
+//     const controlContainer = document.querySelector('.filter-controls');
+//     if (controlContainer) {
+//         controlContainer.appendChild(searchBtn);
+//     }
+// }
+
 let circleDrawControlVisible = false;
 let incidentCircle = null;
 
 let floodPolygon = null;
+let startPoint = null;
+let endPoint = null;
 
 // initialize leaflet map
 async function initializeMap() {
-
-    let startPoint = null;
-    let endPoint = null;
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -292,7 +314,7 @@ async function initializeMap() {
 
     // layers for markers, routes and population data
     markersLayer = L.layerGroup().addTo(map); // layer for school markers
-    markers = L.layerGroup(); // layer for cluster student markers
+    markers = L.markerClusterGroup(); // layer for cluster student markers
     routesLayer = L.layerGroup().addTo(map); // layer for student routes
     populationLayer = L.layerGroup().addTo(map); // layer for campus proximity
 
@@ -323,31 +345,6 @@ async function initializeMap() {
             toggleRouteVisibility(this.checked);
         });
     }
-
-    map.on('click', function (e) {
-        if (currentRoutingMode === 'studentToCampus') {
-            if (!startPoint) {
-                startPoint = e.latlng;
-            } else if (!endPoint) {
-                endPoint = e.latlng;
-                // Use the student route handler instead of direct HERE API call
-                handleStudentRoute({
-                    latitude: startPoint.lat,
-                    longitude: startPoint.lng,
-                    name: "Start Point"
-                }, false);
-            }
-        } else {
-            if (!hazardZone) {
-                return;
-            }
-            const clickedPoint = e.latlng;
-            const nearestCampus = findNearestCampus(clickedPoint);
-            if (nearestCampus) {
-                calculateCampusToAffectedRoute(nearestCampus, clickedPoint, hazardZone.toGeoJSON());
-            }
-        }
-    });
 
     // check for report_id in URL and handle it
     const params = new URLSearchParams(window.location.search);
@@ -394,25 +391,19 @@ async function initializeMap() {
         }
     });
 
-    const hazardDrawControl = new L.Control.Draw({
+    circleDrawControl = new L.Control.Draw({
         draw: {
-            polygon: {
-                shapeOptions: {
-                    color: '#ff0000',
-                    fillOpacity: 0.4
-                },
-                allowIntersection: false,
-                drawError: {
-                    color: '#e1e100',
-                    message: '<strong>Polygon draw error!</strong> Please try again.'
-                },
-                showArea: true
-            },
+            polygon: false,
             polyline: false,
             rectangle: false,
             marker: false,
             circlemarker: false,
-            circle: false
+            circle: {
+                shapeOptions: {
+                    color: '#ff0000',
+                    fillOpacity: 0.4
+                }
+            }
         },
         edit: false
     });
@@ -441,59 +432,341 @@ async function initializeMap() {
     }
 
     // function for when a shape is created on the map
-    // Modify your circle draw control handler to store the hazard zone
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
-        
-        if (e.layerType === 'polygon') {
-            if (hazardZone) {
-                drawnItems.removeLayer(hazardZone);
+    
+        if (e.layerType === 'circle') {
+            if (incidentCircle) {
+                drawnItems.removeLayer(incidentCircle);
             }
-            
-            hazardZone = layer;
-            drawnItems.addLayer(hazardZone);
-            
-            // Convert Leaflet polygon to GeoJSON
-            const hazardGeoJSON = hazardZone.toGeoJSON();
-            
-            // Bind tooltip to show it's a hazard zone
-            hazardZone.bindTooltip("Hazard Zone", {
+            incidentCircle = e.layer;
+            drawnItems.addLayer(incidentCircle);
+    
+            // Get the coordinates of the shape
+            window.incidentLocation = incidentCircle.getLatLng();
+            console.log(window.incidentLocation = incidentCircle.getLatLng());
+    
+            // Convert the circle to a GeoJSON polygon using Turf.js
+            const radiusInKm = incidentCircle.getRadius() / 1000; // Convert radius from meters to kilometers
+            const floodGeoJSON = turf.circle([incidentCircle.getLatLng().lng, incidentCircle.getLatLng().lat], radiusInKm, {
+                steps: 64, // Number of points around the circle
+                units: 'kilometers'
+            });
+    
+            // Store the flood polygon globally
+            floodPolygon = floodGeoJSON.geometry;
+            console.log(floodPolygon); // Check the GeoJSON
+    
+            incidentCircle.bindTooltip("Incident Location", {
                 permanent: true,
                 direction: "center",
                 className: "incident-tooltip"
             }).openTooltip();
-            
-            // Add click handler to remove if needed
-            hazardZone.on('click', function () {
-                const confirmDelete = confirm('Do you want to remove this hazard zone?');
+    
+            incidentCircle.on('click', function () {
+                const confirmDelete = confirm('Do you want to remove this incident circle?');
                 if (confirmDelete) {
-                    drawnItems.removeLayer(hazardZone);
-                    hazardZone = null;
+                    drawnItems.removeLayer(incidentCircle);
+                    incidentCircle = null;
+                    window.incidentLocation = null;
                 }
             });
         } else {
-            // Existing polygon/shape creation logic for other types
             drawnItems.addLayer(layer);
-            shapeAreas = [];
+    
+            shapeAreas = []; // Reset shape areas
             const areaInSquareMeters = calculateArea(layer);
             const areaInSquareKilometers = areaInSquareMeters / 1e6;
             shapeAreas.push(areaInSquareKilometers);
+    
             window.currentLayer = layer;
+    
             openAreaTypeModal();
         }
     });
     
     function toggleCircleDrawControl() {
-        // Replace with polygon draw control for hazard zones
         if (circleDrawControlVisible) {
-            map.removeControl(hazardDrawControl);
+            map.removeControl(circleDrawControl);
         } else {
-            map.addControl(hazardDrawControl);
+            map.addControl(circleDrawControl);
         }
         circleDrawControlVisible = !circleDrawControlVisible;
     }
     
     document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
+    
+    // Calculate route function (using the floodPolygon globally)
+    function calculateRoute(startPoint, endPoint) {
+        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+        
+        console.log("OSRM Request URL:", url);
+        
+        if (floodPolygon) {
+            console.log("Flood Polygon:", floodPolygon);
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("OSRM Response Data:", data);
+                    
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        console.log("Route found:", route);
+                        
+                        // Check if the route intersects with the flood polygon
+                        if (route.geometry && route.geometry.coordinates) {
+                            const routeLine = turf.lineString(route.geometry.coordinates);
+                            const intersects = turf.booleanIntersects(routeLine, floodPolygon);
+                            
+                            if (intersects) {
+                                console.log("Route intersects with flood area, calculating detour...");
+                                calculateDetour(startPoint, endPoint);
+                            } else {
+                                console.log("Route does not intersect with flood area, using direct route");
+                                displayRoute(data);
+                            }
+                        } else {
+                            console.error("No geometry found in route");
+                        }
+                    } else {
+                        console.error("No routes found in response");
+                    }
+                })
+                .catch(error => console.error('Error fetching route data:', error));
+        } else {
+            // No flood polygon defined, just calculate the direct route
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    displayRoute(data);
+                })
+                .catch(error => console.error('Error fetching route data:', error));
+        }
+    }
+    
+    function calculateDetour(startPoint, endPoint) {
+        console.log("Calculating detour waypoints...");
+        
+        // Create points around the flood polygon to use as waypoints
+        const center = incidentCircle.getLatLng();
+        const radius = incidentCircle.getRadius();
+        console.log("Circle center:", center, "radius:", radius);
+        
+        // Create potential waypoints around the flood area
+        const numPoints = 16; // Increase number of points to try
+        const waypoints = [];
+        
+        // Create multiple rings of waypoints at different distances
+        const distanceFactors = [1.5, 2.0, 3.0]; // Multiple of radius
+        
+        distanceFactors.forEach(factor => {
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (2 * Math.PI * i) / numPoints;
+                
+                // Calculate point on circle
+                const waypointLat = center.lat + (radius * factor / 111000) * Math.cos(angle); // 111000 meters is roughly 1 degree of latitude
+                const waypointLng = center.lng + (radius * factor / (111000 * Math.cos(center.lat * (Math.PI/180)))) * Math.sin(angle);
+                
+                waypoints.push({
+                    lng: waypointLng, 
+                    lat: waypointLat
+                });
+            }
+        });
+        
+        console.log(`Generated ${waypoints.length} waypoints for detour calculation`);
+        
+        // Find the best waypoint to route through
+        findBestDetour(startPoint, endPoint, waypoints);
+    }
+    
+    function findBestDetour(startPoint, endPoint, waypoints) {
+        let bestRoute = null;
+        let bestDistance = Infinity;
+        let promises = [];
+        
+        console.log(`Trying ${waypoints.length} possible detour points around flood area`);
+        
+        // Try each waypoint and find the best route
+        waypoints.forEach((waypoint, index) => {
+            console.log(`Trying waypoint ${index+1}:`, waypoint);
+            
+            const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${waypoint.lng},${waypoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+            
+            const promise = fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(`Waypoint ${index+1} response:`, data);
+                    
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        console.log(`Waypoint ${index+1} route:`, route);
+                        
+                        // Check if this route intersects with the flood polygon
+                        if (route.geometry && route.geometry.coordinates) {
+                            const routeLine = turf.lineString(route.geometry.coordinates);
+                            const intersects = turf.booleanIntersects(routeLine, floodPolygon);
+                            
+                            console.log(`Waypoint ${index+1} - Route intersects flood area: ${intersects}`);
+                            console.log(`Waypoint ${index+1} - Route distance: ${route.distance}`);
+                            
+                            if (!intersects && route.distance < bestDistance) {
+                                bestRoute = data;
+                                bestDistance = route.distance;
+                                console.log(`Waypoint ${index+1} is now the best route with distance ${bestDistance}`);
+                            }
+                        } else {
+                            console.error(`Waypoint ${index+1} has no valid geometry`);
+                        }
+                    } else {
+                        console.error(`No routes found for waypoint ${index+1}`);
+                    }
+                })
+                .catch(error => console.error(`Error fetching detour route for waypoint ${index+1}:`, error));
+            
+            promises.push(promise);
+        });
+        
+        // After all waypoints have been tried
+        Promise.all(promises).then(() => {
+            if (bestRoute) {
+                console.log("Found best detour route:", bestRoute);
+                displayRoute(bestRoute);
+            } else {
+                console.error("Could not find a valid detour route");
+                // Fall back to displaying the original route with a warning
+                console.log("Falling back to original route with warning");
+                
+                // Get original route
+                const originalUrl = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+                
+                fetch(originalUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            // Display with warning
+                            console.warn("WARNING: This route passes through flood area!");
+                            displayRoute(data, true); // Pass true to indicate this is through flood area
+                        }
+                    })
+                    .catch(error => console.error('Error fetching original route data:', error));
+            }
+        });
+    }
+    function findBestDetour(startPoint, endPoint, waypoints) {
+        console.log(`Trying ${waypoints.length} possible detour points around flood area`);
+        
+        // Process waypoints one at a time instead of all at once
+        tryNextWaypoint(startPoint, endPoint, waypoints, 0);
+    }
+    
+    function tryNextWaypoint(startPoint, endPoint, waypoints, index) {
+        // Base case: we've tried all waypoints
+        if (index >= waypoints.length) {
+            console.error("Could not find a valid detour route after trying all waypoints");
+            // Fall back to displaying the original route with a warning
+            console.log("Falling back to original route with warning");
+            
+            const originalUrl = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+            
+            fetch(originalUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        console.warn("WARNING: This route passes through flood area!");
+                        displayRoute(data, true); // Pass true to indicate this is through flood area
+                    }
+                })
+                .catch(error => console.error('Error fetching original route data:', error));
+            return;
+        }
+        
+        const waypoint = waypoints[index];
+        console.log(`Trying waypoint ${index+1}/${waypoints.length}:`, waypoint);
+        
+        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${waypoint.lng},${waypoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    
+                    // Check if this route intersects with the flood polygon
+                    if (route.geometry && route.geometry.coordinates) {
+                        const routeLine = turf.lineString(route.geometry.coordinates);
+                        const intersects = turf.booleanIntersects(routeLine, floodPolygon);
+                        
+                        console.log(`Waypoint ${index+1} - Route intersects flood area: ${intersects}`);
+                        
+                        if (!intersects) {
+                            // Found a valid route! Display it and stop looking
+                            console.log(`Found valid detour route through waypoint ${index+1}`);
+                            displayRoute(data);
+                            return; // Stop processing more waypoints
+                        }
+                    }
+                }
+                
+                // If we get here, this waypoint didn't work, try the next one
+                tryNextWaypoint(startPoint, endPoint, waypoints, index + 1);
+            })
+            .catch(error => {
+                console.error(`Error fetching detour route for waypoint ${index+1}:`, error);
+                // Even if there's an error, try the next waypoint
+                tryNextWaypoint(startPoint, endPoint, waypoints, index + 1);
+            });
+    }
+    
+    
+    // Function to display the route on the map
+    function displayRoute(routeData, isWarningRoute = false) {
+        if (routeData && routeData.routes && routeData.routes.length > 0) {
+            const route = routeData.routes[0];
+            if (route.geometry) {
+                console.log("Adding route to map:", route.geometry);
+                
+                // Create route layer with appropriate styling
+                const routeStyle = isWarningRoute ? 
+                    { color: 'red', weight: 6, opacity: 0.7, dashArray: '10, 10' } : 
+                    { color: 'blue', weight: 6, opacity: 0.7 };
+                
+                const routeLayer = L.geoJSON(route.geometry, {
+                    style: routeStyle
+                }).addTo(map);
+                
+                // Add warning popup if needed
+                if (isWarningRoute) {
+                    routeLayer.bindPopup(
+                        "<strong>Warning!</strong><br>This route passes through a flood area.<br>Travel at your own risk.", 
+                        { autoClose: false }
+                    ).openPopup();
+                }
+            } else {
+                console.error("No geometry found in route");
+            }
+        } else {
+            console.error("No valid route data found");
+        }
+    }
+    
+    map.on('click', function (e) {
+        if (!startPoint) {
+            // Set start point
+            startPoint = e.latlng;
+            console.log("Start Point Set:", startPoint); // Debugging log
+            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+        } else if (!endPoint) {
+            // Set end point
+            endPoint = e.latlng;
+            console.log("End Point Set:", endPoint); // Debugging log
+            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+    
+            // Call OSRM for the route calculation
+            calculateRoute(startPoint, endPoint);
+        }
+    });
 
     // handle area type selection
     document.getElementById('confirmAreaType').addEventListener('click', () => {
@@ -521,14 +794,6 @@ async function initializeMap() {
             drawnItems.removeLayer(window.currentLayer);  // remove the shape if cancelled
         }
         closeAreaTypeModal();
-    });
-
-    // Add this in your initializeMap function after other event listeners
-    document.getElementById('routingModeToggle').addEventListener('change', function(e) {
-        currentRoutingMode = e.target.checked ? 'campusToAffected' : 'studentToCampus';
-        document.getElementById('routingModeLabel').textContent = 
-            currentRoutingMode === 'studentToCampus' ? 'Student to Campus' : 'Campus to Affected Area';
-        clearRoute();
     });
 }
 
@@ -857,6 +1122,14 @@ function generateFilterCheckboxes(containerId, items, filterType, isGrouped = fa
     }
 }
 
+const clusterColors = [
+    'blue', 'red', 'green', 'purple', 'orange', 'cyan', 'yellow', 'pink', 'violet', 'brown',
+    'lime', 'indigo', 'teal', 'gold', 'maroon', 'navy', 'olive', 'gray', 'slateblue', 'turquoise',
+    'crimson', 'aquamarine', 'darkgreen', 'darkviolet', 'darkorange', 'coral', 'lightsalmon', 
+    'fuchsia', 'mediumslateblue', 'darkseagreen', 'mediumvioletred'
+];
+
+// function to add all markers to the map from the dataset
 function addMarkers(data) {
     markers.clearLayers(); // reset the marker cluster group
 
@@ -864,23 +1137,23 @@ function addMarkers(data) {
         const { latitude, longitude } = item;
 
         if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-            const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
-                studentData: item
-            }).bindPopup(() => generatePopupContent(item));
+            const latlng = [parseFloat(latitude), parseFloat(longitude)];
+            const marker = createStudentMarker(item, latlng); // 👈 use helper
 
             marker.on('click', () => {
-                console.log('Marker clicked:', item); // log the data being fetched
+                console.log('Marker clicked:', item);
                 handleStudentRoute(item);
             });
 
             markerArray.push(marker);
-            markers.addLayer(marker); // add marker to the cluster group
+            markers.addLayer(marker);
         }
         return markerArray;
     }, []);
 
-    map.addLayer(markers); // add the cluster group to the map
+    map.addLayer(markers);
 
+    // Filter + Chart setup
     const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
     const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
 
@@ -893,6 +1166,7 @@ function addMarkers(data) {
 
     applyFilters();
 }
+
 
 // function to toggle clustering
 let activeButton = null; // store the currently active button
@@ -1065,27 +1339,44 @@ function showMarker(student) {
     return true;
 }
 
+// helper function to create custom marker 
+function createStudentMarker(studentData, latlng, isAffected = false) {
+    const clusterColor = clusterColors[(studentData.cluster - 1) % clusterColors.length];
+
+    return L.marker(latlng, {
+        studentData: studentData,
+        icon: L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color:${clusterColor}; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [30, 30]
+        })
+    }).bindPopup(() => generatePopupContent(studentData, isAffected));
+}
+
+
+// function to update markers on the map.
 function updateMarkers() {
     markers.clearLayers();
+
     allMarkers.forEach(marker => {
         const studentData = marker.options.studentData;
         if (showMarker(studentData)) {
             const isAffected = isStudentAffected(studentData);
-
-            // Create a new marker with the default icon or a custom icon for affected students
-            const newMarker = L.marker(marker.getLatLng(), {
-                studentData: studentData
-            }).bindPopup(() => generatePopupContent(studentData, isAffected));
+            const newMarker = createStudentMarker(studentData, marker.getLatLng(), isAffected);
 
             newMarker.on('click', () => {
-                console.log('Marker clicked:', studentData); // Log the data being fetched
+                console.log('Marker clicked:', studentData);
                 handleStudentRoute(studentData);
             });
+
             markers.addLayer(newMarker);
         }
     });
+
     map.addLayer(markers);
 }
+
+
 
 function getAffectedIcon() {
     return L.divIcon({
@@ -1251,6 +1542,18 @@ function updateCirclePopup(circle, school, data) {
     }
 }
 
+//calculate Distance covers both routing and students within campus radius
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return distance;
+}
 
 function studentType(student) {
     if (student.course) {
@@ -1268,6 +1571,270 @@ function studentType(student) {
     }
     
     return false;
+}
+
+function determineCampus(student) {
+    const isCollege = studentType(student);
+    
+    if (isCollege) {
+        const courseInSCS = COLLEGE_DEPARTMENTS.SCS.includes(student.course);
+        const courseInSED = COLLEGE_DEPARTMENTS.SED.includes(student.course);
+        
+        if (courseInSCS || courseInSED) {
+            return schools.find(school => school.name === "USJ-R Basak Campus");
+        }
+        
+        return schools.find(school => school.name === "USJ-R Main Campus");
+    }
+    
+    return schools.reduce((nearest, school) => {
+        const distance = calculateDistance(student.latitude, student.longitude, school.lat, school.lng);
+        return !nearest || distance < nearest.distance ? { school, distance } : nearest;
+    }, null)?.school;
+}
+
+function handleStudentRoute(student, focusRoute = true) {
+    const studentLat = parseFloat(student.latitude);
+    const studentLng = parseFloat(student.longitude);
+
+    // validate student coordinates
+    if (isNaN(studentLat) || isNaN(studentLng)) {
+        console.error('Invalid student coordinates:', student.latitude, student.longitude);
+        return;
+    }
+
+    // check if clicking the same student
+    if (previouslySelectedStudent === student) {
+        // Clear the route when clicking the same student
+        clearRoute();
+        return;
+    }
+
+    // clear any existing route first
+    clearRoute();
+
+    // set the newly selected student
+    previouslySelectedStudent = student;
+
+    const selectedCampus = determineCampus(student);
+    if (!selectedCampus) {
+        console.error('Unable to determine campus for student:', student);
+        return;
+    }
+
+    const campusLat = selectedCampus.lat;
+    const campusLng = selectedCampus.lng;
+
+    // create waypoints array
+    const waypoints = [
+        L.latLng(studentLat, studentLng),
+        L.latLng(campusLat, campusLng)
+    ];
+
+    const routeColor = studentType(student) ? 'blue' : 'green';
+
+    // configure the routing control
+    currentRouteControl = L.Routing.control({
+        waypoints: waypoints,
+        routeWhileDragging: false,
+        showAlternatives: true,
+        fitSelectedRoutes: focusRoute,
+        createMarker: function(i, wp, nWps) {
+            // ensures that start and end points are consistent (student loc to respective campuses)
+            if (i === 0 || i === nWps - 1) {
+                return L.marker(wp.latLng, {
+                    icon: i === 0 ? 
+                        L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div style='background-color:#4a83ec;' class='marker-pin'></div>",
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        }) : 
+                        L.icon({
+                            iconUrl: SCHOOL_ICON_URL, 
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 40]
+                        })
+                }).bindPopup(i === 0 ? `Student: ${student.name}` : `Campus: ${selectedCampus.name}`);
+            }
+            return null;
+        },
+        lineOptions: {
+            styles: [{color: routeColor, weight: 5, opacity: 0.8}]
+        },
+        altLineOptions: {
+            styles: [
+                {color: '#800000', weight: 4, opacity: 0.7, dashArray: '5,10'},
+                {color: '#000080', weight: 4, opacity: 0.6, dashArray: '5,10'},
+                {color: '#006400', weight: 4, opacity: 0.5, dashArray: '5,10'}
+            ]
+        }
+    }).addTo(map);
+
+    // handle routes found
+    currentRouteControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        console.log('Found routes:', routes);
+
+        if (routes && routes.length > 0) {
+            try {
+                // distances and times for all found routes
+                const distances = routes.map(route => (route.summary.totalDistance / 1000).toFixed(2));
+                const times = routes.map(route => (route.summary.totalTime / 60).toFixed(2));
+                
+                // create payload to be sent to be
+                const payload = {
+                    student_name: student.name || "Unknown Student",
+                    campus_name: selectedCampus.name || "Unknown Campus",
+                    distances: distances.map(Number),
+                    times: times.map(Number)
+                };
+    
+                fetch('/evaluate-routes-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(`API error: ${JSON.stringify(err)}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                   
+                    // payload error handling
+                })
+                .catch(error => { 
+                    console.error("Fetch API call failed:", error);
+                });
+
+            } catch (error) {
+                console.error("Error occurred inside routesfound before fetch:", error);
+            }
+        } else {
+            console.warn("routesfound fired, but no routes available.");
+        }
+        
+        // clear previous routes
+        routesLayer.clearLayers();
+        
+        // add all routes to the map layer
+        routes.forEach((route, index) => {
+            const isMainRoute = index === 0;
+            const style = isMainRoute ? 
+                {color: routeColor, weight: 5, opacity: 0.8} : 
+                currentRouteControl.options.altLineOptions.styles[index - 1];
+            
+            const routeLine = L.polyline(route.coordinates, style);
+            
+            // add routes info
+            routeLine.bindTooltip(
+                `${isMainRoute ? 'Main' : 'Alt'} route: ${(route.summary.totalDistance / 1000).toFixed(1)} km, ` +
+                `${Math.round(route.summary.totalTime / 60)} min`
+            );
+            
+            // switching to either main or alt routes
+            routeLine.on('click', function() {
+                routesLayer.removeLayer(routeLine);
+                routesLayer.addLayer(routeLine);
+                
+                if (currentRouteControl._plan) {
+                    currentRouteControl._plan.setWaypoints(route.waypoints);
+                }
+            });
+            
+            routesLayer.addLayer(routeLine);
+        });
+    });
+
+    currentRouteControl.on('routingerror', function(e) {
+        console.error('Routing error:', e.error);
+        alert(`Could not calculate route: ${e.error.message}`);
+    });
+
+    // find and store the clicked marker
+    const clickedMarker = markers.getLayers().find(marker => 
+        marker.options.studentData === student
+    );
+    
+    currentRouteMarker = clickedMarker;
+    
+    // update the popup content to show the hide route button
+    if (clickedMarker && clickedMarker.isPopupOpen()) {
+        clickedMarker.setPopupContent(
+            generatePopupContent(student, isStudentAffected(student))
+        );
+    }
+}
+
+function clearRoute() {
+    if (currentRouteControl) {
+        map.removeControl(currentRouteControl);
+        currentRouteControl = null;
+    }
+    routesLayer.clearLayers();
+    
+    if (currentRouteMarker) {
+        // update the popup content when clearing the route
+        if (currentRouteMarker.isPopupOpen()) {
+            currentRouteMarker.setPopupContent(
+                generatePopupContent(currentRouteMarker.options.studentData, 
+                isStudentAffected(currentRouteMarker.options.studentData))
+            );
+        }
+        currentRouteMarker = null;
+    }
+    
+    // reset the previously selected student
+    previouslySelectedStudent = null;
+    currentRoute = null;
+}
+
+function toggleRouteVisibility(isVisible) {
+    if (currentRouteControl) {
+        currentRouteControl.getContainer().style.display = isVisible ? 'block' : 'none';
+        
+        // toggle visibility of alternatives too
+        if (currentRouteControl.options.showAlternatives) {
+            const containers = document.querySelectorAll('.leaflet-routing-alt');
+            containers.forEach(container => {
+                container.style.display = isVisible ? 'block' : 'none';
+            });
+        }
+        
+        // toggle the route lines
+        if (!isVisible && routesLayer) {
+            routesLayer.eachLayer(layer => {
+                layer.setStyle({ opacity: 0 });
+            });
+        } else if (isVisible && routesLayer) {
+            routesLayer.eachLayer((layer, index) => {
+                if (layer === currentRoute) {
+                    layer.setStyle({ opacity: 0.8 });
+                } else {
+                    // alternative routes
+                    const altIndex = index - 1;
+                    const opacity = altIndex >= 0 ? 0.7 - (altIndex * 0.1) : 0.7;
+                    layer.setStyle({ opacity: opacity });
+                }
+            });
+        }
+        
+        // update current marker popup if it's open
+        if (currentRouteMarker && currentRouteMarker.isPopupOpen()) {
+            currentRouteMarker.setPopupContent(
+                generatePopupContent(currentRouteMarker.options.studentData, 
+                isStudentAffected(currentRouteMarker.options.studentData))
+            );
+        }
+    }
+    
+    if (!isVisible) clearRoute();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

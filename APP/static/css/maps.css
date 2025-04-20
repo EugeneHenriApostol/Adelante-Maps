@@ -302,3 +302,8 @@ body {
           opacity: 0.8;
       }
   }
+  .custom-marker {
+    font-size: 14px; /* Adjust text size */
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+}

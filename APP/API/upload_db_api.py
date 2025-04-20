@@ -159,75 +159,48 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
     return {'message': f'Successfully uploaded College Student Data. Rows inserted: {len(students)}'}
 
 
-# remove senior high student data endpoint
-@upload_db_api_router.post("/api/remove-senior-high-data")
-async def remove_senior_high_data(
-    db: Session = Depends(get_db),
-    current_user: schemas.UserInDBBase = Depends(auth.get_current_admin) 
-):
-    # Get count before deletion
-    count = db.query(models.SeniorHighStudents).count()
-    
-    # Delete records
-    db.query(models.SeniorHighStudents).delete()
-    
-    # Create activity log
-    log_entry = models.UserActivityLog(
-        user_id=current_user.user_id,
-        activity_type="data_delete",
-        target_table="senior_high_students",
-        record_count=count,
-    )
-    db.add(log_entry)
-    
-    db.commit()
-    
-    return {"message": f"All senior high student data has been removed ({count} records)."}
-
-# remove college data endpoint
-@upload_db_api_router.post("/api/remove-college-data")
-async def remove_college_data(
-    db: Session = Depends(get_db),
-    current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)  
-):
-    # Get count before deletion
-    count = db.query(models.CollegeStudents).count()
-    
-    # Delete records
-    db.query(models.CollegeStudents).delete()
-    
-    # Create activity log
-    log_entry = models.UserActivityLog(
-        user_id=current_user.user_id,
-        activity_type="data_delete",
-        target_table="college_students",
-        record_count=count,
-    )
-    db.add(log_entry)
-    
-    db.commit()
-    
-    return {"message": f"All college student data has been removed ({count} records)."}
-
-# remove previous schools
-@upload_db_api_router.post('/api/remove-previous-schools-data')
-async def remove_previous_school_data(
+@upload_db_api_router.post("/api/remove-all-student-data")
+async def remove_all_student_data(
     db: Session = Depends(get_db),
     current_user: schemas.UserInDBBase = Depends(auth.get_current_admin)
 ):
-    count = db.query(models.PreviousSchool).count()
-    
-    # Delete all previous school entries
+
+    senior_high_count = db.query(models.SeniorHighStudents).count()
+    college_count = db.query(models.CollegeStudents).count()
+    previous_school_count = db.query(models.PreviousSchool).count()
+
+    db.query(models.SeniorHighStudents).delete()
+    db.query(models.CollegeStudents).delete()
     db.query(models.PreviousSchool).delete()
 
-    # Create a log entry
-    log_entry = models.UserActivityLog(
-        user_id=current_user.user_id,
-        activity_type="data_delete",
-        target_table="previous_schools",
-        record_count=count
-    )
-    db.add(log_entry)
+    logs = [
+        models.UserActivityLog(
+            user_id=current_user.user_id,
+            activity_type="data_delete",
+            target_table="senior_high_students",
+            record_count=senior_high_count,
+        ),
+        models.UserActivityLog(
+            user_id=current_user.user_id,
+            activity_type="data_delete",
+            target_table="college_students",
+            record_count=college_count,
+        ),
+        models.UserActivityLog(
+            user_id=current_user.user_id,
+            activity_type="data_delete",
+            target_table="previous_schools",
+            record_count=previous_school_count,
+        ),
+    ]
+    db.add_all(logs)
     db.commit()
 
-    return {"message": f"All previous school data has been removed ({count} records)."}
+    return {
+        "message": "All student and previous school data removed successfully.",
+        "details": {
+            "senior_high_deleted": senior_high_count,
+            "college_deleted": college_count,
+            "previous_schools_deleted": previous_school_count,
+        }
+    }

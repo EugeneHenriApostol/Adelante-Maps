@@ -7,31 +7,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .back-button {
+      display: inline-block;
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .back-button:hover {
+      text-decoration: underline;
+    }
+    </style>
 </head>
 <body class="bg-gray-100">
-    <!-- navigation Bar -->
-    <nav class="bg-green-700">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between">
-                <div class="flex">
-
-                    <div class="flex items-center py-3">
-                        <span class="font-medium text-white">Adelante Maps</span>
-                    </div>
-                    <!-- primary nav -->
-                    <div class="flex items-center ml-4">
-                        <a href="/maps" class="py-3 px-3 text-white hover:bg-green-600">
-                            <i class="fas fa-map-marked-alt mr-2"></i>
-                            Maps
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <!-- page content -->
     <div class="container mx-auto px-4 py-6">
+        <!-- Back button -->
+        <a href="/maps" class="back-button">← Back to Maps</a>
+        
         <h1 class="text-2xl font-bold text-gray-800 text-center mb-2">Event Report Data Analytics</h1>
         <p class="text-gray-600 text-sm text-center mb-6">Analyze and visualize event impact data</p>
 
