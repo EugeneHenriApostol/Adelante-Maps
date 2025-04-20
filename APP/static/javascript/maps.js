@@ -242,13 +242,13 @@ function enhanceGeocoder() {
 let circleDrawControlVisible = false;
 let incidentCircle = null;
 
-let startPoint = null;
-let endPoint = null;
-
 let floodPolygon = null;
 
 // initialize leaflet map
 async function initializeMap() {
+
+    let startPoint = null;
+    let endPoint = null;
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -324,6 +324,31 @@ async function initializeMap() {
         });
     }
 
+    map.on('click', function (e) {
+        if (currentRoutingMode === 'studentToCampus') {
+            if (!startPoint) {
+                startPoint = e.latlng;
+            } else if (!endPoint) {
+                endPoint = e.latlng;
+                // Use the student route handler instead of direct HERE API call
+                handleStudentRoute({
+                    latitude: startPoint.lat,
+                    longitude: startPoint.lng,
+                    name: "Start Point"
+                }, false);
+            }
+        } else {
+            if (!hazardZone) {
+                return;
+            }
+            const clickedPoint = e.latlng;
+            const nearestCampus = findNearestCampus(clickedPoint);
+            if (nearestCampus) {
+                calculateCampusToAffectedRoute(nearestCampus, clickedPoint, hazardZone.toGeoJSON());
+            }
+        }
+    });
+
     // check for report_id in URL and handle it
     const params = new URLSearchParams(window.location.search);
     const reportId = params.get('report_id');
@@ -369,19 +394,25 @@ async function initializeMap() {
         }
     });
 
-    circleDrawControl = new L.Control.Draw({
+    const hazardDrawControl = new L.Control.Draw({
         draw: {
-            polygon: false,
+            polygon: {
+                shapeOptions: {
+                    color: '#ff0000',
+                    fillOpacity: 0.4
+                },
+                allowIntersection: false,
+                drawError: {
+                    color: '#e1e100',
+                    message: '<strong>Polygon draw error!</strong> Please try again.'
+                },
+                showArea: true
+            },
             polyline: false,
             rectangle: false,
             marker: false,
             circlemarker: false,
-            circle: {
-                shapeOptions: {
-                    color: '#ff0000',
-                    fillOpacity: 0.4
-                }
-            }
+            circle: false
         },
         edit: false
     });
@@ -414,38 +445,34 @@ async function initializeMap() {
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
         
-        if (e.layerType === 'circle') {
-            if (incidentCircle) {
-                drawnItems.removeLayer(incidentCircle);
+        if (e.layerType === 'polygon') {
+            if (hazardZone) {
+                drawnItems.removeLayer(hazardZone);
             }
-            incidentCircle = e.layer;
-            drawnItems.addLayer(incidentCircle);
             
-            const { lat, lng } = incidentCircle.getLatLng();
-            const radiusInKm = incidentCircle.getRadius() / 1000;
+            hazardZone = layer;
+            drawnItems.addLayer(hazardZone);
             
-            // Store the hazard zone globally
-            hazardZone = turf.circle([lng, lat], radiusInKm, {
-                steps: 64,
-                units: 'kilometers'
-            });
+            // Convert Leaflet polygon to GeoJSON
+            const hazardGeoJSON = hazardZone.toGeoJSON();
             
-            incidentCircle.bindTooltip("Hazard Zone", {
+            // Bind tooltip to show it's a hazard zone
+            hazardZone.bindTooltip("Hazard Zone", {
                 permanent: true,
                 direction: "center",
                 className: "incident-tooltip"
             }).openTooltip();
             
-            incidentCircle.on('click', function () {
+            // Add click handler to remove if needed
+            hazardZone.on('click', function () {
                 const confirmDelete = confirm('Do you want to remove this hazard zone?');
                 if (confirmDelete) {
-                    drawnItems.removeLayer(incidentCircle);
-                    incidentCircle = null;
+                    drawnItems.removeLayer(hazardZone);
                     hazardZone = null;
                 }
             });
         } else {
-            // Existing polygon creation logic
+            // Existing polygon/shape creation logic for other types
             drawnItems.addLayer(layer);
             shapeAreas = [];
             const areaInSquareMeters = calculateArea(layer);
@@ -457,88 +484,16 @@ async function initializeMap() {
     });
     
     function toggleCircleDrawControl() {
+        // Replace with polygon draw control for hazard zones
         if (circleDrawControlVisible) {
-            map.removeControl(circleDrawControl);
+            map.removeControl(hazardDrawControl);
         } else {
-            map.addControl(circleDrawControl);
+            map.addControl(hazardDrawControl);
         }
         circleDrawControlVisible = !circleDrawControlVisible;
     }
     
     document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
-    
-    // Calculate route function (using the floodPolygon globally)
-    function calculateRoute(startPoint, endPoint) {
-        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
-    
-        console.log("OSRM Request URL:", url); // Log the request URL
-    
-        if (floodPolygon) {
-            console.log("Flood Polygon:", floodPolygon); // Log the flood polygon
-    
-            fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log("OSRM Response Data:", data);
-                
-                if (data.routes && data.routes.length > 0) {
-                    const route = data.routes[0];
-                    console.log("Route found:", route);
-                    
-                    // Pass the entire data object to displayRoute
-                    displayRoute(data);
-                } else {
-                    console.error("No routes found in response");
-                }
-            })
-            .catch(error => console.error('Error fetching route data:', error));
-        } else {
-            console.error("Flood polygon not defined!");
-        }
-    }
-    
-    
-    
-    // Function to display the route on the map
-    function displayRoute(routeData) {
-        if (routeData && routeData.routes && routeData.routes.length > 0) {
-            const route = routeData.routes[0];
-            if (route.geometry) {
-                console.log("Adding route to map:", route.geometry);
-                L.geoJSON(route.geometry).addTo(map);
-            } else {
-                console.error("No geometry found in route");
-            }
-        } else {
-            console.error("No valid route data found");
-        }
-    }
-    
-    // Modify your map click handler to handle both routing modes
-    map.on('click', function(e) {
-        if (currentRoutingMode === 'studentToCampus') {
-            // Existing student to campus routing logic
-            if (!startPoint) {
-                startPoint = e.latlng;
-            } else if (!endPoint) {
-                endPoint = e.latlng;
-                calculateRoute(startPoint, endPoint);
-            }
-        } else {
-            // New campus to affected area routing logic
-            if (!hazardZone) {
-                alert('Please draw a hazard zone first using the Incident Location tool');
-                return;
-            }
-            
-            const clickedPoint = e.latlng;
-            const nearestCampus = findNearestCampus(clickedPoint);
-            
-            if (nearestCampus) {
-                calculateCampusToAffectedRoute(nearestCampus, clickedPoint, hazardZone);
-            }
-        }
-    });
 
     // handle area type selection
     document.getElementById('confirmAreaType').addEventListener('click', () => {
