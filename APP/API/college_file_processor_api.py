@@ -68,6 +68,9 @@ def clean_previous_school_name(name: str):
 
 # fuzzy matching for previous school
 def group_similar_schools(school_series, threshold=85):
+    def get_canonical_school_name(school_name):
+        return mapping.get(school_name, school_name)
+
     cleaned_schools = school_series.unique().tolist()
     grouped = {}
     assigned = set()
@@ -87,14 +90,12 @@ def group_similar_schools(school_series, threshold=85):
                 grouped[name].append(candidate)
                 assigned.add(candidate)
 
-    # Create mapping dict
     mapping = {}
     for canonical, variants in grouped.items():
         for variant in variants:
             mapping[variant] = canonical
 
-    # Map values in original series
-    return school_series.map(lambda x: mapping.get(x, x))
+    return school_series.map(get_canonical_school_name)
 
 # geocode previous school function
 def geocode_previous_school(school: str, barangay: str = "", city: str = "", province: str =""):

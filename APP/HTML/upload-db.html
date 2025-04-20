@@ -173,13 +173,12 @@
     .grid-item .button {
       padding: 0.5rem 0.75rem;
       font-size: 0.9rem;
-      width: 100%;
+      width: 40%;
     }
 
     .grid-item .button i {
       margin-right: 0.25rem;
     }
-    /* End of updated grid styles */
 
     .modal {
       display: none;
@@ -277,74 +276,27 @@
       </div>
 
       <div class="grid">
-        <!-- Senior High Remove -->
+        <!-- Student data remove -->
         <div class="grid-item">
-          <h4>Senior High School</h4>
-          <p>Remove all SHS records</p>
-          <button id="removeSeniorHigh" class="button button-red">
+          <h4>Student Data</h4>
+          <p>Remove all student records</p>
+          <button id="removeData" class="button button-red">
             <i class="fas fa-trash-alt"></i>
             Remove
           </button>
         </div>
 
-        <!-- College Remove -->
-        <div class="grid-item">
-          <h4>College</h4>
-          <p>Remove all college records</p>
-          <button id="removeCollege" class="button button-red">
-            <i class="fas fa-trash-alt"></i>
-            Remove
-          </button>
-        </div>
-        
-        <!-- Previous Schools Remove -->
-        <div class="grid-item">
-          <h4>Previous Schools</h4>
-          <p>Remove all schools data</p>
-          <button id="removePreviousSchools" class="button button-red">
-            <i class="fas fa-trash-alt"></i>
-            Remove
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Senior High Confirmation Modal -->
-    <div id="seniorHighModal" class="modal">
+    <!-- Student Data Confirmation Modal -->
+    <div id="studentDataModal" class="modal">
       <div class="modal-content">
         <h2>Confirm Removal</h2>
-        <p>Are you sure you want to remove all Senior High School student records?</p>
+        <p>Are you sure you want to remove all student records?</p>
         <div class="modal-buttons">
-          <button id="cancelSeniorHigh" class="button" style="background-color: #9ca3af;">Cancel</button>
-          <button id="confirmSeniorHigh" class="button button-red">Remove</button>
+          <button id="cancelRemove" class="button" style="background-color: #9ca3af;">Cancel</button>
+          <button id="confirmData" class="button button-red">Remove</button>
         </div>
       </div>
     </div>
-
-    <!-- College Confirmation Modal -->
-    <div id="collegeModal" class="modal">
-      <div class="modal-content">
-        <h2>Confirm Removal</h2>
-        <p>Are you sure you want to remove all College student records?</p>
-        <div class="modal-buttons">
-          <button id="cancelCollege" class="button" style="background-color: #9ca3af;">Cancel</button>
-          <button id="confirmCollege" class="button button-red">Remove</button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Previous Schools Confirmation Modal -->
-    <div id="previousSchoolsModal" class="modal">
-      <div class="modal-content">
-        <h2>Confirm Removal</h2>
-        <p>Are you sure you want to remove all previous schools data?</p>
-        <div class="modal-buttons">
-          <button id="cancelPreviousSchools" class="button" style="background-color: #9ca3af;">Cancel</button>
-          <button id="confirmPreviousSchools" class="button button-red">Remove</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <script>
     // File input handling for Senior High
@@ -448,93 +400,36 @@
     });
 
     // Modal handling
-    const removeSeniorHigh = document.getElementById('removeSeniorHigh');
-    const removeCollege = document.getElementById('removeCollege');
-    const removePreviousSchools = document.getElementById('removePreviousSchools');
-    const seniorHighModal = document.getElementById('seniorHighModal');
-    const collegeModal = document.getElementById('collegeModal');
-    const previousSchoolsModal = document.getElementById('previousSchoolsModal');
+    const removeData = document.getElementById('removeData');
+    const studentDataModal = document.getElementById('studentDataModal');
 
-    removeSeniorHigh.addEventListener('click', () => {
-      seniorHighModal.style.display = 'flex';
+    removeData.addEventListener('click', () => {
+      studentDataModal.style.display = 'flex';
     });
 
-    removeCollege.addEventListener('click', () => {
-      collegeModal.style.display = 'flex';
-    });
-    
-    removePreviousSchools.addEventListener('click', () => {
-      previousSchoolsModal.style.display = 'flex';
-    });
-
-    document.getElementById('cancelSeniorHigh').addEventListener('click', () => {
-      seniorHighModal.style.display = 'none';
-    });
-
-    document.getElementById('cancelCollege').addEventListener('click', () => {
-      collegeModal.style.display = 'none';
-    });
-    
-    document.getElementById('cancelPreviousSchools').addEventListener('click', () => {
-      previousSchoolsModal.style.display = 'none';
+    document.getElementById('cancelRemove').addEventListener('click', () => {
+      studentDataModal.style.display = 'none';
     });
 
     // Confirm removal handlers
-    document.getElementById('confirmSeniorHigh').addEventListener('click', async () => {
+    document.getElementById('confirmData').addEventListener('click', async () => {
       try {
-        const response = await fetch('/api/remove-senior-high-data', {
+        const response = await fetch('/api/remove-all-student-data', {
           method: 'POST',
         });
         const result = await response.json();
-        alert(result.message || 'Senior High data removed');
+        alert(result.message || 'Student data removed');
       } catch (error) {
-        alert('Failed to remove Senior High data');
+        alert('Failed to remove Student data');
       } finally {
-        seniorHighModal.style.display = 'none';
-      }
-    });
-
-    document.getElementById('confirmCollege').addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/remove-college-data', {
-          method: 'POST',
-        });
-        const result = await response.json();
-        alert(result.message || 'College data removed');
-      } catch (error) {
-        alert('Failed to remove College data');
-      } finally {
-        collegeModal.style.display = 'none';
-      }
-    });
-    
-    document.getElementById('confirmPreviousSchools').addEventListener('click', async () => {
-      console.log("Delete previous schools clicked");
-      try {
-        const response = await fetch('/api/remove-previous-schools-data', {
-          method: 'POST',
-        });
-        const result = await response.json();
-        alert(result.message || 'Previous schools data removed');
-      } catch (error) {
-        alert('Failed to remove previous schools data');
-      } finally {
-        previousSchoolsModal.style.display = 'none';
+        studentDataModal.style.display = 'none';
       }
     });
 
     // Close modals when clicking outside
     window.addEventListener('click', (e) => {
-      if (e.target === seniorHighModal) {
-        seniorHighModal.style.display = 'none';
-      }
-      
-      if (e.target === collegeModal) {
-        collegeModal.style.display = 'none';
-      }
-      
-      if (e.target === previousSchoolsModal) {
-        previousSchoolsModal.style.display = 'none';
+      if (e.target === studentDataModal) {
+        studentDataModal.style.display = 'none';
       }
     });
   </script>
