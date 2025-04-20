@@ -1,47 +1,31 @@
-# senior_high_processor_api.py
-import re, html, os, math, io
+import math, io, os ,re, html
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
-from fastapi import File, HTTPException, UploadFile, requests
+from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 import pandas as pd
+from sklearn.metrics import silhouette_score
+
+import models, auth
+from kneed import KneeLocator
 
 from fastapi import APIRouter, Depends
 from sklearn.cluster import KMeans
 import requests
-from kneed import KneeLocator
-import auth, models
 
 from rapidfuzz import process, fuzz
 from collections import defaultdict
 
-senior_high_file_api_router = APIRouter()
+college_file_api_router = APIRouter()
 
 load_dotenv()
 
-# clean text function
+def clean_strand(strand):
+    return re.sub(r"^\d{2}", "", strand).strip()
+
+
 def clean_text(text):
     return re.sub(r'[^\w\s]', '', str(text))
-
-# remove column function
-def remove_column(file_path: str, column_name: str):
-
-    try:
-        df = pd.read_csv(file_path)
-
-        if column_name in df.columns:
-            df.drop(columns=[column_name], inplace=True)
-        else:
-            raise HTTPException(status_code=400, detail=f'Column {column_name} not found.')
-
-        # save the processed file
-        output_path = file_path.replace(".csv", "_updated.csv")
-        df.to_csv(output_path, index=False)
-        return output_path
-
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Error processing file: {e}')
 
 # geocode address function    
 def geocode_address(address, api_key):
@@ -55,29 +39,36 @@ def geocode_address(address, api_key):
             longitude = data['items'][0]['position']['lng']
             return latitude, longitude
         else:
+            print(f"Geocoding failed for {address}, returning 'Unknown'")
             return 0, 0
     else:
+        print(f"Error geocoding {address}: {response.status_code}")
         return 0, 0
 
 # clean previous school name function
 def clean_previous_school_name(name: str):
     name = html.unescape(name)
+
+    # Remove anything inside parentheses
     name = re.sub(r'\(.*?\)', '', name)
+
+    # Remove all numbers
     name = re.sub(r'\d+', '', name)
+
+    # Remove all special characters including dots, dashes, apostrophes, etc.
     name = re.sub(r"[^A-Za-z\s]", '', name)
+
+    # Remove extra spaces
     name = ' '.join(name.split()).strip()
+
+    # Capitalize the entire name (optional but makes things consistent)
     name = name.upper()
     
     return name
 
 
 # fuzzy matching for previous school
-
 def group_similar_schools(school_series, threshold=85):
-
-    def get_canonical_school_name(school_name):
-        return mapping.get(school_name, school_name)
-
     cleaned_schools = school_series.unique().tolist()
     grouped = {}
     assigned = set()
@@ -97,12 +88,14 @@ def group_similar_schools(school_series, threshold=85):
                 grouped[name].append(candidate)
                 assigned.add(candidate)
 
+    # Create mapping dict
     mapping = {}
     for canonical, variants in grouped.items():
         for variant in variants:
             mapping[variant] = canonical
 
-    return school_series.map(get_canonical_school_name)
+    # Map values in original series
+    return school_series.map(lambda x: mapping.get(x, x))
 
 # geocode previous school function
 def geocode_previous_school(school: str, barangay: str = "", city: str = "", province: str =""):
@@ -145,58 +138,18 @@ def geocode_previous_school(school: str, barangay: str = "", city: str = "", pro
         print(f"Geocoding failed for: {query_address} - Error: {e}")
     
     return 0, 0
-    
-# preprocess senior high file function
-def preprocess_file_seniorhigh(file_path: str):
-    # read csv file
+
+# preprocess college file function
+def preprocess_file_college(file_path: str):
     try:
-        df = pd.read_csv(file_path, header=None)
+        # read the raw CSV file
+        df = pd.read_csv(file_path)  
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading CSV: {e}")
     
-    api_key = os.getenv("GEOCODE_API_KEY")  # replace api key (free but expires after 1000 uses)
-    if not api_key:
-        raise HTTPException(status_code=500, detail="Geocode API key is missing.")
-    
-    # preprocessing part
 
-    expected_columns = [
-        'year', 'strand', 'age', 'strand_abbrev', 'previous_school',
-        'city', 'province', 'barangay'
-    ]
-    
-    df.columns = expected_columns
-
-    df.insert(0, 'stud_id', range(1, len(df) + 1))
-
-    df["year"] = df["year"].fillna("N/A").astype(str).str.strip()
-    df["age"] = pd.to_numeric(df["age"], errors="coerce").fillna(0)
-    df["strand"] = df["strand"].fillna("N/A").astype(str).str.strip()
-    df["previous_school"] = df["previous_school"].fillna("Unknown").str.strip()
-    df["city"] = df["city"].fillna("Unknown").str.strip()
-    df["province"] = df["province"].fillna("Unknown").str.strip()
-    df["barangay"] = df["barangay"].fillna("Unknown").str.strip()
-
-    df["barangay"] = df["barangay"].str.strip().str.title()
-    df["city"] = df["city"].str.strip().str.title()
-    df["province"] = df["province"].str.strip().str.title()
-
-    df["previous_school"] = df["previous_school"].apply(clean_previous_school_name)
-    df["previous_school"] = group_similar_schools(df["previous_school"])
-
-    df["full_address"] = (
-        df["barangay"] + ", " + df["city"] + ", " + df["province"]
-    ).str.strip()
-
-    if 'strand_abbrev' in df.columns:
-        df.drop(columns=['strand_abbrev'], inplace=True)
-
-    # geocode part
-    def get_coordinates(address):
-            return geocode_address(address, api_key)
-        
-    geocoded_data = df['full_address'].apply(get_coordinates)
-    df['latitude'], df['longitude'] = zip(*geocoded_data)
+    # add incremental student ID
+    df.insert(0, "stud_id", range(1, len(df) + 1))
 
     # cluster part
     df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce').fillna(0)
@@ -219,7 +172,7 @@ def preprocess_file_seniorhigh(file_path: str):
             wcss.append(kmeans.inertia_)
 
         kl = KneeLocator(range(2, max(3, upper_k + 1)), wcss, curve='convex', direction='decreasing')
-        best_k = kl.elbow if kl.elbow is not None else 2  
+        best_k = kl.elbow if kl.elbow is not None else 2  # fallback if knee not found
 
         print(f"✅ Optimal k based on Elbow Method: {best_k}")
 
@@ -237,51 +190,34 @@ def preprocess_file_seniorhigh(file_path: str):
 
     df['cluster'] = df['cluster'].fillna(-1).astype(int)
 
-
-    # geocode previous school part
-    def geocode_prev_school_from_row(row):
-        return geocode_previous_school(
-            row['previous_school'],
-            row['barangay'],
-            row['city'],
-            row['province']
-        )
-
-    geocoded_prev_school = df.apply(geocode_prev_school_from_row, axis=1)
-    df['prev_latitude'], df['prev_longitude'] = zip(*geocoded_prev_school)
-
-    df['prev_latitude'] = df['prev_latitude'].fillna(0)
-    df['prev_longitude'] = df['prev_longitude'].fillna(0)
-    
     # save the cleaned file
     output_path = file_path.replace(".csv", "_processed.csv")
     df.to_csv(output_path, index=False)
     return output_path
 
-# upload raw senior high student file api
-@senior_high_file_api_router.post('/api/upload/raw/seniorhigh-file')
-async def upload_file(file: UploadFile = File(...), current_user: models.User = Depends(auth.get_current_admin)):
-    # check if file is csv
-    if not file.filename.endswith('csv'):
-        raise HTTPException(status_code=400, detail='Only CSV files are allowed.')
 
+# upload raw college file api
+@college_file_api_router.post("/api/upload/raw/college-file")
+async def upload_file(file: UploadFile = File(...)):
+    # validate file type
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+    
     tmp_path = None
     try:
         with NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        processed_path = preprocess_file_seniorhigh(tmp_path)
+        processed_path = preprocess_file_college(tmp_path)
 
     finally:
         if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
+            os.remove(tmp_path)  
 
 
-    # return file as a response without saving to the server
-    
     return FileResponse(
         path=processed_path,
         media_type='text/csv',
-        filename="preprocessed_seniorhigh_file.csv"
-    )  
+        filename="[1]_preprocessed_college_file.csv"
+    )
