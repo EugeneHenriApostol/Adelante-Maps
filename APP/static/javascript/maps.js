@@ -40,6 +40,14 @@ let affectedStudents = {
     fire: []
 };
 let drawControlVisible = false;
+
+let circleDrawControlVisible = false;
+let incidentCircle = null;
+
+let floodPolygon = null;
+let startPoint = null;
+let endPoint = null;
+
 // api and ic0n url
 const SENIOR_HIGH_API_URL = '/api/senior-high-student-data';
 const COLLEGE_API_URL = '/api/college-student-data';
@@ -237,37 +245,6 @@ function enhanceGeocoder() {
     
     return enhancedGeocoder;
 }
-
-// function addSearchButton() {
-//     searchBtn.addEventListener('click', function() {
-//         // Toggle the geocoder visibility
-//         const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
-//         if (geocoderContainer) {
-//             if (geocoderContainer.classList.contains('leaflet-control-geocoder-expanded')) {
-//                 geocoderContainer.classList.remove('leaflet-control-geocoder-expanded');
-//             } else {
-//                 geocoderContainer.classList.add('leaflet-control-geocoder-expanded');
-//                 const input = document.querySelector('.leaflet-control-geocoder-form input');
-//                 if (input) {
-//                     input.focus();
-//                 }
-//             }
-//         }
-//     });
-    
-//     // Add it to your existing control container
-//     const controlContainer = document.querySelector('.filter-controls');
-//     if (controlContainer) {
-//         controlContainer.appendChild(searchBtn);
-//     }
-// }
-
-let circleDrawControlVisible = false;
-let incidentCircle = null;
-
-let floodPolygon = null;
-let startPoint = null;
-let endPoint = null;
 
 // initialize leaflet map
 async function initializeMap() {
@@ -496,8 +473,37 @@ async function initializeMap() {
     
     document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
     
+    // Function to find nearest campus to a point
+    function findNearestCampus(point) {
+        if (!schools || schools.length === 0) {
+            console.error("No schools/campuses data available");
+            return null;
+        }
+        
+        let nearestCampus = null;
+        let shortestDistance = Infinity;
+        
+        schools.forEach(campus => {
+            const campusLatLng = L.latLng(campus.lat, campus.lng);
+            const distance = campusLatLng.distanceTo(point);
+            
+            if (distance < shortestDistance) {
+                shortestDistance = distance;
+                nearestCampus = campus;
+            }
+        });
+        
+        return nearestCampus;
+    }
     // Calculate route function (using the floodPolygon globally)
     function calculateRoute(startPoint, endPoint) {
+        // Show loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'route-loading';
+        loadingDiv.innerHTML = '<div class="spinner"></div><p>Calculating best route...</p>';
+        loadingDiv.style.cssText = 'position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1000;';
+        document.body.appendChild(loadingDiv);
+        
         const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
         
         console.log("OSRM Request URL:", url);
@@ -524,24 +530,37 @@ async function initializeMap() {
                                 calculateDetour(startPoint, endPoint);
                             } else {
                                 console.log("Route does not intersect with flood area, using direct route");
+                                // Remove loading indicator
+                                document.body.removeChild(loadingDiv);
                                 displayRoute(data);
                             }
                         } else {
                             console.error("No geometry found in route");
+                            document.body.removeChild(loadingDiv);
                         }
                     } else {
                         console.error("No routes found in response");
+                        document.body.removeChild(loadingDiv);
                     }
                 })
-                .catch(error => console.error('Error fetching route data:', error));
+                .catch(error => {
+                    console.error('Error fetching route data:', error);
+                    document.body.removeChild(loadingDiv);
+                    alert('Error calculating route. Please try again.');
+                });
         } else {
             // No flood polygon defined, just calculate the direct route
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
+                    document.body.removeChild(loadingDiv);
                     displayRoute(data);
                 })
-                .catch(error => console.error('Error fetching route data:', error));
+                .catch(error => {
+                    console.error('Error fetching route data:', error);
+                    document.body.removeChild(loadingDiv);
+                    alert('Error calculating route. Please try again.');
+                });
         }
     }
     
@@ -727,22 +746,47 @@ async function initializeMap() {
             if (route.geometry) {
                 console.log("Adding route to map:", route.geometry);
                 
-                // Create route layer with appropriate styling
+                // Create better route styling
                 const routeStyle = isWarningRoute ? 
-                    { color: 'red', weight: 6, opacity: 0.7, dashArray: '10, 10' } : 
-                    { color: 'blue', weight: 6, opacity: 0.7 };
+                    { color: '#ff3333', weight: 6, opacity: 0.8, dashArray: '10, 10', className: 'route-layer' } : 
+                    { color: '#3388ff', weight: 6, opacity: 0.8, className: 'route-layer' };
                 
                 const routeLayer = L.geoJSON(route.geometry, {
                     style: routeStyle
                 }).addTo(map);
                 
-                // Add warning popup if needed
-                if (isWarningRoute) {
-                    routeLayer.bindPopup(
-                        "<strong>Warning!</strong><br>This route passes through a flood area.<br>Travel at your own risk.", 
-                        { autoClose: false }
-                    ).openPopup();
+                // Add route information popup
+                const distanceKm = (route.distance / 1000).toFixed(2);
+                const durationMin = Math.round(route.duration / 60);
+                
+                const popupContent = isWarningRoute ? 
+                    `<div style="text-align: center; min-width: 200px;">
+                        <h4 style="color: #ff3333;"><i class="fas fa-exclamation-triangle"></i> Warning: Flood Zone Ahead</h4>
+                        <p>This route passes through a flood area.</p>
+                        <p><strong>Distance:</strong> ${distanceKm} km<br>
+                        <strong>Est. time:</strong> ${durationMin} min</p>
+                        <p style="color: #ff3333;">Travel at your own risk!</p>
+                    </div>` : 
+                    `<div style="text-align: center; min-width: 150px;">
+                        <h4>Route Information</h4>
+                        <p><strong>Distance:</strong> ${distanceKm} km<br>
+                        <strong>Est. time:</strong> ${durationMin} min</p>
+                    </div>`;
+                
+                // Add popup to midpoint of route
+                const coordinates = route.geometry.coordinates;
+                if (coordinates.length > 0) {
+                    const midIndex = Math.floor(coordinates.length / 2);
+                    const midpoint = L.latLng(coordinates[midIndex][1], coordinates[midIndex][0]);
+                    L.popup({ closeButton: true, autoClose: false })
+                        .setLatLng(midpoint)
+                        .setContent(popupContent)
+                        .openOn(map);
                 }
+                
+                // Fit map to show the entire route
+                map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+                
             } else {
                 console.error("No geometry found in route");
             }
@@ -752,19 +796,45 @@ async function initializeMap() {
     }
     
     map.on('click', function (e) {
-        if (!startPoint) {
-            // Set start point
-            startPoint = e.latlng;
-            console.log("Start Point Set:", startPoint); // Debugging log
-            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
-        } else if (!endPoint) {
-            // Set end point
-            endPoint = e.latlng;
-            console.log("End Point Set:", endPoint); // Debugging log
-            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
-    
-            // Call OSRM for the route calculation
+        // Clear previous route and markers when starting a new route
+        if (startPoint || endPoint) {
+            // Clear previous markers and route
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Marker && (layer._latlng === startPoint || layer._latlng === endPoint)) {
+                    map.removeLayer(layer);
+                }
+                if (layer instanceof L.GeoJSON && layer.options && layer.options.className === 'route-layer') {
+                    map.removeLayer(layer);
+                }
+            });
+            startPoint = null;
+            endPoint = null;
+        }
+        
+        // Set end point to clicked location
+        endPoint = e.latlng;
+        
+        // Find nearest campus as start point
+        let nearestCampus = findNearestCampus(endPoint);
+        if (nearestCampus) {
+            startPoint = L.latLng(nearestCampus.lat, nearestCampus.lng);
+            
+            // Add markers
+            L.marker(startPoint, {
+                icon: L.icon({
+                    iconUrl: SCHOOL_ICON_URL,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32]
+                })
+            }).addTo(map).bindPopup(`<b>Start: ${nearestCampus.name}</b>`).openPopup();
+            
+            L.marker(endPoint).addTo(map).bindPopup("<b>Destination</b>").openPopup();
+            
+            // Calculate route between nearest campus and clicked point
             calculateRoute(startPoint, endPoint);
+        } else {
+            alert("No campus data available. Please ensure campuses are loaded.");
         }
     });
 
