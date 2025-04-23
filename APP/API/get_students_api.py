@@ -61,16 +61,10 @@ def get_all_college_students(
 # api to get all senior high students from the database for clustering
 @get_students_api_router.get('/api/senior-high-student-data')
 def get_senior_high_student_data(
-    cluster_type: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     query = db.query(models.SeniorHighStudents)
-
-    if cluster_type == "cluster_address":
-        query = query.order_by(models.SeniorHighStudents.cluster_address)
-    elif cluster_type == "cluster_proximity":
-        query = query.order_by(models.SeniorHighStudents.cluster_proximity)
 
     students = query.all()
 
@@ -90,16 +84,10 @@ def get_senior_high_student_data(
 # api to get all college students from the database for clustering
 @get_students_api_router.get('/api/college-student-data')
 def get_college_student_data(
-    cluster_type: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     query = db.query(models.CollegeStudents)
-
-    if cluster_type == "cluster_address":
-        query = query.order_by(models.CollegeStudents.cluster_address)
-    elif cluster_type == "cluster_proximity":
-        query = query.order_by(models.CollegeStudents.cluster_proximity)
 
     students = query.all()
 

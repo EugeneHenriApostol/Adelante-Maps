@@ -130,6 +130,14 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
                 </form>
             `).openPopup();
 
+        campusMarker.on('popupclose', function() {
+            if (isAddingCampus) {
+                map.removeLayer(campusMarker);
+                campusMarker = null;
+                isAddingCampus = false;
+            }
+        });
+
         setTimeout(() => {
             // submit 
             document.getElementById('campusForm').addEventListener('submit', async function (event) {
@@ -155,6 +163,7 @@ document.getElementById('addCampusBtn').addEventListener('click', () => {
 
                     const result = await response.json();
                     alert('Campus saved successfully!');
+                    location.reload();
 
                     // reset state
                     map.removeLayer(campusMarker);
@@ -244,6 +253,7 @@ let incidentCircle = null;
 let floodPolygon = null;
 let startPoint = null;
 let endPoint = null;
+let isRoutingMode = false;
 
 // initialize leaflet map
 async function initializeMap() {
@@ -412,9 +422,6 @@ async function initializeMap() {
         const layer = e.layer;
     
         if (e.layerType === 'circle') {
-            if (incidentCircle) {
-                drawnItems.removeLayer(incidentCircle);
-            }
             incidentCircle = e.layer;
             drawnItems.addLayer(incidentCircle);
     
@@ -521,178 +528,125 @@ async function initializeMap() {
         }
     }
     
-    function calculateDetour(startPoint, endPoint) {
-        console.log("Calculating detour waypoints...");
+    // Improved version of calculateDetour and findBestDetour
+    async function calculateDetour(startPoint, endPoint) {
+        console.log("Calculating optimized detour...");
         
-        // Create points around the flood polygon to use as waypoints
         const center = incidentCircle.getLatLng();
         const radius = incidentCircle.getRadius();
-        console.log("Circle center:", center, "radius:", radius);
         
-        // Create potential waypoints around the flood area
-        const numPoints = 16; // Increase number of points to try
+        // Determine the general direction from start to end relative to the circle
+        const startAngle = Math.atan2(startPoint.lng - center.lng, startPoint.lat - center.lat);
+        const endAngle = Math.atan2(endPoint.lng - center.lng, endPoint.lat - center.lat);
+        const angleDiff = Math.abs((endAngle - startAngle + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+        
+        // Determine which side to prioritize for detour (left or right of the circle)
+        const detourDirection = angleDiff > 0 ? 1 : -1; // 1 for clockwise, -1 for counter-clockwise
+        
+        // Create waypoints in a prioritized order
+        const numPoints = 8; // Reduced from 16 since we're being smarter about search
+        const distanceFactors = [1.5, 2.0]; // Reduced layers
+        
+        // Generate waypoints in order of priority
         const waypoints = [];
-        
-        // Create multiple rings of waypoints at different distances
-        const distanceFactors = [1.5, 2.0, 3.0]; // Multiple of radius
-        
-        distanceFactors.forEach(factor => {
+        for (let factor of distanceFactors) {
+            // Start search from the most promising direction
             for (let i = 0; i < numPoints; i++) {
-                const angle = (2 * Math.PI * i) / numPoints;
+                // Alternate between left and right side of the circle
+                const direction = i % 2 === 0 ? detourDirection : -detourDirection;
+                const step = Math.floor(i / 2) + 1;
                 
-                // Calculate point on circle
-                const waypointLat = center.lat + (radius * factor / 111000) * Math.cos(angle); // 111000 meters is roughly 1 degree of latitude
+                const angle = direction * step * (2 * Math.PI / numPoints);
+                
+                const waypointLat = center.lat + (radius * factor / 111000) * Math.cos(angle);
                 const waypointLng = center.lng + (radius * factor / (111000 * Math.cos(center.lat * (Math.PI/180)))) * Math.sin(angle);
                 
-                waypoints.push({
-                    lng: waypointLng, 
-                    lat: waypointLat
-                });
+                waypoints.push({ lng: waypointLng, lat: waypointLat });
             }
-        });
-        
-        console.log(`Generated ${waypoints.length} waypoints for detour calculation`);
-        
-        // Find the best waypoint to route through
-        findBestDetour(startPoint, endPoint, waypoints);
-    }
-    
-    function findBestDetour(startPoint, endPoint, waypoints) {
-        let bestRoute = null;
-        let bestDistance = Infinity;
-        let promises = [];
-        
-        console.log(`Trying ${waypoints.length} possible detour points around flood area`);
-        
-        // Try each waypoint and find the best route
-        waypoints.forEach((waypoint, index) => {
-            console.log(`Trying waypoint ${index+1}:`, waypoint);
-            
-            const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${waypoint.lng},${waypoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
-            
-            const promise = fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    console.log(`Waypoint ${index+1} response:`, data);
-                    
-                    if (data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        console.log(`Waypoint ${index+1} route:`, route);
-                        
-                        // Check if this route intersects with the flood polygon
-                        if (route.geometry && route.geometry.coordinates) {
-                            const routeLine = turf.lineString(route.geometry.coordinates);
-                            const intersects = turf.booleanIntersects(routeLine, floodPolygon);
-                            
-                            console.log(`Waypoint ${index+1} - Route intersects flood area: ${intersects}`);
-                            console.log(`Waypoint ${index+1} - Route distance: ${route.distance}`);
-                            
-                            if (!intersects && route.distance < bestDistance) {
-                                bestRoute = data;
-                                bestDistance = route.distance;
-                                console.log(`Waypoint ${index+1} is now the best route with distance ${bestDistance}`);
-                            }
-                        } else {
-                            console.error(`Waypoint ${index+1} has no valid geometry`);
-                        }
-                    } else {
-                        console.error(`No routes found for waypoint ${index+1}`);
-                    }
-                })
-                .catch(error => console.error(`Error fetching detour route for waypoint ${index+1}:`, error));
-            
-            promises.push(promise);
-        });
-        
-        // After all waypoints have been tried
-        Promise.all(promises).then(() => {
-            if (bestRoute) {
-                console.log("Found best detour route:", bestRoute);
-                displayRoute(bestRoute);
-            } else {
-                console.error("Could not find a valid detour route");
-                // Fall back to displaying the original route with a warning
-                console.log("Falling back to original route with warning");
-                
-                // Get original route
-                const originalUrl = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
-                
-                fetch(originalUrl)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.routes && data.routes.length > 0) {
-                            // Display with warning
-                            console.warn("WARNING: This route passes through flood area!");
-                            displayRoute(data, true); // Pass true to indicate this is through flood area
-                        }
-                    })
-                    .catch(error => console.error('Error fetching original route data:', error));
-            }
-        });
-    }
-    function findBestDetour(startPoint, endPoint, waypoints) {
-        console.log(`Trying ${waypoints.length} possible detour points around flood area`);
-        
-        // Process waypoints one at a time instead of all at once
-        tryNextWaypoint(startPoint, endPoint, waypoints, 0);
-    }
-    
-    function tryNextWaypoint(startPoint, endPoint, waypoints, index) {
-        // Base case: we've tried all waypoints
-        if (index >= waypoints.length) {
-            console.error("Could not find a valid detour route after trying all waypoints");
-            // Fall back to displaying the original route with a warning
-            console.log("Falling back to original route with warning");
-            
-            const originalUrl = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
-            
-            fetch(originalUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.routes && data.routes.length > 0) {
-                        console.warn("WARNING: This route passes through flood area!");
-                        displayRoute(data, true); // Pass true to indicate this is through flood area
-                    }
-                })
-                .catch(error => console.error('Error fetching original route data:', error));
-            return;
         }
         
-        const waypoint = waypoints[index];
-        console.log(`Trying waypoint ${index+1}/${waypoints.length}:`, waypoint);
+        console.log(`Generated ${waypoints.length} prioritized waypoints`);
         
+        // Visualize waypoints for debugging (optional)
+        waypoints.forEach((wp, i) => {
+            L.circleMarker([wp.lat, wp.lng], {
+                radius: 5,
+                color: '#333',
+                fillColor: i % 2 === 0 ? '#ff7800' : '#3388ff',
+                fillOpacity: 1
+            }).addTo(map).bindPopup(`Waypoint ${i+1}`);
+        });
+        
+        // Find best detour with progress feedback
+        await findBestDetour(startPoint, endPoint, waypoints);
+    }
+
+    async function findBestDetour(startPoint, endPoint, waypoints) {
+        const progressElement = document.createElement('div');
+        progressElement.className = 'route-progress';
+        progressElement.innerHTML = '<div class="progress-bar"></div><div class="progress-text">Searching for detour...</div>';
+        document.getElementById('map').appendChild(progressElement);
+        
+        try {
+            for (let i = 0; i < waypoints.length; i++) {
+                const waypoint = waypoints[i];
+                updateProgress(progressElement, i + 1, waypoints.length);
+                
+                try {
+                    const routeData = await tryWaypoint(startPoint, endPoint, waypoint);
+                    if (routeData) {
+                        progressElement.remove();
+                        displayRoute(routeData);
+                        return; // Found a valid route, exit
+                    }
+                } catch (error) {
+                    console.error(`Error trying waypoint ${i+1}:`, error);
+                    // Continue to next waypoint
+                }
+            }
+            
+            // If we get here, no valid detour was found
+            progressElement.querySelector('.progress-text').textContent = 'No detour found - showing direct route';
+            await showOriginalRouteWithWarning(startPoint, endPoint);
+        } finally {
+            setTimeout(() => progressElement.remove(), 3000);
+        }
+    }
+
+    async function tryWaypoint(startPoint, endPoint, waypoint) {
         const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${waypoint.lng},${waypoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
         
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.routes && data.routes.length > 0) {
-                    const route = data.routes[0];
-                    
-                    // Check if this route intersects with the flood polygon
-                    if (route.geometry && route.geometry.coordinates) {
-                        const routeLine = turf.lineString(route.geometry.coordinates);
-                        const intersects = turf.booleanIntersects(routeLine, floodPolygon);
-                        
-                        console.log(`Waypoint ${index+1} - Route intersects flood area: ${intersects}`);
-                        
-                        if (!intersects) {
-                            // Found a valid route! Display it and stop looking
-                            console.log(`Found valid detour route through waypoint ${index+1}`);
-                            displayRoute(data);
-                            return; // Stop processing more waypoints
-                        }
-                    }
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+            if (route.geometry?.coordinates) {
+                const routeLine = turf.lineString(route.geometry.coordinates);
+                if (!turf.booleanIntersects(routeLine, floodPolygon)) {
+                    return data; // Valid detour found
                 }
-                
-                // If we get here, this waypoint didn't work, try the next one
-                tryNextWaypoint(startPoint, endPoint, waypoints, index + 1);
-            })
-            .catch(error => {
-                console.error(`Error fetching detour route for waypoint ${index+1}:`, error);
-                // Even if there's an error, try the next waypoint
-                tryNextWaypoint(startPoint, endPoint, waypoints, index + 1);
-            });
+            }
+        }
+        return null; // Not a valid detour
+    }
+
+    function updateProgress(element, current, total) {
+        const percent = Math.round((current / total) * 100);
+        element.querySelector('.progress-bar').style.width = `${percent}%`;
+        element.querySelector('.progress-text').textContent = `Checking detour ${current} of ${total} (${percent}%)`;
+    }
+
+    async function showOriginalRouteWithWarning(startPoint, endPoint) {
+        const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.routes && data.routes.length > 0) {
+            console.warn("WARNING: This route passes through flood area!");
+            displayRoute(data, true);
+        }
     }
     
     
@@ -728,26 +682,55 @@ async function initializeMap() {
     }
     
     function enableRoutingSupport() {
+        if (isRoutingMode) return;
+    
+        isRoutingMode = true;
         startPoint = null;
         endPoint = null;
+        map.getContainer().style.cursor = 'crosshair';
+    
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "cancel-routing-btn";
+        cancelBtn.textContent = "Cancel Routing";
+        document.getElementById("map").appendChild(cancelBtn);
+    
+        function cancelRoutingMode() {
+            map.off('click', onMapClick);
+            window.removeEventListener("keydown", onKeyDown);
+            map.getContainer().style.cursor = '';
+            startPoint = null;
+            endPoint = null;
+            isRoutingMode = false;
+            cancelBtn.remove();
+        }
     
         function onMapClick(e) {
             if (!startPoint) {
                 startPoint = e.latlng;
-    
                 L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
             } else if (!endPoint) {
                 endPoint = e.latlng;
-    
                 L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
                 calculateRoute(startPoint, endPoint);
     
                 map.off('click', onMapClick);
+                map.getContainer().style.cursor = '';
+                isRoutingMode = false;
+                cancelBtn.remove();
             }
         }
     
+        function onKeyDown(e) {
+            if (e.key === "Escape") {
+                cancelRoutingMode();
+            }
+        }
+    
+        cancelBtn.addEventListener("click", cancelRoutingMode);
         map.on('click', onMapClick);
+        window.addEventListener("keydown", onKeyDown);
     }
+    
 
     document.getElementById("provideSupport").addEventListener("click", function () {
         enableRoutingSupport();
