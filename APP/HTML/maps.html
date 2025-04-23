@@ -38,7 +38,8 @@
                                 Admin Tools
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="adminToolsDropdown">
-                                <li><a class="dropdown-item" href="#" id="addCampusBtn"><i class="bi bi-geo-alt-fill"></i> Add Campus</a></li>
+                                <li><a class="dropdown-item" href="#" id="addCampusBtn"><i
+                                            class="bi bi-geo-alt-fill"></i> Add Campus</a></li>
                             </ul>
                         </li>
                         <!-- dropdown for clusters -->
@@ -48,7 +49,8 @@
                                 Clusters
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="clusterDropdown">
-                                <li><a class="dropdown-item" href="#" id="seniorhighcluster">Senior High Cluster</a></li>
+                                <li><a class="dropdown-item" href="#" id="seniorhighcluster">Senior High Cluster</a>
+                                </li>
                                 <li><a class="dropdown-item" href="#" id="collegecluster">College Cluster</a></li>
                             </ul>
                         </li>
@@ -63,6 +65,23 @@
                             <i class="bi bi-funnel"></i> Filter Controls
                         </a>
 
+                        <a class="nav-link cursor-pointer text-dark" id="previousSchool" href="#">
+                            <i class="bi bi-mortarboard"></i> Previous school
+                        </a>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="routingDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="bi bi-signpost-split"></i> Routing Mode
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="routingDropdown">
+                                <li><a class="dropdown-item routing-mode-option active" href="#" data-mode="student-campus">Student to
+                                        Campus</a></li>
+                                <li><a class="dropdown-item routing-mode-option" href="#" data-mode="campus-affected">Campus to Affected
+                                        Area</a></li>
+                            </ul>
+                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link cursor-pointer text-dark" id="toggleDrawControl" href="#">
                                 <i class="bi bi-map"></i> Geospatial Event Tool
@@ -73,7 +92,7 @@
                             <a class="nav-link cursor-pointer text-dark" id="toggleCircleDrawControl" href="#">
                                 <i class="bi bi-geo-alt"></i> Incident Location (Circle)
                             </a>
-                        </li>                        
+                        </li>
 
                         <!-- link to event reports -->
                         <li class="nav-item">
@@ -89,22 +108,6 @@
                                 <input type="range" class="form-range me-2" id="radius-slider" min="100" max="5000"
                                     step="100" value="1000">
                                 <span id="radius-value">1000</span> meters
-                            </div>
-                        </li>
-
-                        <a class="nav-link cursor-pointer text-dark" id="previousSchool" href="#">
-                            <i class="bi bi-mortarboard"></i>  Previous school
-                        </a>
-
-                        <li class="nav-item">
-                            <div class="nav-link d-flex align-items-center text-dark">
-                                <span class="me-2">Routing Mode:</span>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="routingModeToggle">
-                                    <label class="form-check-label" for="routingModeToggle">
-                                        <span id="routingModeLabel">Student to Campus</span>
-                                    </label>
-                                </div>
                             </div>
                         </li>
 
@@ -184,7 +187,7 @@
         <button id="chatbot-widget-button" class="chatbot-widget-btn" aria-label="Open chat assistant">
             <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="Chat Bot" width="30" height="30">
         </button>
-    
+
         <div id="chatbot-widget">
             <div class="chatbot-header">
                 <h5>Adelante Maps Assistant</h5>
@@ -205,7 +208,8 @@
 
 
     <!-- event report modal -->
-    <div id="areaTypeModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div id="areaTypeModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
         <div class="modal-content" style="background: white; padding: 20px; border-radius: 10px; width: 400px;">
             <h2>Select Affected Area Type</h2>
             <form id="areaTypeForm">
@@ -236,7 +240,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
 
     <script src="{{ url_for('static', path='javascript/maps.js') }}" defer></script>
-    <script src="{{ url_for('static', path='javascript/routing.js') }}" defer></script>
     <script src="{{ url_for('static', path='javascript/chatbot.js') }}" defer></script>
 
     <!-- javascript code for sliding the side bar -->
@@ -266,7 +269,7 @@
 
                 if (response.ok) {
                     const user = await response.json();
-                    if (user.role_id === 2 || user.role_id === 3) { 
+                    if (user.role_id === 2 || user.role_id === 3) {
                         const adminItem = document.getElementById('adminDashboardItem');
                         if (adminItem) {
                             adminItem.style.display = 'block';
@@ -316,8 +319,8 @@
             }
         });
 
-    const styleElement = document.createElement('style');
-    document.head.appendChild(styleElement);
+        const styleElement = document.createElement('style');
+        document.head.appendChild(styleElement);
     </script>
 </body>
 
