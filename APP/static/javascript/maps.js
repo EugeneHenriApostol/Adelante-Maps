@@ -1024,71 +1024,198 @@ async function plotPreviousSchools() {
 
 // function to add filter controls
 function addFilterControls() {
-    const filterControls = L.control({ position: 'topright' });
-    filterControls.onAdd = function(map) {
-        const div = L.DomUtil.create('div', 'leaflet-control leaflet-bar filter-controls');
-        return div;
-    };
-    filterControls.addTo(map);
+    const filterControls = L.control({ position: "topright" })
+    filterControls.onAdd = (map) => {
+        const div = L.DomUtil.create("div", "leaflet-control leaflet-bar filter-controls")
+        return div
+    }
+    filterControls.addTo(map)
 }
 
 // function to generates filter checkboxes dynamically based on clustered student and appends them to a container
 function generateFilterCheckboxes(containerId, items, filterType, isGrouped = false) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
+  const container = document.getElementById(containerId)
+  container.innerHTML = ""
 
-    if (isGrouped) {
-        Object.keys(items).forEach(department => {
-            const departmentDiv = document.createElement('div');
-            departmentDiv.classList.add('department-group');
+  if (isGrouped) {
+    // Create a "Select All" checkbox for all departments
+    const allDepartmentsDiv = document.createElement("div")
+    allDepartmentsDiv.classList.add("form-check", "select-all-container")
 
-            const departmentHeader = document.createElement('div');
-            departmentHeader.textContent = department;
-            departmentHeader.classList.add('department-header');
-            departmentDiv.appendChild(departmentHeader);
+    const allDepartmentsCheckbox = document.createElement("input")
+    allDepartmentsCheckbox.classList.add("form-check-input", "select-all-main")
+    allDepartmentsCheckbox.type = "checkbox"
+    allDepartmentsCheckbox.id = `${filterType}-all`
 
-            items[department].forEach(item => {
-                const div = document.createElement('div');
-                div.classList.add('form-check');
-                const checkbox = document.createElement('input');
-                checkbox.classList.add('form-check-input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `${filterType}-${item}`;
-                checkbox.dataset[filterType] = item;
+    const allDepartmentsLabel = document.createElement("label")
+    allDepartmentsLabel.classList.add("form-check-label", "fw-bold")
+    allDepartmentsLabel.htmlFor = allDepartmentsCheckbox.id
+    allDepartmentsLabel.textContent = "Select All"
 
-                const label = document.createElement('label');
-                label.classList.add('form-check-label');
-                label.htmlFor = checkbox.id;
-                label.textContent = item;
+    allDepartmentsDiv.appendChild(allDepartmentsCheckbox)
+    allDepartmentsDiv.appendChild(allDepartmentsLabel)
+    container.appendChild(allDepartmentsDiv)
 
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                departmentDiv.appendChild(div);
-            });
+    // Add event listener for the main "Select All" checkbox
+    allDepartmentsCheckbox.addEventListener("change", function () {
+      const isChecked = this.checked
+      // Select all department checkboxes
+      const departmentCheckboxes = container.querySelectorAll(".select-all-department")
+      departmentCheckboxes.forEach((checkbox) => {
+        checkbox.checked = isChecked
+        // Trigger the change event to update the child checkboxes
+        checkbox.dispatchEvent(new Event("change"))
+      })
+    })
 
-            container.appendChild(departmentDiv);
-        });
-    } else {
-        items.forEach(item => {
-            const div = document.createElement('div');
-            div.classList.add('form-check');
-            const checkbox = document.createElement('input');
-            checkbox.classList.add('form-check-input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `${filterType}-${item}`;
-            checkbox.dataset[filterType] = item;
+    Object.keys(items).forEach((department) => {
+      const departmentDiv = document.createElement("div")
+      departmentDiv.classList.add("department-group")
 
-            const label = document.createElement('label');
-            label.classList.add('form-check-label');
-            label.htmlFor = checkbox.id;
-            label.textContent = item;
+      // Create department header with checkbox
+      const departmentHeaderDiv = document.createElement("div")
+      departmentHeaderDiv.classList.add("department-header-container")
 
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            container.appendChild(div);
-        });
-    }
+      const departmentCheckbox = document.createElement("input")
+      departmentCheckbox.classList.add("form-check-input", "select-all-department")
+      departmentCheckbox.type = "checkbox"
+      departmentCheckbox.id = `${filterType}-${department}-all`
+
+      const departmentHeader = document.createElement("label")
+      departmentHeader.textContent = department
+      departmentHeader.classList.add("department-header", "form-check-label")
+      departmentHeader.htmlFor = departmentCheckbox.id
+
+      departmentHeaderDiv.appendChild(departmentCheckbox)
+      departmentHeaderDiv.appendChild(departmentHeader)
+      departmentDiv.appendChild(departmentHeaderDiv)
+
+      // Create checkboxes for each item in the department
+      const itemCheckboxes = []
+      items[department].forEach((item) => {
+        const div = document.createElement("div")
+        div.classList.add("form-check")
+
+        const checkbox = document.createElement("input")
+        checkbox.classList.add("form-check-input", `${department}-item`)
+        checkbox.type = "checkbox"
+        checkbox.id = `${filterType}-${item}`
+        checkbox.dataset[filterType] = item
+        itemCheckboxes.push(checkbox)
+
+        const label = document.createElement("label")
+        label.classList.add("form-check-label")
+        label.htmlFor = checkbox.id
+        label.textContent = item
+
+        div.appendChild(checkbox)
+        div.appendChild(label)
+        departmentDiv.appendChild(div)
+
+        // Add event listener to update department checkbox state
+        checkbox.addEventListener("change", () => {
+          updateDepartmentCheckbox(department, departmentCheckbox, itemCheckboxes)
+          updateMainCheckbox(allDepartmentsCheckbox, departmentCheckboxes)
+        })
+      })
+
+      // Add event listener for the department checkbox
+      departmentCheckbox.addEventListener("change", function () {
+        const isChecked = this.checked
+        itemCheckboxes.forEach((checkbox) => {
+          checkbox.checked = isChecked
+        })
+        updateMainCheckbox(allDepartmentsCheckbox, departmentCheckboxes)
+      })
+
+      container.appendChild(departmentDiv)
+    })
+
+    // Get all department checkboxes after they've been created
+    const departmentCheckboxes = container.querySelectorAll(".select-all-department")
+  } else {
+    // Create a "Select All" checkbox for non-grouped items
+    const allItemsDiv = document.createElement("div")
+    allItemsDiv.classList.add("form-check", "select-all-container")
+
+    const allItemsCheckbox = document.createElement("input")
+    allItemsCheckbox.classList.add("form-check-input", "select-all-main")
+    allItemsCheckbox.type = "checkbox"
+    allItemsCheckbox.id = `${filterType}-all`
+
+    const allItemsLabel = document.createElement("label")
+    allItemsLabel.classList.add("form-check-label", "fw-bold")
+    allItemsLabel.htmlFor = allItemsCheckbox.id
+    allItemsLabel.textContent = "Select All"
+
+    allItemsDiv.appendChild(allItemsCheckbox)
+    allItemsDiv.appendChild(allItemsLabel)
+    container.appendChild(allItemsDiv)
+
+    const itemCheckboxes = []
+    items.forEach((item) => {
+      const div = document.createElement("div")
+      div.classList.add("form-check")
+
+      const checkbox = document.createElement("input")
+      checkbox.classList.add("form-check-input", "filter-item")
+      checkbox.type = "checkbox"
+      checkbox.id = `${filterType}-${item}`
+      checkbox.dataset[filterType] = item
+      itemCheckboxes.push(checkbox)
+
+      const label = document.createElement("label")
+      label.classList.add("form-check-label")
+      label.htmlFor = checkbox.id
+      label.textContent = item
+
+      div.appendChild(checkbox)
+      div.appendChild(label)
+      container.appendChild(div)
+
+      // Add event listener to update "Select All" checkbox state
+      checkbox.addEventListener("change", () => {
+        updateSelectAllCheckbox(allItemsCheckbox, itemCheckboxes)
+      })
+    })
+
+    // Add event listener for the "Select All" checkbox
+    allItemsCheckbox.addEventListener("change", function () {
+      const isChecked = this.checked
+      itemCheckboxes.forEach((checkbox) => {
+        checkbox.checked = isChecked
+      })
+    })
+  }
 }
+
+// Helper function to update department checkbox state based on item checkboxes
+function updateDepartmentCheckbox(department, departmentCheckbox, itemCheckboxes) {
+  const allChecked = itemCheckboxes.every((checkbox) => checkbox.checked)
+  const someChecked = itemCheckboxes.some((checkbox) => checkbox.checked)
+
+  departmentCheckbox.checked = allChecked
+  departmentCheckbox.indeterminate = someChecked && !allChecked
+}
+
+// Helper function to update main "Select All" checkbox state based on department checkboxes
+function updateMainCheckbox(mainCheckbox, departmentCheckboxes) {
+  const allChecked = Array.from(departmentCheckboxes).every((checkbox) => checkbox.checked)
+  const someChecked = Array.from(departmentCheckboxes).some((checkbox) => checkbox.checked)
+
+  mainCheckbox.checked = allChecked
+  mainCheckbox.indeterminate = someChecked && !allChecked
+}
+
+// Helper function to update "Select All" checkbox for non-grouped items
+function updateSelectAllCheckbox(selectAllCheckbox, itemCheckboxes) {
+  const allChecked = itemCheckboxes.every((checkbox) => checkbox.checked)
+  const someChecked = itemCheckboxes.some((checkbox) => checkbox.checked)
+
+  selectAllCheckbox.checked = allChecked
+  selectAllCheckbox.indeterminate = someChecked && !allChecked
+}
+
 
 const clusterColors = [
     'blue', 'red', 'green', 'purple', 'orange', 'cyan', 'yellow', 'pink', 'violet', 'brown',
@@ -1099,40 +1226,38 @@ const clusterColors = [
 
 // function to add all markers to the map from the dataset
 function addMarkers(data) {
-    markers.clearLayers(); // reset the marker cluster group
+    markers.clearLayers() // reset the marker cluster group
 
     allMarkers = data.reduce((markerArray, item) => {
-        const { latitude, longitude } = item;
+        const { latitude, longitude } = item
 
-        if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-            const latlng = [parseFloat(latitude), parseFloat(longitude)];
-            const marker = createStudentMarker(item, latlng); // 👈 use helper
+        if (latitude && longitude && !isNaN(Number.parseFloat(latitude)) && !isNaN(Number.parseFloat(longitude))) {
+        const latlng = [Number.parseFloat(latitude), Number.parseFloat(longitude)]
+        const marker = createStudentMarker(item, latlng) // 👈 use helper
 
-            marker.on('click', () => {
-                console.log('Marker clicked:', item);
-                handleStudentRoute(item);
-            });
+        marker.on("click", () => {
+            console.log("Marker clicked:", item)
+            handleStudentRoute(item)
+        })
 
-            markerArray.push(marker);
-            markers.addLayer(marker);
+        markerArray.push(marker)
+        markers.addLayer(marker)
         }
-        return markerArray;
-    }, []);
+        return markerArray
+    }, [])
 
-    map.addLayer(markers);
+    map.addLayer(markers)
 
     // Filter + Chart setup
-    const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
-    const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
+    const yearLevels = [...new Set(data.map((item) => item.year).filter(Boolean))]
 
-    generateFilterCheckboxes('strand-checks', SHS_DEPARTMENTS, 'strand', true);
-    generateFilterCheckboxes('year-checks', yearLevels, 'year');
-    generateFilterCheckboxes('course-checks', COLLEGE_DEPARTMENTS, 'course', true);
-    generateFilterCheckboxes('previous-school-checks', previousSchools, 'previous_school');
-    createPopulationDistribution(data);
-    updateAffectedStudents();
+    generateFilterCheckboxes("strand-checks", SHS_DEPARTMENTS, "strand", true)
+    generateFilterCheckboxes("year-checks", yearLevels, "year")
+    generateFilterCheckboxes("course-checks", COLLEGE_DEPARTMENTS, "course", true)
+    createPopulationDistribution(data)
+    updateAffectedStudents()
 
-    applyFilters();
+    applyFilters()
 }
 
 
@@ -1190,7 +1315,6 @@ function handleSeniorHighCluster(clusterType, buttonId) {
 
     document.getElementById('strand-filter-section').style.display = activeCluster ? 'block' : 'none';
     document.getElementById('course-filter-section').style.display = 'none';
-    document.getElementById('previous-school-filter-section').style.display = activeCluster ? 'block' : 'none';
 }
 
 function handleCollegeCluster(clusterType, buttonId) {
@@ -1198,7 +1322,6 @@ function handleCollegeCluster(clusterType, buttonId) {
 
     document.getElementById('course-filter-section').style.display = activeCluster ? 'block' : 'none';
     document.getElementById('strand-filter-section').style.display = 'none';
-    document.getElementById('previous-school-filter-section').style.display = activeCluster ? 'block' : 'none';
 }
 
 function setupEventListeners() {
@@ -1215,7 +1338,6 @@ function setupEventListeners() {
 
     document.getElementById('strand-checks').addEventListener('change', updateStrandFilters);
     document.getElementById('course-checks').addEventListener('change', updateCourseFilters);
-    document.getElementById('previous-school-checks').addEventListener('change', updatePreviousSchoolFilters);
     document.getElementById('year-checks').addEventListener('change', updateYearFilter);
     document.getElementById('age-input').addEventListener('input', updateAgeFilter);
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
@@ -1242,16 +1364,6 @@ function updateCourseFilters() {
     });
 }
 
-function updatePreviousSchoolFilters() {
-    const checkboxes = document.querySelectorAll('#previous-school-checks .form-check-input');
-    currentFilters.previous_school.clear();
-    checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-            currentFilters.previous_school.add(checkbox.dataset.previous_school);
-        }
-    });
-}
-
 function updateYearFilter() {
     const checkboxes = document.querySelectorAll('#year-checks .form-check-input');
     checkboxes.forEach(checkbox => {
@@ -1274,7 +1386,6 @@ function clearFilters() {
     
     document.querySelectorAll('#strand-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.querySelectorAll('#course-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
-    document.querySelectorAll('#previous-school-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.querySelectorAll('#year-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.getElementById('age-input').value = '';
     
