@@ -273,6 +273,22 @@ body {
       animation: pulse 2s;
   }
 
+  /* Routing mode toggle */
+  .form-switch .form-check-input {
+      width: 3em;
+      height: 1.5em;
+      margin-right: 0.5em;
+  }
+
+  /* Hazard zone styling */
+  .incident-tooltip {
+      background-color: rgba(255, 0, 0, 0.7);
+      color: white;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+  }
+
   @keyframes pulse {
       0% {
           opacity: 0.8;

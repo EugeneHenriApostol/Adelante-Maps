@@ -17,6 +17,7 @@ class User(Base):
 
     role = relationship("Role")
     activities = relationship("UserActivityLog", back_populates="user")
+    campuses = relationship("Campus", back_populates="user")
     
 class UserActivityLog(Base):
     __tablename__ = "user_activity_logs"
@@ -43,6 +44,10 @@ class Campus(Base):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user = relationship("User", back_populates="campuses")
+
 
 
 class PreviousSchool(Base):
