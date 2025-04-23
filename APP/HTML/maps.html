@@ -63,17 +63,20 @@
                             <i class="bi bi-funnel"></i> Filter Controls
                         </a>
 
-                        <li class="nav-item">
-                            <a class="nav-link cursor-pointer text-dark" id="toggleDrawControl" href="#">
-                                <i class="bi bi-map"></i> Geospatial Event Tool
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="geospatialToolDropDown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Geospatial Event Tool
                             </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link cursor-pointer text-dark" id="toggleCircleDrawControl" href="#">
-                                <i class="bi bi-geo-alt"></i> Incident Location (Circle)
-                            </a>
-                        </li>                        
+                            <ul class="dropdown-menu" aria-labelledby="geospatialToolDropDown">
+                                <li><a class="dropdown-item" href="#" id="toggleDrawControl">
+                                    <i class="bi bi-map"></i> Affected Students</a></li>
+                                <li><a class="dropdown-item" href="#" id="toggleCircleDrawControl">
+                                    <i class="bi bi-geo-alt"></i> Incident Location (Circle)</a></li>
+                                <li><a class="dropdown-item" href="#" id="provideSupport">
+                                    <i class="bi bi-bus-front"></i> Provide Support</a></li>    
+                            </ul>
+                        </li>                  
 
                         <!-- link to event reports -->
                         <li class="nav-item">

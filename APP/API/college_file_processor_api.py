@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 import pandas as pd
-from kneed import KneeLocator
+from sklearn.metrics import silhouette_score
 
 import models, auth
 
@@ -206,18 +206,20 @@ def preprocess_file_college(file_path: str):
         print(f"Sample size (all valid students): {n}")
         print(f"Upper limit for k (√(n/2)): {upper_k}")
 
+        best_k = 2
+        best_score = -1
         coords = valid_coordinates[['latitude', 'longitude']].values
-        wcss = []
 
         for k in range(2, max(3, upper_k + 1)):
             kmeans = KMeans(n_clusters=k, random_state=42, init='k-means++')
-            kmeans.fit(coords)
-            wcss.append(kmeans.inertia_)
+            labels = kmeans.fit_predict(coords)
+            score = silhouette_score(coords, labels)
+            if score > best_score:
+                best_score = score
+                best_k = k
 
-        kl = KneeLocator(range(2, max(3, upper_k + 1)), wcss, curve='convex', direction='decreasing')
-        best_k = kl.elbow if kl.elbow is not None else 2  # fallback if knee not found
-
-        print(f"✅ Optimal k based on Elbow Method: {best_k}")
+        print(f"Optimal k based on Silhouette Score: {best_k}")
+        print(f"Best Silhouette Score: {best_score:.4f}")
 
         kmeans_final = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
         valid_coordinates['cluster'] = kmeans_final.fit_predict(coords) + 1

@@ -238,30 +238,6 @@ function enhanceGeocoder() {
     return enhancedGeocoder;
 }
 
-// function addSearchButton() {
-//     searchBtn.addEventListener('click', function() {
-//         // Toggle the geocoder visibility
-//         const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
-//         if (geocoderContainer) {
-//             if (geocoderContainer.classList.contains('leaflet-control-geocoder-expanded')) {
-//                 geocoderContainer.classList.remove('leaflet-control-geocoder-expanded');
-//             } else {
-//                 geocoderContainer.classList.add('leaflet-control-geocoder-expanded');
-//                 const input = document.querySelector('.leaflet-control-geocoder-form input');
-//                 if (input) {
-//                     input.focus();
-//                 }
-//             }
-//         }
-//     });
-    
-//     // Add it to your existing control container
-//     const controlContainer = document.querySelector('.filter-controls');
-//     if (controlContainer) {
-//         controlContainer.appendChild(searchBtn);
-//     }
-// }
-
 let circleDrawControlVisible = false;
 let incidentCircle = null;
 
@@ -751,21 +727,30 @@ async function initializeMap() {
         }
     }
     
-    map.on('click', function (e) {
-        if (!startPoint) {
-            // Set start point
-            startPoint = e.latlng;
-            console.log("Start Point Set:", startPoint); // Debugging log
-            L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
-        } else if (!endPoint) {
-            // Set end point
-            endPoint = e.latlng;
-            console.log("End Point Set:", endPoint); // Debugging log
-            L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+    function enableRoutingSupport() {
+        startPoint = null;
+        endPoint = null;
     
-            // Call OSRM for the route calculation
-            calculateRoute(startPoint, endPoint);
+        function onMapClick(e) {
+            if (!startPoint) {
+                startPoint = e.latlng;
+    
+                L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+            } else if (!endPoint) {
+                endPoint = e.latlng;
+    
+                L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+                calculateRoute(startPoint, endPoint);
+    
+                map.off('click', onMapClick);
+            }
         }
+    
+        map.on('click', onMapClick);
+    }
+
+    document.getElementById("provideSupport").addEventListener("click", function () {
+        enableRoutingSupport();
     });
 
     // handle area type selection
