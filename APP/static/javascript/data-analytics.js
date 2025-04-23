@@ -18,10 +18,9 @@ async function fetchTopSchools() {
       .slice(0, 10);
   
     console.log("Top 10 Schools:", top10Schools);
-    displaySchools(top10Schools); // optional
+    displaySchools(top10Schools); 
   }
-  
-  // 👇 Add this line to run the function
+
   fetchTopSchools();
   
   function displaySchools(schools) {
