@@ -1048,8 +1048,9 @@ async function plotPreviousSchools() {
 
         if (
             latitude && longitude &&
-            !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))
-        ) {
+            !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude)) &&
+            name.toLowerCase() !== "unknown" 
+        ){
             const popupContent = `
                 <strong>${name}</strong><br/>
                 📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}<br/>

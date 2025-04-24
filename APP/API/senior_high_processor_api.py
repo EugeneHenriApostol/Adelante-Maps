@@ -1,9 +1,9 @@
 # senior_high_processor_api.py
-import re, html, os, math, io
+import re, html, os, math
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
 from fastapi import File, HTTPException, UploadFile, requests
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 import pandas as pd
 
 from fastapi import APIRouter, Depends
@@ -12,8 +12,7 @@ import requests
 from kneed import KneeLocator
 import auth, models
 
-from rapidfuzz import process, fuzz
-from collections import defaultdict
+from rapidfuzz import fuzz
 
 senior_high_file_api_router = APIRouter()
 
@@ -72,7 +71,6 @@ def clean_previous_school_name(name: str):
 
 
 # fuzzy matching for previous school
-
 def group_similar_schools(school_series, threshold=85):
 
     def get_canonical_school_name(school_name):
@@ -279,7 +277,6 @@ async def upload_file(file: UploadFile = File(...), current_user: models.User = 
 
 
     # return file as a response without saving to the server
-    
     return FileResponse(
         path=processed_path,
         media_type='text/csv',

@@ -2,7 +2,9 @@ async function fetchTopSchools() {
     const response = await fetch('/api/students/all-schools');
     const schools = await response.json();
   
-    const schoolsWithCounts = schools.map(school => {
+    const schoolsWithCounts = schools
+    .filter(school => school.name.toLowerCase() !== 'unknown')
+    .map(school => {
       const totalStudents = (school.students_senior_high?.length || 0) + (school.students_college?.length || 0);
       return {
         id: school.id,
@@ -18,15 +20,13 @@ async function fetchTopSchools() {
       .slice(0, 10);
   
     console.log("Top 10 Schools:", top10Schools);
-    displaySchools(top10Schools); // optional
   }
   
-  // 👇 Add this line to run the function
   fetchTopSchools();
   
   function displaySchools(schools) {
     const tableBody = document.querySelector("#schools-table tbody");
-    tableBody.innerHTML = ""; // Clear if any previous rows
+    tableBody.innerHTML = ""; // clear if any previous rows
   
     schools.forEach((school, index) => {
       const row = document.createElement("tr");

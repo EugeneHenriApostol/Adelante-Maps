@@ -116,7 +116,12 @@ def get_top_schools_with_students(db: Session = Depends(get_db)):
     school_map = {}
 
     for school in schools:
-        key = (school.name.strip().lower(), round(school.latitude, 4), round(school.longitude, 4))
+        clean_name = school.name.strip().lower()
+        
+        if clean_name == "unknown" or not clean_name:
+            continue  # skip unknown schools
+
+        key = (clean_name, round(school.latitude, 4), round(school.longitude, 4))
 
         if key not in school_map:
             school_map[key] = {
@@ -128,7 +133,6 @@ def get_top_schools_with_students(db: Session = Depends(get_db)):
                 "students_college": []
             }
 
-        # Combine student lists
         school_map[key]["students_senior_high"].extend(school.students_senior_high)
         school_map[key]["students_college"].extend(school.students_college)
 
