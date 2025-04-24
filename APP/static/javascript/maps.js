@@ -16,7 +16,6 @@ let previouslySelectedStudent = null;
 let currentFilters = {
     course: new Set(),
     strand: new Set(),
-    previous_school: new Set(),
     yearLevel: null,
     age: null,
 };
@@ -255,6 +254,12 @@ let startPoint = null;
 let endPoint = null;
 let isRoutingMode = false;
 
+let cancelBtn = null;
+
+let startMarker = null;
+let endMarker = null;
+let routeLayer = null;
+
 // initialize leaflet map
 async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
@@ -300,7 +305,7 @@ async function initializeMap() {
 
     // layers for markers, routes and population data
     markersLayer = L.layerGroup().addTo(map); // layer for school markers
-    markers = L.markerClusterGroup(); // layer for cluster student markers
+    markers = L.layerGroup(); // layer for cluster student markers
     routesLayer = L.layerGroup().addTo(map); // layer for student routes
     populationLayer = L.layerGroup().addTo(map); // layer for campus proximity
 
@@ -425,14 +430,14 @@ async function initializeMap() {
             incidentCircle = e.layer;
             drawnItems.addLayer(incidentCircle);
     
-            // Get the coordinates of the shape
+            // get coordinates 
             window.incidentLocation = incidentCircle.getLatLng();
             console.log(window.incidentLocation = incidentCircle.getLatLng());
     
-            // Convert the circle to a GeoJSON polygon using Turf.js
-            const radiusInKm = incidentCircle.getRadius() / 1000; // Convert radius from meters to kilometers
+            // convert the circle to a GeoJSON polygon 
+            const radiusInKm = incidentCircle.getRadius() / 1000; // convert radius from meters to kilometers
             const floodGeoJSON = turf.circle([incidentCircle.getLatLng().lng, incidentCircle.getLatLng().lat], radiusInKm, {
-                steps: 64, // Number of points around the circle
+                steps: 64, // number of points around the circle
                 units: 'kilometers'
             });
     
@@ -479,7 +484,6 @@ async function initializeMap() {
     
     document.getElementById("toggleCircleDrawControl").addEventListener("click", toggleCircleDrawControl);
     
-    // Calculate route function (using the floodPolygon globally)
     function calculateRoute(startPoint, endPoint) {
         const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
         
@@ -544,7 +548,7 @@ async function initializeMap() {
         const detourDirection = angleDiff > 0 ? 1 : -1; // 1 for clockwise, -1 for counter-clockwise
         
         // Create waypoints in a prioritized order
-        const numPoints = 8; // Reduced from 16 since we're being smarter about search
+        const numPoints = 12; // Reduced from 16 since we're being smarter about search
         const distanceFactors = [1.5, 2.0]; // Reduced layers
         
         // Generate waypoints in order of priority
@@ -662,7 +666,7 @@ async function initializeMap() {
                     { color: 'red', weight: 6, opacity: 0.7, dashArray: '10, 10' } : 
                     { color: 'blue', weight: 6, opacity: 0.7 };
                 
-                const routeLayer = L.geoJSON(route.geometry, {
+                routeLayer = L.geoJSON(route.geometry, {
                     style: routeStyle
                 }).addTo(map);
                 
@@ -688,53 +692,97 @@ async function initializeMap() {
         startPoint = null;
         endPoint = null;
         map.getContainer().style.cursor = 'crosshair';
-    
-        const cancelBtn = document.createElement("button");
-        cancelBtn.className = "cancel-routing-btn";
-        cancelBtn.textContent = "Cancel Routing";
-        document.getElementById("map").appendChild(cancelBtn);
-    
-        function cancelRoutingMode() {
-            map.off('click', onMapClick);
-            window.removeEventListener("keydown", onKeyDown);
-            map.getContainer().style.cursor = '';
-            startPoint = null;
-            endPoint = null;
-            isRoutingMode = false;
-            cancelBtn.remove();
+
+        if (!cancelBtn) {
+            cancelBtn = document.createElement("button");
+            cancelBtn.className = "cancel-routing-btn";
+            cancelBtn.textContent = "Cancel Routing";
+            document.getElementById("map").appendChild(cancelBtn);
+
+            cancelBtn.addEventListener("click", cancelRoutingMode);
         }
-    
-        function onMapClick(e) {
-            if (!startPoint) {
-                startPoint = e.latlng;
-                L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
-            } else if (!endPoint) {
-                endPoint = e.latlng;
-                L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
-                calculateRoute(startPoint, endPoint);
-    
-                map.off('click', onMapClick);
-                map.getContainer().style.cursor = '';
-                isRoutingMode = false;
-                cancelBtn.remove();
-            }
-        }
-    
-        function onKeyDown(e) {
-            if (e.key === "Escape") {
-                cancelRoutingMode();
-            }
-        }
-    
-        cancelBtn.addEventListener("click", cancelRoutingMode);
+        
         map.on('click', onMapClick);
         window.addEventListener("keydown", onKeyDown);
+    }
+
+    function cancelRoutingMode() {
+        map.off('click', onMapClick);
+        window.removeEventListener("keydown", onKeyDown);
+        map.getContainer().style.cursor = '';
+        startPoint = null;
+        endPoint = null;
+        isRoutingMode = false;
+    
+        if (startMarker) {
+            map.removeLayer(startMarker);
+            startMarker = null;
+        }
+        if (endMarker) {
+            map.removeLayer(endMarker);
+            endMarker = null;
+        }
+        if (routeLayer) {
+            map.removeLayer(routeLayer);
+            routeLayer = null;
+        }
+    }
+
+    function onMapClick(e) {
+        if (!startPoint) {
+            startPoint = e.latlng;
+            startMarker = L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+        } else if (!endPoint) {
+            endPoint = e.latlng;
+            endMarker = L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+            calculateRoute(startPoint, endPoint);
+    
+            map.off('click', onMapClick);
+            map.getContainer().style.cursor = '';
+            isRoutingMode = false;
+        }
+    }
+
+    function onKeyDown(e) {
+        if (e.key === "Escape") {
+            cancelRoutingMode();
+        }
     }
     
 
     document.getElementById("provideSupport").addEventListener("click", function () {
-        enableRoutingSupport();
+        if (isRoutingMode) {
+            // Case 1: Actively routing
+            cancelRoutingMode();
+    
+            if (cancelBtn) {
+                cancelBtn.remove();
+                cancelBtn = null;
+            }
+        } else if (cancelBtn) {
+            // Case 2: Not routing anymore, but route is displayed and cancel button is still there
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+            if (startMarker) {
+                map.removeLayer(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+    
+            cancelBtn.remove();
+            cancelBtn = null;
+        } else {
+            // Case 3: Starting fresh routing mode
+            enableRoutingSupport();
+        }
     });
+    
+    
 
     // handle area type selection
     document.getElementById('confirmAreaType').addEventListener('click', () => {
@@ -972,12 +1020,12 @@ async function plotPreviousSchools() {
     const schools = await fetchData(PREVIOUS_SCHOOL_API_URL);
     console.log("Previous schools:", schools);
 
-    // Group schools by latitude and longitude to avoid duplicating markers
+    // group schools by latitude and longitude to avoid duplicating markers
     const groupedSchools = {};
 
     schools.forEach((school) => {
         const { latitude, longitude, name, senior_high_count, college_count } = school;
-        const key = `${latitude.toFixed(4)}-${longitude.toFixed(4)}`;  // Unique key for each coordinate
+        const key = `${latitude.toFixed(4)}-${longitude.toFixed(4)}`;  // unique key for each coordinate
 
         if (!groupedSchools[key]) {
             groupedSchools[key] = {
@@ -989,12 +1037,12 @@ async function plotPreviousSchools() {
             };
         }
 
-        // Increment the counts for schools with the same coordinates
+        // increment the counts for schools with the same coordinates
         groupedSchools[key].senior_high_count += senior_high_count;
         groupedSchools[key].college_count += college_count;
     });
 
-    // Plot the markers for each unique school location
+    // plot markers for each unique school location
     Object.values(groupedSchools).forEach((school) => {
         const { latitude, longitude, name, senior_high_count, college_count } = school;
 
@@ -1006,7 +1054,7 @@ async function plotPreviousSchools() {
                 <strong>${name}</strong><br/>
                 📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}<br/>
                 👨‍🎓 Senior High: ${senior_high_count}<br/>
-                🎓 College: ${college_count}
+                🎓 College: ${college_count}<br>
             `;
 
             const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
@@ -1024,70 +1072,196 @@ async function plotPreviousSchools() {
 
 // function to add filter controls
 function addFilterControls() {
-    const filterControls = L.control({ position: 'topright' });
-    filterControls.onAdd = function(map) {
-        const div = L.DomUtil.create('div', 'leaflet-control leaflet-bar filter-controls');
-        return div;
-    };
-    filterControls.addTo(map);
+    const filterControls = L.control({ position: "topright" })
+    filterControls.onAdd = (map) => {
+        const div = L.DomUtil.create("div", "leaflet-control leaflet-bar filter-controls")
+        return div
+    }
+    filterControls.addTo(map)
 }
 
 // function to generates filter checkboxes dynamically based on clustered student and appends them to a container
 function generateFilterCheckboxes(containerId, items, filterType, isGrouped = false) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
+  const container = document.getElementById(containerId)
+  container.innerHTML = ""
 
-    if (isGrouped) {
-        Object.keys(items).forEach(department => {
-            const departmentDiv = document.createElement('div');
-            departmentDiv.classList.add('department-group');
+  if (isGrouped) {
+    // Create a "Select All" checkbox for all departments
+    const allDepartmentsDiv = document.createElement("div")
+    allDepartmentsDiv.classList.add("form-check", "select-all-container")
 
-            const departmentHeader = document.createElement('div');
-            departmentHeader.textContent = department;
-            departmentHeader.classList.add('department-header');
-            departmentDiv.appendChild(departmentHeader);
+    const allDepartmentsCheckbox = document.createElement("input")
+    allDepartmentsCheckbox.classList.add("form-check-input", "select-all-main")
+    allDepartmentsCheckbox.type = "checkbox"
+    allDepartmentsCheckbox.id = `${filterType}-all`
 
-            items[department].forEach(item => {
-                const div = document.createElement('div');
-                div.classList.add('form-check');
-                const checkbox = document.createElement('input');
-                checkbox.classList.add('form-check-input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `${filterType}-${item}`;
-                checkbox.dataset[filterType] = item;
+    const allDepartmentsLabel = document.createElement("label")
+    allDepartmentsLabel.classList.add("form-check-label", "fw-bold")
+    allDepartmentsLabel.htmlFor = allDepartmentsCheckbox.id
+    allDepartmentsLabel.textContent = "Select All"
 
-                const label = document.createElement('label');
-                label.classList.add('form-check-label');
-                label.htmlFor = checkbox.id;
-                label.textContent = item;
+    allDepartmentsDiv.appendChild(allDepartmentsCheckbox)
+    allDepartmentsDiv.appendChild(allDepartmentsLabel)
+    container.appendChild(allDepartmentsDiv)
 
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                departmentDiv.appendChild(div);
-            });
+    // Add event listener for the main "Select All" checkbox
+    allDepartmentsCheckbox.addEventListener("change", function () {
+      const isChecked = this.checked
+      // Select all department checkboxes
+      const departmentCheckboxes = container.querySelectorAll(".select-all-department")
+      departmentCheckboxes.forEach((checkbox) => {
+        checkbox.checked = isChecked
+        // Trigger the change event to update the child checkboxes
+        checkbox.dispatchEvent(new Event("change"))
+      })
+    })
 
-            container.appendChild(departmentDiv);
-        });
-    } else {
-        items.forEach(item => {
-            const div = document.createElement('div');
-            div.classList.add('form-check');
-            const checkbox = document.createElement('input');
-            checkbox.classList.add('form-check-input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `${filterType}-${item}`;
-            checkbox.dataset[filterType] = item;
+    Object.keys(items).forEach((department) => {
+      const departmentDiv = document.createElement("div")
+      departmentDiv.classList.add("department-group")
 
-            const label = document.createElement('label');
-            label.classList.add('form-check-label');
-            label.htmlFor = checkbox.id;
-            label.textContent = item;
+      // Create department header with checkbox
+      const departmentHeaderDiv = document.createElement("div")
+      departmentHeaderDiv.classList.add("department-header-container")
 
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            container.appendChild(div);
-        });
-    }
+      const departmentCheckbox = document.createElement("input")
+      departmentCheckbox.classList.add("form-check-input", "select-all-department")
+      departmentCheckbox.type = "checkbox"
+      departmentCheckbox.id = `${filterType}-${department}-all`
+
+      const departmentHeader = document.createElement("label")
+      departmentHeader.textContent = department
+      departmentHeader.classList.add("department-header", "form-check-label")
+      departmentHeader.htmlFor = departmentCheckbox.id
+
+      departmentHeaderDiv.appendChild(departmentCheckbox)
+      departmentHeaderDiv.appendChild(departmentHeader)
+      departmentDiv.appendChild(departmentHeaderDiv)
+
+      // Create checkboxes for each item in the department
+      const itemCheckboxes = []
+      items[department].forEach((item) => {
+        const div = document.createElement("div")
+        div.classList.add("form-check")
+
+        const checkbox = document.createElement("input")
+        checkbox.classList.add("form-check-input", `${department}-item`)
+        checkbox.type = "checkbox"
+        checkbox.id = `${filterType}-${item}`
+        checkbox.dataset[filterType] = item
+        itemCheckboxes.push(checkbox)
+
+        const label = document.createElement("label")
+        label.classList.add("form-check-label")
+        label.htmlFor = checkbox.id
+        label.textContent = item
+
+        div.appendChild(checkbox)
+        div.appendChild(label)
+        departmentDiv.appendChild(div)
+
+        // Add event listener to update department checkbox state
+        checkbox.addEventListener("change", () => {
+          updateDepartmentCheckbox(department, departmentCheckbox, itemCheckboxes)
+          updateMainCheckbox(allDepartmentsCheckbox, departmentCheckboxes)
+        })
+      })
+
+      // Add event listener for the department checkbox
+      departmentCheckbox.addEventListener("change", function () {
+        const isChecked = this.checked
+        itemCheckboxes.forEach((checkbox) => {
+          checkbox.checked = isChecked
+        })
+        updateMainCheckbox(allDepartmentsCheckbox, departmentCheckboxes)
+      })
+
+      container.appendChild(departmentDiv)
+    })
+
+    // Get all department checkboxes after they've been created
+    const departmentCheckboxes = container.querySelectorAll(".select-all-department")
+  } else {
+    // Create a "Select All" checkbox for non-grouped items
+    const allItemsDiv = document.createElement("div")
+    allItemsDiv.classList.add("form-check", "select-all-container")
+
+    const allItemsCheckbox = document.createElement("input")
+    allItemsCheckbox.classList.add("form-check-input", "select-all-main")
+    allItemsCheckbox.type = "checkbox"
+    allItemsCheckbox.id = `${filterType}-all`
+
+    const allItemsLabel = document.createElement("label")
+    allItemsLabel.classList.add("form-check-label", "fw-bold")
+    allItemsLabel.htmlFor = allItemsCheckbox.id
+    allItemsLabel.textContent = "Select All"
+
+    allItemsDiv.appendChild(allItemsCheckbox)
+    allItemsDiv.appendChild(allItemsLabel)
+    container.appendChild(allItemsDiv)
+
+    const itemCheckboxes = []
+    items.forEach((item) => {
+      const div = document.createElement("div")
+      div.classList.add("form-check")
+
+      const checkbox = document.createElement("input")
+      checkbox.classList.add("form-check-input", "filter-item")
+      checkbox.type = "checkbox"
+      checkbox.id = `${filterType}-${item}`
+      checkbox.dataset[filterType] = item
+      itemCheckboxes.push(checkbox)
+
+      const label = document.createElement("label")
+      label.classList.add("form-check-label")
+      label.htmlFor = checkbox.id
+      label.textContent = item
+
+      div.appendChild(checkbox)
+      div.appendChild(label)
+      container.appendChild(div)
+
+      // Add event listener to update "Select All" checkbox state
+      checkbox.addEventListener("change", () => {
+        updateSelectAllCheckbox(allItemsCheckbox, itemCheckboxes)
+      })
+    })
+
+    // Add event listener for the "Select All" checkbox
+    allItemsCheckbox.addEventListener("change", function () {
+      const isChecked = this.checked
+      itemCheckboxes.forEach((checkbox) => {
+        checkbox.checked = isChecked
+      })
+    })
+  }
+}
+
+// Helper function to update department checkbox state based on item checkboxes
+function updateDepartmentCheckbox(department, departmentCheckbox, itemCheckboxes) {
+  const allChecked = itemCheckboxes.every((checkbox) => checkbox.checked)
+  const someChecked = itemCheckboxes.some((checkbox) => checkbox.checked)
+
+  departmentCheckbox.checked = allChecked
+  departmentCheckbox.indeterminate = someChecked && !allChecked
+}
+
+// Helper function to update main "Select All" checkbox state based on department checkboxes
+function updateMainCheckbox(mainCheckbox, departmentCheckboxes) {
+  const allChecked = Array.from(departmentCheckboxes).every((checkbox) => checkbox.checked)
+  const someChecked = Array.from(departmentCheckboxes).some((checkbox) => checkbox.checked)
+
+  mainCheckbox.checked = allChecked
+  mainCheckbox.indeterminate = someChecked && !allChecked
+}
+
+// Helper function to update "Select All" checkbox for non-grouped items
+function updateSelectAllCheckbox(selectAllCheckbox, itemCheckboxes) {
+  const allChecked = itemCheckboxes.every((checkbox) => checkbox.checked)
+  const someChecked = itemCheckboxes.some((checkbox) => checkbox.checked)
+
+  selectAllCheckbox.checked = allChecked
+  selectAllCheckbox.indeterminate = someChecked && !allChecked
 }
 
 const clusterColors = [
@@ -1106,7 +1280,7 @@ function addMarkers(data) {
 
         if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
             const latlng = [parseFloat(latitude), parseFloat(longitude)];
-            const marker = createStudentMarker(item, latlng); // 👈 use helper
+            const marker = createStudentMarker(item, latlng); 
 
             marker.on('click', () => {
                 console.log('Marker clicked:', item);
@@ -1123,12 +1297,10 @@ function addMarkers(data) {
 
     // Filter + Chart setup
     const yearLevels = [...new Set(data.map(item => item.year).filter(Boolean))];
-    const previousSchools = [...new Set(data.map(item => item.previous_school).filter(Boolean))];
 
     generateFilterCheckboxes('strand-checks', SHS_DEPARTMENTS, 'strand', true);
     generateFilterCheckboxes('year-checks', yearLevels, 'year');
     generateFilterCheckboxes('course-checks', COLLEGE_DEPARTMENTS, 'course', true);
-    generateFilterCheckboxes('previous-school-checks', previousSchools, 'previous_school');
     createPopulationDistribution(data);
     updateAffectedStudents();
 
@@ -1190,7 +1362,6 @@ function handleSeniorHighCluster(clusterType, buttonId) {
 
     document.getElementById('strand-filter-section').style.display = activeCluster ? 'block' : 'none';
     document.getElementById('course-filter-section').style.display = 'none';
-    document.getElementById('previous-school-filter-section').style.display = activeCluster ? 'block' : 'none';
 }
 
 function handleCollegeCluster(clusterType, buttonId) {
@@ -1198,7 +1369,6 @@ function handleCollegeCluster(clusterType, buttonId) {
 
     document.getElementById('course-filter-section').style.display = activeCluster ? 'block' : 'none';
     document.getElementById('strand-filter-section').style.display = 'none';
-    document.getElementById('previous-school-filter-section').style.display = activeCluster ? 'block' : 'none';
 }
 
 function setupEventListeners() {
@@ -1215,7 +1385,6 @@ function setupEventListeners() {
 
     document.getElementById('strand-checks').addEventListener('change', updateStrandFilters);
     document.getElementById('course-checks').addEventListener('change', updateCourseFilters);
-    document.getElementById('previous-school-checks').addEventListener('change', updatePreviousSchoolFilters);
     document.getElementById('year-checks').addEventListener('change', updateYearFilter);
     document.getElementById('age-input').addEventListener('input', updateAgeFilter);
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
@@ -1242,16 +1411,6 @@ function updateCourseFilters() {
     });
 }
 
-function updatePreviousSchoolFilters() {
-    const checkboxes = document.querySelectorAll('#previous-school-checks .form-check-input');
-    currentFilters.previous_school.clear();
-    checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-            currentFilters.previous_school.add(checkbox.dataset.previous_school);
-        }
-    });
-}
-
 function updateYearFilter() {
     const checkboxes = document.querySelectorAll('#year-checks .form-check-input');
     checkboxes.forEach(checkbox => {
@@ -1268,13 +1427,11 @@ function updateAgeFilter(event) {
 function clearFilters() {
     currentFilters.course.clear();
     currentFilters.strand.clear();
-    currentFilters.previous_school.clear();
     currentFilters.yearLevel = null;
     currentFilters.age = null;
     
     document.querySelectorAll('#strand-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.querySelectorAll('#course-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
-    document.querySelectorAll('#previous-school-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.querySelectorAll('#year-checks .form-check-input').forEach(checkbox => checkbox.checked = false);
     document.getElementById('age-input').value = '';
     
@@ -1290,7 +1447,7 @@ function applyFilters() {
     markers.clearLayers();
 
     // If there are no filters applied, show all markers
-    if (currentFilters.strand.size === 0 && currentFilters.course.size === 0 && currentFilters.previous_school.size === 0 && !currentFilters.yearLevel && !currentFilters.age) {
+    if (currentFilters.strand.size === 0 && currentFilters.course.size === 0 && !currentFilters.yearLevel && !currentFilters.age) {
         allMarkers.forEach(marker => markers.addLayer(marker));
     } else {
         filteredMarkers.forEach(marker => markers.addLayer(marker));
@@ -1301,7 +1458,6 @@ function applyFilters() {
 function showMarker(student) {
     if (currentFilters.course.size > 0 && !currentFilters.course.has(student.course)) return false;
     if (currentFilters.strand.size > 0 && !currentFilters.strand.has(student.strand)) return false;
-    if (currentFilters.previous_school.size > 0 && !currentFilters.previous_school.has(student.previous_school)) return false;
     if (currentFilters.yearLevel && student.year !== currentFilters.yearLevel) return false;
     if (currentFilters.age && student.age !== currentFilters.age) return false;
     return true;
@@ -1381,7 +1537,6 @@ function generatePopupContent(student, isAffected) {
     content += `<b>Year Level:</b> ${student.year}<br>`;
     content += `<b>Age:</b> ${student.age}<br>`;
     content += `<b>Coordinates:</b> (${student.latitude}, ${student.longitude})<br>`;
-    content += `<b>Previous School:</b> ${student.previous_school}<br>`;
 
     // Display affected status if applicable
     if (isAffected) {

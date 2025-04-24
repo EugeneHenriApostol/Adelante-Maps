@@ -15,6 +15,8 @@ import requests
 from rapidfuzz import process, fuzz
 from collections import defaultdict
 
+from kneed import KneeLocator
+
 college_file_api_router = APIRouter()
 
 load_dotenv()
@@ -48,19 +50,14 @@ def geocode_address(address, api_key):
 def clean_previous_school_name(name: str):
     name = html.unescape(name)
 
-    # Remove anything inside parentheses
     name = re.sub(r'\(.*?\)', '', name)
 
-    # Remove all numbers
     name = re.sub(r'\d+', '', name)
 
-    # Remove all special characters including dots, dashes, apostrophes, etc.
     name = re.sub(r"[^A-Za-z\s]", '', name)
 
-    # Remove extra spaces
     name = ' '.join(name.split()).strip()
 
-    # Capitalize the entire name (optional but makes things consistent)
     name = name.upper()
     
     return name
@@ -206,20 +203,18 @@ def preprocess_file_college(file_path: str):
         print(f"Sample size (all valid students): {n}")
         print(f"Upper limit for k (√(n/2)): {upper_k}")
 
-        best_k = 2
-        best_score = -1
         coords = valid_coordinates[['latitude', 'longitude']].values
+        wcss = []
 
         for k in range(2, max(3, upper_k + 1)):
             kmeans = KMeans(n_clusters=k, random_state=42, init='k-means++')
-            labels = kmeans.fit_predict(coords)
-            score = silhouette_score(coords, labels)
-            if score > best_score:
-                best_score = score
-                best_k = k
+            kmeans.fit(coords)
+            wcss.append(kmeans.inertia_)
 
-        print(f"Optimal k based on Silhouette Score: {best_k}")
-        print(f"Best Silhouette Score: {best_score:.4f}")
+        kl = KneeLocator(range(2, max(3, upper_k + 1)), wcss, curve='convex', direction='decreasing')
+        best_k = kl.elbow if kl.elbow is not None else 2  
+
+        print(f"✅ Optimal k based on Elbow Method: {best_k}")
 
         kmeans_final = KMeans(n_clusters=best_k, random_state=42, init='k-means++')
         valid_coordinates['cluster'] = kmeans_final.fit_predict(coords) + 1
