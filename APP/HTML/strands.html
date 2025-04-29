@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Strands</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/strands.css') }}">
+</head>
+<body>
+  <h1>USJR Senior High Strands</h1>
+  <a href="/admin-dashboard" class="back-button">← Back to Dashboard</a>
+  <div style="text-align: center; margin-bottom: 20px; margin-top: 20px;">
+    <button onclick="showStrandForm()">Add Strand</button>
+  </div>
+
+  <table id="strandTable">
+    <thead>
+      <tr>
+        <th>Strand Name</th>
+        <th>Campus</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="strandFormModal">
+    <div class="modal-content">
+      <h3>Add Strand</h3>
+      <form id="strandForm">
+        <label for="strandName">Strand Name</label>
+        <input type="text" id="strandName" required>
+
+        <label for="campusSelect">Campus</label>
+        <select id="campusSelect" required></select>
+
+        <div style="margin-top: 20px; text-align: right;">
+          <button type="submit">Create</button>
+          <button type="button" onclick="hideStrandForm()" style="background-color: #6c757d;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', path='javascript/strands.js') }}" defer></script>
+</body>
+</html>

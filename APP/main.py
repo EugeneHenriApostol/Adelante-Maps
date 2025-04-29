@@ -22,6 +22,8 @@ from API.route_evaluation import route_evaluation_router
 from API.usjr_student_processor_api import usjr_student_processor_api_router
 from API.campus_api import campus_api_router
 from API.get_previous_school_api import get_previous_schools_api_router
+from API.strand_api import strand_api_router
+from API.course_api import course_api_router
 
 from Routes.register_route import register_router
 from Routes.login_route import login_router
@@ -39,6 +41,8 @@ from Routes.students_data_analytics_route import students_analytics_router
 from Routes.college_data_analytics_route import college_analytics_router
 from Routes.event_reports_route import event_reports_router
 from Routes.file_process_route import file_process_router
+from Routes.strand_route import strand_router
+from Routes.course_route import course_router
 
 from Routes.exception_handler import custom_http_exception_handler  
 
@@ -68,6 +72,8 @@ app.include_router(students_analytics_router)
 app.include_router(college_analytics_router)
 app.include_router(event_reports_router)
 app.include_router(file_process_router)
+app.include_router(strand_router)
+app.include_router(course_router)
 
 app.include_router(get_users_api_router)
 app.include_router(edit_users_api_router)
@@ -80,6 +86,8 @@ app.include_router(event_reports_api_router)
 app.include_router(usjr_student_processor_api_router)
 app.include_router(campus_api_router)
 app.include_router(get_previous_schools_api_router)
+app.include_router(strand_api_router)
+app.include_router(course_api_router)
 
 app.include_router(senior_high_file_api_router)
 app.include_router(college_file_api_router)

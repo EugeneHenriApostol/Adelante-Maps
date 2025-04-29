@@ -1,8 +1,8 @@
-"""added tracking upload data for college and shs tables
+"""initialcampus migrations
 
-Revision ID: e870875d730a
-Revises: bc12cf77f49f
-Create Date: 2025-04-13 22:07:23.905442
+Revision ID: 62a4b280c54f
+Revises: 2b4f6d157454
+Create Date: 2025-04-29 10:46:11.412989
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e870875d730a'
-down_revision: Union[str, None] = None
+revision: str = '62a4b280c54f'
+down_revision: Union[str, None] = '2b4f6d157454'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

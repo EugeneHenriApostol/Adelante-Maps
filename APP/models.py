@@ -44,10 +44,29 @@ class Campus(Base):
     longitude = Column(Float, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    strands = relationship('Strand', back_populates='campus')
+    courses = relationship('Course', back_populates='campus')
+
+class Strand(Base):
+    __tablename__ = 'strands'
+    strand_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    campus_id = Column(Integer, ForeignKey('campuses.campus_id'))
+
+    campus = relationship('Campus', back_populates='strands')
+
+class Course(Base):
+    __tablename__ = 'courses'
+    course_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    campus_id = Column(Integer, ForeignKey('campuses.campus_id'))
+
+    campus = relationship('Campus', back_populates='courses')
+
 
 class PreviousSchool(Base):
     __tablename__ = 'previous_schools'
-    id = Column(Integer, primary_key=True, index=True)
+    previousSchool_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), index=True)
     latitude = Column(Float)
     longitude = Column(Float)
@@ -69,7 +88,7 @@ class SeniorHighStudents(Base):
     longitude = Column(Float)
     cluster = Column(Integer)
 
-    previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
+    previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_senior_high')
 
 class CollegeStudents(Base):
@@ -87,7 +106,7 @@ class CollegeStudents(Base):
     longitude = Column(Float)
     cluster = Column(Integer)
 
-    previous_school_id = Column(Integer, ForeignKey('previous_schools.id'))
+    previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_college')
 
 
