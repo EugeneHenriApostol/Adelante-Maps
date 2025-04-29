@@ -21,7 +21,7 @@ def create_course(course_data: schemas.CourseBase, db: Session = Depends(get_db)
     db.refresh(course)
     return course
 
-@course_api_router.get('/api/retrieve/courses', response_model=List[schemas.Course])
+@course_api_router.get('/api/retrieve/courses', response_model=List[schemas.CourseWithCampus])
 def get_courses(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin)):
     return db.query(models.Course).options(joinedload(models.Course.campus)).all()
 

@@ -57,3 +57,23 @@ def delete_campus(campus_id: int, db: Session = Depends(get_db), current_user: m
     db.commit()
 
     return {"message": "Campus successfully deleted."}
+
+@campus_api_router.get('/api/retrieve/course-campus-mappings')
+def get_course_campus_mappings(db: Session = Depends(get_db)):
+    # Get course mappings from database
+    course_mappings = db.query(models.CourseMapping).all()
+    
+    # Get department mappings from database
+    department_mappings = db.query(models.DepartmentMapping).all()
+    
+    # Format the response
+    return {
+        "courses": [
+            {"course_id": mapping.course_id, "campus_id": mapping.campus_id}
+            for mapping in course_mappings
+        ],
+        "departments": [
+            {"department_id": mapping.department_id, "campus_id": mapping.campus_id}
+            for mapping in department_mappings
+        ]
+    }

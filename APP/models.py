@@ -36,6 +36,27 @@ class Role(Base):
     role_id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(50), unique=True, nullable=False)
 
+class CourseMapping(Base):
+    __tablename__ = "course_mappings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(String, index=True)
+    campus_id = Column(Integer, ForeignKey("campuses.campus_id"))
+    
+    # Relationship to Campus
+    campus = relationship("Campus", back_populates="course_mappings")
+
+class DepartmentMapping(Base):
+    __tablename__ = "department_mappings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    department_id = Column(String, index=True)
+    campus_id = Column(Integer, ForeignKey("campuses.campus_id"))
+    
+    # Relationship to Campus
+    campus = relationship("Campus", back_populates="department_mappings")
+
+
 class Campus(Base):
     __tablename__ = "campuses"
     campus_id = Column(Integer, primary_key=True, index=True)
@@ -90,6 +111,9 @@ class SeniorHighStudents(Base):
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_senior_high')
+    
+    strand_id = Column(Integer, ForeignKey('strands.strand_id'))
+    strand_relationship = relationship('Strand')
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
@@ -108,6 +132,9 @@ class CollegeStudents(Base):
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_college')
+    
+    course_id = Column(Integer, ForeignKey('courses.course_id'))
+    course_relationship = relationship('Course') 
 
 
 class EventReports(Base):

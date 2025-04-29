@@ -84,7 +84,7 @@ class Campus(CampusBase):
 # strand
 class StrandBase(BaseModel):
     name: str
-    campus_id: int
+    campus_id: Optional[int] = None
 
 class Strand(StrandBase):
     strand_id: int
@@ -95,8 +95,8 @@ class Strand(StrandBase):
 class StrandWithCampus(BaseModel):
     strand_id: int
     name: str
-    campus_id: Optional[int]  
-    campus: Optional[Campus]  
+    campus_id: Optional[int] = None
+    campus: Optional[Campus] = None 
 
     class Config:
         from_attributes = True
@@ -104,7 +104,7 @@ class StrandWithCampus(BaseModel):
 # course
 class CourseBase(BaseModel):
     name: str
-    campus_id: int
+    campus_id: Optional[int] = None
 
 class Course(CourseBase):
     course_id: int
@@ -115,8 +115,28 @@ class Course(CourseBase):
 class CourseWithCampus(BaseModel):
     course_id: int
     name: str
-    campus_id: Optional[int]  
-    campus: Optional[Campus]  
+    campus_id: Optional[int] = None
+    campus: Optional[Campus] = None
 
     class Config:
         from_attributes = True
+        
+class CourseMappingBase(BaseModel):
+    course_id: str
+    campus_id: int
+    
+class CourseMapping(CourseMappingBase):
+    id: int
+    
+    class Config:
+        orm_mode = True
+
+class DepartmentMappingBase(BaseModel):
+    department_id: str
+    campus_id: int
+    
+class DepartmentMapping(DepartmentMappingBase):
+    id: int
+    
+    class Config:
+        orm_mode = True
