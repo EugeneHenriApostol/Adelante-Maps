@@ -120,23 +120,3 @@ class CourseWithCampus(BaseModel):
 
     class Config:
         from_attributes = True
-        
-class CourseMappingBase(BaseModel):
-    course_id: str
-    campus_id: int
-    
-class CourseMapping(CourseMappingBase):
-    id: int
-    
-    class Config:
-        orm_mode = True
-
-class DepartmentMappingBase(BaseModel):
-    department_id: str
-    campus_id: int
-    
-class DepartmentMapping(DepartmentMappingBase):
-    id: int
-    
-    class Config:
-        orm_mode = True
