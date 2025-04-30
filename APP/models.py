@@ -73,7 +73,7 @@ class PreviousSchool(Base):
 
     students_senior_high = relationship('SeniorHighStudents', back_populates='previous_school')
     students_college = relationship('CollegeStudents', back_populates='previous_school')
-
+ 
 class SeniorHighStudents(Base):
     __tablename__ = 'senior_high_students'
     stud_id = Column(Integer, primary_key=True, index=True)

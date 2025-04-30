@@ -260,6 +260,7 @@ let startMarker = null;
 let endMarker = null;
 let routeLayer = null;
 
+
 // initialize leaflet map
 async function initializeMap() {
     map = L.map('map').setView([10.3157, 123.8854], 11); // map view (Cebu)
@@ -422,11 +423,14 @@ async function initializeMap() {
         modal.style.display = 'none';
     }
 
-    // function for when a shape is created on the map
+    // draw
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
     
         if (e.layerType === 'circle') {
+            if (incidentCircle) {
+                drawnItems.removeLayer(incidentCircle);
+            }
             incidentCircle = e.layer;
             drawnItems.addLayer(incidentCircle);
     
@@ -441,9 +445,8 @@ async function initializeMap() {
                 units: 'kilometers'
             });
     
-            // Store the flood polygon globally
             floodPolygon = floodGeoJSON.geometry;
-            console.log(floodPolygon); // Check the GeoJSON
+            console.log(floodPolygon); 
     
             incidentCircle.bindTooltip("Incident Location", {
                 permanent: true,
@@ -462,7 +465,7 @@ async function initializeMap() {
         } else {
             drawnItems.addLayer(layer);
     
-            shapeAreas = []; // Reset shape areas
+            shapeAreas = []; // reset shape areas
             const areaInSquareMeters = calculateArea(layer);
             const areaInSquareKilometers = areaInSquareMeters / 1e6;
             shapeAreas.push(areaInSquareKilometers);
@@ -501,7 +504,7 @@ async function initializeMap() {
                         const route = data.routes[0];
                         console.log("Route found:", route);
                         
-                        // Check if the route intersects with the flood polygon
+                        // check if the route intersects with the polygon
                         if (route.geometry && route.geometry.coordinates) {
                             const routeLine = turf.lineString(route.geometry.coordinates);
                             const intersects = turf.booleanIntersects(routeLine, floodPolygon);
@@ -522,7 +525,7 @@ async function initializeMap() {
                 })
                 .catch(error => console.error('Error fetching route data:', error));
         } else {
-            // No flood polygon defined, just calculate the direct route
+            // no flood polygon defined just calculate the direct route
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -539,49 +542,47 @@ async function initializeMap() {
         const center = incidentCircle.getLatLng();
         const radius = incidentCircle.getRadius();
         
-        // Determine the general direction from start to end relative to the circle
-        const startAngle = Math.atan2(startPoint.lng - center.lng, startPoint.lat - center.lat);
-        const endAngle = Math.atan2(endPoint.lng - center.lng, endPoint.lat - center.lat);
-        const angleDiff = Math.abs((endAngle - startAngle + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+        // More precise direction calculation
+        const startBearing = turf.bearing(
+            turf.point([center.lng, center.lat]),
+            turf.point([startPoint.lng, startPoint.lat])
+        );
+        const endBearing = turf.bearing(
+            turf.point([center.lng, center.lat]),
+            turf.point([endPoint.lng, endPoint.lat])
+        );
+        const detourDirection = (endBearing - startBearing + 360) % 360 > 180 ? 1 : -1;
         
-        // Determine which side to prioritize for detour (left or right of the circle)
-        const detourDirection = angleDiff > 0 ? 1 : -1; // 1 for clockwise, -1 for counter-clockwise
+        // waypoint generation
+        const numPoints = 24; // 
+        const distanceFactors = [1.3, 1.7, 2.2, 2.8]; //  more distance options
+        // const numPoints = 16;
+        // const distanceFactors = [1.5, 2.0];
         
-        // Create waypoints in a prioritized order
-        const numPoints = 12; // Reduced from 16 since we're being smarter about search
-        const distanceFactors = [1.5, 2.0]; // Reduced layers
-        
-        // Generate waypoints in order of priority
         const waypoints = [];
         for (let factor of distanceFactors) {
-            // Start search from the most promising direction
             for (let i = 0; i < numPoints; i++) {
-                // Alternate between left and right side of the circle
-                const direction = i % 2 === 0 ? detourDirection : -detourDirection;
-                const step = Math.floor(i / 2) + 1;
+                // Focus more on the optimal side
+                const angleStep = (i < numPoints/2) ? 
+                    detourDirection * (i/(numPoints/2)) * Math.PI : 
+                    -detourDirection * ((i-numPoints/2)/(numPoints/2)) * Math.PI;
                 
-                const angle = direction * step * (2 * Math.PI / numPoints);
+                const waypointLat = center.lat + (radius * factor / 111000) * Math.cos(angleStep);
+                const waypointLng = center.lng + (radius * factor / (111000 * Math.cos(center.lat * (Math.PI/180)))) * Math.sin(angleStep);
                 
-                const waypointLat = center.lat + (radius * factor / 111000) * Math.cos(angle);
-                const waypointLng = center.lng + (radius * factor / (111000 * Math.cos(center.lat * (Math.PI/180)))) * Math.sin(angle);
-                
-                waypoints.push({ lng: waypointLng, lat: waypointLat });
+                waypoints.push({ 
+                    lng: waypointLng, 
+                    lat: waypointLat,
+                    priority: i < numPoints/2 ? 1 : 2 // higher priority for optimal side
+                });
             }
         }
         
+        // sort waypoints by priority 
+        waypoints.sort((a, b) => a.priority - b.priority);
+        
         console.log(`Generated ${waypoints.length} prioritized waypoints`);
         
-        // Visualize waypoints for debugging (optional)
-        waypoints.forEach((wp, i) => {
-            L.circleMarker([wp.lat, wp.lng], {
-                radius: 5,
-                color: '#333',
-                fillColor: i % 2 === 0 ? '#ff7800' : '#3388ff',
-                fillOpacity: 1
-            }).addTo(map).bindPopup(`Waypoint ${i+1}`);
-        });
-        
-        // Find best detour with progress feedback
         await findBestDetour(startPoint, endPoint, waypoints);
     }
 
@@ -591,6 +592,9 @@ async function initializeMap() {
         progressElement.innerHTML = '<div class="progress-bar"></div><div class="progress-text">Searching for detour...</div>';
         document.getElementById('map').appendChild(progressElement);
         
+        let bestRoute = null;
+        let bestDistance = Infinity;
+        
         try {
             for (let i = 0; i < waypoints.length; i++) {
                 const waypoint = waypoints[i];
@@ -599,19 +603,32 @@ async function initializeMap() {
                 try {
                     const routeData = await tryWaypoint(startPoint, endPoint, waypoint);
                     if (routeData) {
-                        progressElement.remove();
-                        displayRoute(routeData);
-                        return; // Found a valid route, exit
+                        const routeDistance = routeData.routes[0].distance;
+                        
+                        // keep track of the shortest valid route
+                        if (routeDistance < bestDistance) {
+                            bestRoute = routeData;
+                            bestDistance = routeDistance;
+                            
+                            // early exit if find a reasonably good route
+                            if (routeDistance < bestDistance * 1.2) {
+                                break;
+                            }
+                        }
                     }
                 } catch (error) {
                     console.error(`Error trying waypoint ${i+1}:`, error);
-                    // Continue to next waypoint
                 }
             }
             
-            // If we get here, no valid detour was found
-            progressElement.querySelector('.progress-text').textContent = 'No detour found - showing direct route';
-            await showOriginalRouteWithWarning(startPoint, endPoint);
+            if (bestRoute) {
+                progressElement.remove();
+                displayRoute(bestRoute);
+            } else {
+                progressElement.querySelector('.progress-text').textContent = 
+                    'No detour found - showing direct route';
+                await showOriginalRouteWithWarning(startPoint, endPoint);
+            }
         } finally {
             setTimeout(() => progressElement.remove(), 3000);
         }
@@ -620,25 +637,37 @@ async function initializeMap() {
     async function tryWaypoint(startPoint, endPoint, waypoint) {
         const url = `http://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${waypoint.lng},${waypoint.lat};${endPoint.lng},${endPoint.lat}?overview=full&geometries=geojson`;
         
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.routes && data.routes.length > 0) {
-            const route = data.routes[0];
-            if (route.geometry?.coordinates) {
-                const routeLine = turf.lineString(route.geometry.coordinates);
-                if (!turf.booleanIntersects(routeLine, floodPolygon)) {
-                    return data; // Valid detour found
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            
+            if (data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                if (route.geometry?.coordinates) {
+                    const routeLine = turf.lineString(route.geometry.coordinates);
+                    
+                    // more intersection check
+                    if (!turf.booleanIntersects(routeLine, floodPolygon)) {
+                        return data;
+                    } else {
+                        console.log('Route still intersects flood area');
+                    }
                 }
             }
+            return null;
+        } catch (error) {
+            console.error('Error fetching route:', error);
+            return null;
         }
-        return null; // Not a valid detour
     }
 
     function updateProgress(element, current, total) {
         const percent = Math.round((current / total) * 100);
         element.querySelector('.progress-bar').style.width = `${percent}%`;
-        element.querySelector('.progress-text').textContent = `Checking detour ${current} of ${total} (${percent}%)`;
+        element.querySelector('.progress-text').textContent = 
+            `Checking detour ${current} of ${total} (${percent}%)`;
     }
 
     async function showOriginalRouteWithWarning(startPoint, endPoint) {
@@ -692,16 +721,7 @@ async function initializeMap() {
         startPoint = null;
         endPoint = null;
         map.getContainer().style.cursor = 'crosshair';
-
-        if (!cancelBtn) {
-            cancelBtn = document.createElement("button");
-            cancelBtn.className = "cancel-routing-btn";
-            cancelBtn.textContent = "Cancel Routing";
-            document.getElementById("map").appendChild(cancelBtn);
-
-            cancelBtn.addEventListener("click", cancelRoutingMode);
-        }
-        
+    
         map.on('click', onMapClick);
         window.addEventListener("keydown", onKeyDown);
     }
@@ -752,15 +772,10 @@ async function initializeMap() {
 
     document.getElementById("provideSupport").addEventListener("click", function () {
         if (isRoutingMode) {
-            // Case 1: Actively routing
+            // If routing is currently active, cancel it
             cancelRoutingMode();
-    
-            if (cancelBtn) {
-                cancelBtn.remove();
-                cancelBtn = null;
-            }
-        } else if (cancelBtn) {
-            // Case 2: Not routing anymore, but route is displayed and cancel button is still there
+        } else {
+            // Clean any old route/markers before enabling again
             if (routeLayer) {
                 map.removeLayer(routeLayer);
                 routeLayer = null;
@@ -774,10 +789,6 @@ async function initializeMap() {
                 endMarker = null;
             }
     
-            cancelBtn.remove();
-            cancelBtn = null;
-        } else {
-            // Case 3: Starting fresh routing mode
             enableRoutingSupport();
         }
     });
@@ -1009,13 +1020,12 @@ const schoolIcon = L.icon({
 });
 
 
+let previousSchoolsVisible = false;
 // add previous school
 async function plotPreviousSchools() {
     clearRoute();  // clear any previous polylines/routes if applicable
     markers.clearLayers();  // clear other markers
     activeCluster = null;  // reset cluster state
-    currentClusterType = null;
-    currentEducationLevel = null;
 
     const schools = await fetchData(PREVIOUS_SCHOOL_API_URL);
     console.log("Previous schools:", schools);
@@ -1045,6 +1055,7 @@ async function plotPreviousSchools() {
     // plot markers for each unique school location
     Object.values(groupedSchools).forEach((school) => {
         const { latitude, longitude, name, senior_high_count, college_count } = school;
+        let total = senior_high_count + college_count;
 
         if (
             latitude && longitude &&
@@ -1056,6 +1067,8 @@ async function plotPreviousSchools() {
                 📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}<br/>
                 👨‍🎓 Senior High: ${senior_high_count}<br/>
                 🎓 College: ${college_count}<br>
+                🧑‍🤝‍🧑 Total Students: ${total}<br>
+
             `;
 
             const marker = L.marker([parseFloat(latitude), parseFloat(longitude)], {
@@ -1066,7 +1079,12 @@ async function plotPreviousSchools() {
         }
     });
 
-    map.addLayer(markers); // show the school markers
+    map.addLayer(markers);
+}
+
+function clearPreviousSchoolMarkers() {
+    markers.clearLayers();
+    map.removeLayer(markers);
 }
 
 
@@ -1503,14 +1521,14 @@ function updateMarkers() {
 
 
 
-function getAffectedIcon() {
-    return L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div style='background-color:red;' class='marker-pin'></div>`,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42]
-    });
-}
+// function getAffectedIcon() {
+//     return L.divIcon({
+//         className: 'custom-div-icon',
+//         html: `<div style='background-color:red;' class='marker-pin'></div>`,
+//         iconSize: [30, 42],
+//         iconAnchor: [15, 42]
+//     });
+// }
 
 function generatePopupContent(student, isAffected) {
     if (!student) {
@@ -1971,8 +1989,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.getElementById('previousSchool').addEventListener('click', async (e) => {
     e.preventDefault();
-    await plotPreviousSchools();
+
+    if (previousSchoolsVisible) {
+        clearPreviousSchoolMarkers();
+        previousSchoolsVisible = false;
+    } else {
+        await plotPreviousSchools();
+        previousSchoolsVisible = true;
+    }
 });
+
 
 
 document.getElementById('dataAnalytics').addEventListener('click', function() {

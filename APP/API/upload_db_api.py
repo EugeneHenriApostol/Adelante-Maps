@@ -38,14 +38,6 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 db.commit()
                 db.refresh(prev_school)
 
-            # strand
-            strand = db.query(models.Strand).filter(models.Strand.name == row['strand']).first()
-            if not strand:
-                strand = models.Strand(name=row['strand'], campus_id=None)
-                db.add(strand)
-                db.commit()
-                db.refresh(strand)
-
             student = models.SeniorHighStudents(
                 stud_id=int(row['stud_id']),
                 year=int(row['year']),
@@ -58,8 +50,7 @@ async def upload_senior_high_data(file: UploadFile = File(...), db: Session = De
                 latitude=float(row['latitude']),
                 longitude=float(row['longitude']),
                 cluster=int(row['cluster']) if row['cluster'] else None,
-                previous_school_id=prev_school.previousSchool_id,
-                strand_id = strand.strand_id
+                previous_school_id=prev_school.previousSchool_id
             )
             
             if prev_school.previousSchool_id:  # if it already exists in db
@@ -124,14 +115,6 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
                 db.commit()
                 db.refresh(prev_school)
 
-            # course
-            course = db.query(models.Course).filter(models.Course.name == row['course']).first()
-            if not course:
-                course = models.Course(name=row['course'], campus_id = None)
-                db.add(course)
-                db.commit()
-                db.refresh(course)
-
             student = models.CollegeStudents(
                 stud_id=int(row['stud_id']),
                 year=int(row['year']),
@@ -145,8 +128,7 @@ async def upload_college_data(file: UploadFile = File(...), db: Session = Depend
                 latitude=float(row['latitude']),
                 longitude=float(row['longitude']),
                 cluster=int(row['cluster']) if row['cluster'] else None,
-                previous_school_id=prev_school.previousSchool_id,
-                course_id = course.course_id,
+                previous_school_id=prev_school.previousSchool_id
             )
             
             if prev_school.previousSchool_id:  # if it already exists in db

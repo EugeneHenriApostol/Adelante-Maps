@@ -125,7 +125,7 @@ def get_top_schools_with_students(db: Session = Depends(get_db)):
 
         if key not in school_map:
             school_map[key] = {
-                "id": school.id,
+                "id": school.previousSchool_id,
                 "name": school.name,
                 "latitude": school.latitude,
                 "longitude": school.longitude,

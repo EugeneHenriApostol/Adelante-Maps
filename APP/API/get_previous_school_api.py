@@ -12,11 +12,12 @@ def get_all_previous_schools(db: Session = Depends(get_db), current_user: models
 
     result = []
     for school in schools:
-        senior_high_count = db.query(models.SeniorHighStudents).filter(models.SeniorHighStudents.previous_school_id == school.id).count()
-        college_count = db.query(models.CollegeStudents).filter(models.CollegeStudents.previous_school_id == school.id).count()
+        senior_high_count = db.query(models.SeniorHighStudents).filter(models.SeniorHighStudents.previous_school_id == school.previousSchool_id).count()
+        college_count = db.query(models.CollegeStudents).filter(models.CollegeStudents.previous_school_id == school.previousSchool_id).count()
+
 
         result.append({
-            "id": school.id,
+            "id": school.previousSchool_id,
             "name": school.name,
             "latitude": school.latitude,
             "longitude": school.longitude,
