@@ -90,9 +90,6 @@ class SeniorHighStudents(Base):
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_senior_high')
-    
-    strand_id = Column(Integer, ForeignKey('strands.strand_id'))
-    strand_relationship = relationship('Strand')
 
 class CollegeStudents(Base):
     __tablename__ = "college_students"
@@ -111,10 +108,6 @@ class CollegeStudents(Base):
 
     previous_school_id = Column(Integer, ForeignKey('previous_schools.previousSchool_id'))
     previous_school = relationship('PreviousSchool', back_populates='students_college')
-    
-    course_id = Column(Integer, ForeignKey('courses.course_id'))
-    course_relationship = relationship('Course') 
-
 
 class EventReports(Base):
     __tablename__ = "event_reports"

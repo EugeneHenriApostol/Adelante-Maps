@@ -747,14 +747,26 @@ async function initializeMap() {
             routeLayer = null;
         }
     }
-
+    const busIcon = L.icon({
+        iconUrl: 'static/img/bus-icon.png', 
+        iconSize: [50, 50], 
+        iconAnchor: [30, 50], 
+        popupAnchor: [0, -40] 
+    });
+    
     function onMapClick(e) {
         if (!startPoint) {
             startPoint = e.latlng;
-            startMarker = L.marker(startPoint).addTo(map).bindPopup("Start Point").openPopup();
+            startMarker = L.marker(startPoint, { icon: busIcon })
+                .addTo(map)
+                .bindPopup("Start Point")
+                .openPopup();
         } else if (!endPoint) {
             endPoint = e.latlng;
-            endMarker = L.marker(endPoint).addTo(map).bindPopup("End Point").openPopup();
+            endMarker = L.marker(endPoint, { icon: busIcon })
+                .addTo(map)
+                .bindPopup("End Point")
+                .openPopup();
             calculateRoute(startPoint, endPoint);
     
             map.off('click', onMapClick);
@@ -762,6 +774,7 @@ async function initializeMap() {
             isRoutingMode = false;
         }
     }
+    
 
     function onKeyDown(e) {
         if (e.key === "Escape") {
