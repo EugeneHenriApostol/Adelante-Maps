@@ -1533,16 +1533,6 @@ function updateMarkers() {
 }
 
 
-
-// function getAffectedIcon() {
-//     return L.divIcon({
-//         className: 'custom-div-icon',
-//         html: `<div style='background-color:red;' class='marker-pin'></div>`,
-//         iconSize: [30, 42],
-//         iconAnchor: [15, 42]
-//     });
-// }
-
 function generatePopupContent(student, isAffected) {
     if (!student) {
         console.error('Student data is undefined in generatePopupContent');
@@ -1697,6 +1687,11 @@ function updateCirclePopup(circle, school, data) {
     }
 }
 
+const CAMPUS_COORDINATES = {
+    MAIN: { lat: 10.2941, lng: 123.897, name: "USJ-R Main Campus" },
+    BASAK: { lat: 10.2875, lng: 123.863, name: "USJ-R Basak Campus" }
+};
+
 //calculate Distance covers both routing and students within campus radius
 function calculateDistance(lat1, lng1, lat2, lng2) {
     const R = 6371; // Radius of the Earth in km
@@ -1710,44 +1705,71 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return distance;
 }
 
+// Identify if student is college or senior high
 function studentType(student) {
     if (student.course) {
-        return true;
+        return true; // College student
     }
 
     if (student.strand) {
-        return false;
+        return false; // Senior high student
     }
     
     if (student.department) {
-        return Object.values(COLLEGE_DEPARTMENTS).some(depts => 
-            depts.includes(student.department)
+        return Object.keys(COLLEGE_DEPARTMENTS).some(dept => 
+            COLLEGE_DEPARTMENTS[dept].includes(student.department)
         );
     }
     
     return false;
 }
 
+// Determine which campus a student should be routed to
 function determineCampus(student) {
     const isCollege = studentType(student);
     
     if (isCollege) {
-        const courseInSCS = COLLEGE_DEPARTMENTS.SCS.includes(student.course);
-        const courseInSED = COLLEGE_DEPARTMENTS.SED.includes(student.course);
-        
-        if (courseInSCS || courseInSED) {
-            return schools.find(school => school.name === "USJ-R Basak Campus");
+        // Check if student has a course defined
+        if (student.course) {
+            // Check if course belongs to SCS or SED departments
+            const courseInSCS = COLLEGE_DEPARTMENTS.SCS.includes(student.course);
+            const courseInSED = COLLEGE_DEPARTMENTS.SED.includes(student.course);
+            
+            if (courseInSCS || courseInSED) {
+                return CAMPUS_COORDINATES.BASAK;
+            }
+            
+            return CAMPUS_COORDINATES.MAIN;
         }
         
-        return schools.find(school => school.name === "USJ-R Main Campus");
+        // If student has department instead of course
+        if (student.department) {
+            if (student.department === 'SCS' || student.department === 'SED') {
+                return CAMPUS_COORDINATES.BASAK;
+            }
+            return CAMPUS_COORDINATES.MAIN;
+        }
     }
     
-    return schools.reduce((nearest, school) => {
-        const distance = calculateDistance(student.latitude, student.longitude, school.lat, school.lng);
-        return !nearest || distance < nearest.distance ? { school, distance } : nearest;
-    }, null)?.school;
+    // For non-college students (senior high), find the nearest campus
+    const mainDistance = calculateDistance(
+        student.latitude, 
+        student.longitude, 
+        CAMPUS_COORDINATES.MAIN.lat, 
+        CAMPUS_COORDINATES.MAIN.lng
+    );
+    
+    const basakDistance = calculateDistance(
+        student.latitude, 
+        student.longitude, 
+        CAMPUS_COORDINATES.BASAK.lat, 
+        CAMPUS_COORDINATES.BASAK.lng
+    );
+    
+    return mainDistance <= basakDistance ? CAMPUS_COORDINATES.MAIN : CAMPUS_COORDINATES.BASAK;
 }
 
+// Handle student routing (updated version)
 function handleStudentRoute(student, focusRoute = true) {
     const studentLat = parseFloat(student.latitude);
     const studentLng = parseFloat(student.longitude);
@@ -1771,6 +1793,7 @@ function handleStudentRoute(student, focusRoute = true) {
     // set the newly selected student
     previouslySelectedStudent = student;
 
+    // Get the appropriate campus for this student
     const selectedCampus = determineCampus(student);
     if (!selectedCampus) {
         console.error('Unable to determine campus for student:', student);
@@ -1826,7 +1849,7 @@ function handleStudentRoute(student, focusRoute = true) {
         }
     }).addTo(map);
 
-    // handle routes found
+    // handle routes found - same as original code
     currentRouteControl.on('routesfound', function(e) {
         const routes = e.routes;
         console.log('Found routes:', routes);
@@ -1837,7 +1860,7 @@ function handleStudentRoute(student, focusRoute = true) {
                 const distances = routes.map(route => (route.summary.totalDistance / 1000).toFixed(2));
                 const times = routes.map(route => (route.summary.totalTime / 60).toFixed(2));
                 
-                // create payload to be sent to be
+                // create payload to be sent to backend
                 const payload = {
                     student_name: student.name || "Unknown Student",
                     campus_name: selectedCampus.name || "Unknown Campus",
@@ -1861,8 +1884,8 @@ function handleStudentRoute(student, focusRoute = true) {
                     return response.json();
                 })
                 .then(data => {
-                   
-                    // payload error handling
+                    // Handle successful response
+                    console.log("Route data successfully sent to server:", data);
                 })
                 .catch(error => { 
                     console.error("Fetch API call failed:", error);
@@ -1927,6 +1950,7 @@ function handleStudentRoute(student, focusRoute = true) {
     }
 }
 
+// Other functions remain the same
 function clearRoute() {
     if (currentRouteControl) {
         map.removeControl(currentRouteControl);
