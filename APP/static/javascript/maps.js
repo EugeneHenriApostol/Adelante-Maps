@@ -1705,14 +1705,14 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return distance;
 }
 
-// Identify if student is college or senior high
+//identify if student is college or senior high
 function studentType(student) {
     if (student.course) {
-        return true; // College student
+        return true;
     }
 
     if (student.strand) {
-        return false; // Senior high student
+        return false;
     }
     
     if (student.department) {
@@ -1724,14 +1724,13 @@ function studentType(student) {
     return false;
 }
 
-// Determine which campus a student should be routed to
+//determine which campus a student should be routed to
 function determineCampus(student) {
     const isCollege = studentType(student);
     
     if (isCollege) {
-        // Check if student has a course defined
+
         if (student.course) {
-            // Check if course belongs to SCS or SED departments
             const courseInSCS = COLLEGE_DEPARTMENTS.SCS.includes(student.course);
             const courseInSED = COLLEGE_DEPARTMENTS.SED.includes(student.course);
             
@@ -1742,7 +1741,6 @@ function determineCampus(student) {
             return CAMPUS_COORDINATES.MAIN;
         }
         
-        // If student has department instead of course
         if (student.department) {
             if (student.department === 'SCS' || student.department === 'SED') {
                 return CAMPUS_COORDINATES.BASAK;
@@ -1751,7 +1749,6 @@ function determineCampus(student) {
         }
     }
     
-    // For non-college students (senior high), find the nearest campus
     const mainDistance = calculateDistance(
         student.latitude, 
         student.longitude, 
@@ -1769,7 +1766,6 @@ function determineCampus(student) {
     return mainDistance <= basakDistance ? CAMPUS_COORDINATES.MAIN : CAMPUS_COORDINATES.BASAK;
 }
 
-// Handle student routing (updated version)
 function handleStudentRoute(student, focusRoute = true) {
     const studentLat = parseFloat(student.latitude);
     const studentLng = parseFloat(student.longitude);
@@ -1793,7 +1789,6 @@ function handleStudentRoute(student, focusRoute = true) {
     // set the newly selected student
     previouslySelectedStudent = student;
 
-    // Get the appropriate campus for this student
     const selectedCampus = determineCampus(student);
     if (!selectedCampus) {
         console.error('Unable to determine campus for student:', student);
@@ -1950,7 +1945,6 @@ function handleStudentRoute(student, focusRoute = true) {
     }
 }
 
-// Other functions remain the same
 function clearRoute() {
     if (currentRouteControl) {
         map.removeControl(currentRouteControl);
